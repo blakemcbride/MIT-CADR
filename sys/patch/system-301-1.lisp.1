@@ -1,0 +1,106 @@
+;;; -*- Mode:Lisp; Readtable:T; Package:USER; Base:8; Patch-File:T -*-
+;;; Patch file for System version 301.1
+;;; Reason:
+;;;  REALLY-PAGE-OUT-PAGE, COUNT-DIRTY-PAGES, CLEAN-DIRTY-PAGES: New functions.
+;;; Written 25-Nov-24 20:42:38 by ams,
+;;; while running on Lisp Machine One from band 3
+;;; with Experimental System 301.0, Experimental ZWEI 129.0, microcode 323, Dist.
+
+
+
+; From file OZ: /sys/io/disk.lisp at 25-Nov-24 20:42:45
+#8R SYSTEM-INTERNALS#: 
+(COMPILER-LET ((*PACKAGE* (PKG-FIND-PACKAGE "SYSTEM-INTERNALS")))
+  (COMPILER::PATCH-SOURCE-FILE "OZ: //sys//io//disk"
+
+(DEFUN REALLY-PAGE-OUT-PAGE (ADDRESS &AUX CCWP PS PHYS-ADR)
+  "Write it on the disk, changing in-core page table status to RWF, etc."
+  (select-processor
+    ((:lambda :cadr)
+     (WITHOUT-INTERRUPTS
+       (SETQ ADDRESS (%POINTER ADDRESS))
+       (UNWIND-PROTECT
+	   (PROG ()
+		 (WIRE-PAGE-RQB)
+		 (SETQ CCWP %DISK-RQ-CCW-LIST)
+		 ;; We collect some page frames to put them in, remembering the
+		 ;; PFNs as CCWs.
+		 (COND ((OR (NULL (SETQ PS (%PAGE-STATUS ADDRESS)))
+			    (= 0 (LDB %%PHT1-MODIFIED-BIT PS))
+			    (NULL (SETQ PHYS-ADR (%PHYSICAL-ADDRESS ADDRESS))))
+			(RETURN NIL))
+		       (T (LET ((PFN (LSH PHYS-ADR -8)))
+			    (ASET (1+ (LSH PFN 8)) PAGE-RQB CCWP)
+			    (ASET (LSH PFN -8) PAGE-RQB (1+ CCWP)))
+			  (SETQ CCWP (+ 2 CCWP))
+			  (ASET (LOGAND (AREF PAGE-RQB (- CCWP 2)) -2)	;Turn off chain bit
+				PAGE-RQB (- CCWP 2))
+			  (DISK-WRITE-WIRED PAGE-RQB 0 (+ (LSH ADDRESS -8) PAGE-OFFSET))
+			  (%CHANGE-PAGE-STATUS ADDRESS (+ 1_23. %PHT-SWAP-STATUS-FLUSHABLE)
+					       (LDB %%REGION-MAP-BITS
+						    (REGION-BITS (%REGION-NUMBER ADDRESS))))
+			  (RETURN T)
+			  )))
+	 ;; UNWIND-PROTECT forms
+	 (UNWIRE-PAGE-RQB)
+	 )))
+    (:explorer nil)))
+
+))
+
+; From file OZ: /sys/sys/qmisc.lisp at 25-Nov-24 20:43:11
+#8R SYSTEM-INTERNALS#: 
+(COMPILER-LET ((*PACKAGE* (PKG-FIND-PACKAGE "SYSTEM-INTERNALS")))
+  (COMPILER::PATCH-SOURCE-FILE "OZ: //sys//sys//qmisc"
+
+(DEFUN COUNT-WIRED-PAGES ()
+  (DECLARE (VALUES NUMBER-OF-WIRED-PAGES NUMBER-OF-FIXED-WIRED-PAGES))
+  (DO ((ADR (REGION-ORIGIN PAGE-TABLE-AREA) (+ ADR 2))
+       (N (TRUNCATE (SYSTEM-COMMUNICATION-AREA %SYS-COM-PAGE-TABLE-SIZE) 2) (1- N))
+       (N-WIRED 0))
+      ((ZEROP N)
+       (DO ((ADR (REGION-ORIGIN PHYSICAL-PAGE-DATA) (1+ ADR))
+	    (N (TRUNCATE (SYSTEM-COMMUNICATION-AREA %SYS-COM-MEMORY-SIZE) PAGE-SIZE) (1- N))
+	    (N-FIXED-WIRED 0))
+	   ((ZEROP N)
+	    (RETURN (VALUES (+ N-WIRED N-FIXED-WIRED)
+			    N-FIXED-WIRED)))
+	 (AND (= (%P-LDB #o0020 ADR) #o177777)
+	      ( (%P-LDB #o2020 ADR) #o177777)
+	      (SETQ N-FIXED-WIRED (1+ N-FIXED-WIRED)))))
+    (AND (NOT (ZEROP (%P-LDB %%PHT1-VALID-BIT ADR)))
+	 (= (%P-LDB %%PHT1-SWAP-STATUS-CODE ADR) %PHT-SWAP-STATUS-WIRED)
+	 (INCF N-WIRED))))
+
+(DEFUN COUNT-DIRTY-PAGES ()
+  (DO ((ADR (REGION-ORIGIN PAGE-TABLE-AREA) (+ ADR 2))
+       (N (TRUNCATE (AREF (SYMBOL-FUNCTION 'SYSTEM-COMMUNICATION-AREA) %SYS-COM-PAGE-TABLE-SIZE)
+		    2)
+	  (1- N))
+       (N-DIRTY 0))
+      ((ZEROP N)
+       N-DIRTY)
+    (COND ((AND (NOT (ZEROP (%P-LDB %%PHT1-VALID-BIT ADR)))
+		(NOT (= (%P-LDB %%PHT1-SWAP-STATUS-CODE ADR) %PHT-SWAP-STATUS-WIRED))
+		(OR (= (%P-LDB %%PHT1-MODIFIED-BIT ADR) 1)
+		    (= (%P-LDB %%PHT2-MAP-STATUS-CODE (1+ ADR))
+		       %PHT-MAP-STATUS-READ-WRITE)))
+	   (SETQ N-DIRTY (1+ N-DIRTY))))))
+
+(DEFUN CLEAN-DIRTY-PAGES ()
+  (DO ((ADR (REGION-ORIGIN PAGE-TABLE-AREA) (+ ADR 2))
+       (N (TRUNCATE (AREF (SYMBOL-FUNCTION 'SYSTEM-COMMUNICATION-AREA) %SYS-COM-PAGE-TABLE-SIZE)
+		    2)
+	  (1- N))
+       (N-DIRTY 0))
+      ((ZEROP N)
+       N-DIRTY)
+    (COND ((AND (NOT (ZEROP (%P-LDB %%PHT1-VALID-BIT ADR)))
+		(NOT (= (%P-LDB %%PHT1-SWAP-STATUS-CODE ADR) %PHT-SWAP-STATUS-WIRED))
+		(OR (= (%P-LDB %%PHT1-MODIFIED-BIT ADR) 1)
+		    (= (%P-LDB %%PHT2-MAP-STATUS-CODE (1+ ADR))
+		       %PHT-MAP-STATUS-READ-WRITE)))
+	   (SETQ N-DIRTY (1+ N-DIRTY))
+	   (REALLY-PAGE-OUT-PAGE (LSH (%P-LDB %%PHT1-VIRTUAL-PAGE-NUMBER ADR) 8.))))))
+
+))

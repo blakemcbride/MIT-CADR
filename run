@@ -1,0 +1,17 @@
+#!/bin/sh
+# run --- start the MIT CADR Lisp Machine simulator
+#
+# usage: ./run [usim options]      e.g. ./run -H   (headless)
+#
+# Paths in usim.ini are relative to the top of the repository, so the
+# simulator must be started from here.
+
+set -e
+cd "$(dirname "$0")"
+
+if [ ! -x usim/usim ] || [ ! -e disks/disk-sys-303-0.img ]; then
+    echo "run: not built yet; run 'make' first" >&2
+    exit 1
+fi
+
+exec usim/usim -c usim.ini "$@"

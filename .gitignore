@@ -1,0 +1,30 @@
+# Build products
+*.o
+*.d
+*.a
+.objs-*/
+.deps-*/
+usim/usim
+usim/usim-*-release
+usim/usim-*-debug
+usim/di
+usim/diskmaker
+usim/lod
+usim/readmcr
+usim/showmcr
+usim/t_alu
+TAGS
+
+# Working disk image (unpacked from disks/*.img.gz) and run-time state
+disks/*.img
+disks/*.img.tmp
+*.state
+*.pbm
+*.tga
+core
+
+# Editor droppings
+*~
+\#*\#
+.\#*
+.DS_Store

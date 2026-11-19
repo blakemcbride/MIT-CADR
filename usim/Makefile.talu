@@ -1,0 +1,71 @@
+SHELL := /bin/sh
+
+# disable suffix rules
+SUFFIXES:
+# disable implicit rule
+%.o: %.c
+
+# t_alu tests uexec.c's ALU against a 74S181 reference, so it links
+# against usim's own objects rather than compiling its own copy.  Those
+# come from a usim build, which this makefile runs first; usim.o is
+# left out of the link because it carries main(), and t_stubs.c fills
+# in what it would have defined.
+USIM_BACKEND ?= sdl3
+USIM_BUILD_TYPE ?= debug
+
+OBJDIR := .objs-talu
+DEPDIR := .deps-talu
+USIM_OBJDIR := .objs-usim/$(USIM_BACKEND)/$(USIM_BUILD_TYPE)
+
+.DEFAULT_GOAL := all
+.PHONY: all check clean usim-objs
+
+all: t_alu
+
+check: t_alu
+	./t_alu
+
+clean:
+	rm -rf t_alu $(DEPDIR) $(OBJDIR) t_alu.dSYM
+
+# the same backend libraries Makefile.usim links usim against
+ifeq ($(USIM_BACKEND), x11)
+USIM_LDFLAGS	= -lX11 -L/usr/X11R6/lib -L/opt/local/lib
+else ifeq ($(USIM_BACKEND), sdl2)
+USIM_LDFLAGS	= $(shell sdl2-config --libs) -lm
+else ifeq ($(USIM_BACKEND), sdl3)
+SDL3_NOT_INSTALLED	= $(shell pkg-config --exists sdl3; echo $$?)
+ifeq ($(SDL3_NOT_INSTALLED),1)
+USIM_LDFLAGS	= -LSDL/ -Wl,-rpath,$(CURDIR)/SDL -lSDL3
+else
+USIM_LDFLAGS	= $(shell pkg-config sdl3 --libs)
+endif
+USIM_LDFLAGS	+= -lm
+endif
+
+CFLAGS = -std=gnu99 -Wall -Wextra -I. -O3 -ggdb3
+DEPFLAGS = -MT $@ -MMD -MP -MF $(DEPDIR)/$*.d
+
+$(OBJDIR): ; mkdir -p $@
+$(DEPDIR): ; mkdir -p $@
+
+# implicit rule to compile objects
+$(OBJDIR)/%.o: %.c $(DEPDIR)/%.d | $(OBJDIR) $(DEPDIR)
+	$(CC) $(CFLAGS) $(DEPFLAGS) -c -o $@ $<
+
+SRCS := t_alu.c t_stubs.c
+OBJS := $(SRCS:%.c=$(OBJDIR)/%.o)
+DEPS := $(SRCS:%.c=$(DEPDIR)/%.d)
+
+usim-objs:
+	$(MAKE) -f Makefile.usim USIM_BACKEND=$(USIM_BACKEND) USIM_BUILD_TYPE=$(USIM_BUILD_TYPE)
+
+USIM_OBJS = $(filter-out $(USIM_OBJDIR)/usim.o,$(wildcard $(USIM_OBJDIR)/*.o)) $(wildcard $(USIM_OBJDIR)/*.a)
+
+t_alu: usim-objs $(OBJS)
+	$(CC) $(CFLAGS) -o $@ $(OBJS) $(USIM_OBJS) $(LDFLAGS) $(USIM_LDFLAGS)
+
+# dependency files has no dependency
+$(DEPS):
+
+include $(wildcard $(DEPS))

@@ -1,0 +1,223 @@
+-*- Mode:Text; Fonts:(TR12 CPTFONT TR12I HL12B TR12B TR12BI) -*-
+
+4Site configuration for a stand alone Lisp Machine*
+
+This is a simple site configuration for a stand alone Lisp Machine
+talking to a file server.  It can also be used as a basis to creating
+your own personal site, e.g. if you plan on having your Lisp Machine
+on the Global Chaosnet.
+
+  - LOCAL-BRIDGE at Chaos address 0177040.
+  - LOCAL-CADR at Chaos address 0177041.
+
+4Making a new site*
+
+See also "Updating Site Information" in the Lisp
+Machine manual.
+
+site.lisp:
+  - Change it, if desired.
+hosts.text
+  - Change it, if desired.
+lmlocs.lisp:
+  - Change it, if desired.
+  - The associated-machine should correspond to what is set in usim
+    configuration.
+sys.translations:
+  - Change :PHYSICAL-HOST.
+  - Change SITE LISP to point to new site directory, or alternatively
+    this checkout.
+  - Change SYS TRANSLATIONS; point to the system source directory.
+
+This is only used when setting up a site from "scratch" using a System
+distribution load.  The values below are suitable for `usite`, change
+them accordinly if you are creating your own site.
+
+  (setq si:host-alist nil)
+  (si:set-sys-host "local-bridge" :unix #o177001)
+  (login 'lispm 'local-bridge)
+  (load "bridge://usite//site.lisp")
+  (load "bridge://usite//sys.translations")
+  (fs:define-sys-logical-device)
+  (make-system 'site :compile)
+
+Now save your changes by picking a empty partition on the disk (LOD2
+is generally used for the System distribution load band).
+
+  (print-disk-label)		      ;Pick a empty partition.
+  (disk-save 3)			      ;Reboots machine into new world.
+  (set-current-band 3)		      ;Make it default.
+
+4Accessing a new host*
+
+Decide on which subnet to use.  Decide on name and Chaosnet addresses
+for your Lisp Machine(s), your host and any other machines.
+Communicate this to BV if you intend to go onto the Global Chaosnet!
+
+Create a directory for your site, e.g. your-site under l/.
+
+Create (use extra.hosts as a template) your-site/hosts.text
+accordingly:
+
+	NET CHAOS,	  1
+	HOST YOUR-BRIDGE,	CHAOS 1,SERVER,UNIX,VAX
+	HOST YOUR-CADR,		CHAOS 2,USER,LISPM,LISPM
+
+Modify usim.ini accordingly (chaos.hosts, chaos.myname,
+chaos.servername):
+
+	[chaos]
+	hosts = ../your-site/hosts.text
+	myname = YOUR-CADR
+	servername = YOUR-BRIDGE
+
+With the above you can now access the host file system from usim:
+
+  (si:set-sys-host "your-bridge" :unix #1)
+  (login 'lispm 'your-bridge)
+
+To access the host file system.  At this point, you can use ZMacs to
+create/edit all the files needed to make a new site.  The minimum are:
+
+  - your-site/hosts.text
+  - your-site/site.lisp
+  - your-site/lmlocs.lisp
+  - your-site/sys.translations
+
+See the files in usite/ or amssite/ for inspiration.
+
+4Setting up a local file system*
+
+You can also use a local file system, to set this up you first need to
+be able to talk to your host (see above).  If you've renamed your
+host, adjust as needed.
+
+First load LOCAL-FILE, and create a directory for all your site files:
+
+  (make-system 'local-file")
+  (create-directory "lm:<site>")
+
+Next, you need to copy all your site files from your host to your Lisp
+Machine:
+
+  (copy-file "bridge://usite//extra.hosts" "lm:<site>")
+  (copy-file "bridge://usite//hosts.text" "lm:<site>")
+  (copy-file "bridge://usite//hsttbl.lisp" "lm:<site>")
+  (copy-file "bridge://usite//lmlocs.lisp" "lm:<site>")
+  (copy-file "bridge://usite//site.lisp" "lm:<site>")
+  (copy-file "bridge://usite//sys.translations" "lm:<site>")
+
+Now you need to edit at least the following files:
+
+  - lm:<site>site.lisp
+  - lm:<site>sys.translations
+
+	This should look something like the following so to make sure
+	that files get accessed from the local file system:
+
+	(FS:SET-LOGICAL-PATHNAME-HOST "SYS"
+	  :TRANSLATIONS '(("SITE;" "lm:<site>")
+			  ("*;*;*;" "lm:<sys.*.*.*>")
+			  ("*;*;" "lm:<sys.*.*>")
+			  ("*;" "lm:<sys.*>")))
+
+  - lm:<site>lmlocs.lisp
+
+	This is optional, you can make your Lisp Machine self
+	associate, meaning that it will try to locate things first
+	from it self.
+
+	Edit lmlocs.lisp so that the _last_ value in refers to it
+	self, e.g.,
+
+	("Local-CADR"  "Local-CADR"       "Anyplace" (ANYPLACE 0) "Local-CADR")
+
+Now you can more or less follow the previous steps of loading
+site.lisp and sys.translations and recompiling the site system:
+
+
+  (load "lm:<site>site.lisp")
+  (load "lm:<site>sys.translations")
+  (fs:define-sys-logical-device)
+  (setq si:host-alist nil)
+  (make-system 'site :compile)
+
+At this point you _can_ do DISK-SAVE; but it will dump a dirty site
+(just meaning lots of extra stuff in the load band).  To make your
+world load cleaner, do (si:%halt) and start usim again.  Then re-do a
+small subset of the above:
+
+  (make-system 'local-file")
+  (load "lm:<site>site.lisp")
+  (load "lm:<site>sys.translations")
+  (fs:define-sys-logical-device)
+  (setq si:host-alist nil)
+  (make-system 'site :compile)
+
+And DISK-SAVE, check that things work, and SET-CURRENT-BAND if you are
+happy.
+
+Now you can create your own home directory and lispm.init if you want,
+and when you login it will load it.
+
+  (create-directory "lm:<ams>")
+  (ed "lm:<ams>lispm.init")
+  (login 'ams)
+
+4SUPDUPing to your CADR from Unix*
+
+First setup everything as above, you will need to have a properly
+configured site. The following example will assume that the site
+LOCAL.
+
+Install chaosnet-bridge:
+
+  cd usite
+  git clone https://github.com/bictorv/chaosnet-bridge
+
+cbridge-local-udp.conf
+
+
+usim-local-udp.ini
+
+  [chaos]
+  backend=udp
+
+  myname=LOCAL-CADR
+  bridgeport_local=42043
+
+  bridgeip=127.0.0.1
+  bridgechaos=177001
+  bridgeport=42042
+
+ams@carbonium chaosnet-bridge % ./hostat 0177001      
+Hostat for host LOCAL-BRIDGE (0177001)
+Net 	In       Out      Abort    Lost     crcerr   ram      Badlen   Rejected
+0376 	11       11       0        0        0        0        0        0       
+ams@carbonium chaosnet-bridge % ./hostat 0177041
+Hostat for host Local-CADR (0177041)
+Net 	In       Out      Abort    Lost     crcerr   ram      Badlen   Rejected
+0376 	2        1        0        0        0        0        0        0       
+
+
+
+ams@carbonium chaosnet-bridge % python3 telnet.py 0177041
+
+LM-3 System, band 3 of AMS-LISPM-1. (LOCAL)
+2048K physical memory, 16127K virtual memory.
+ Experimental System 300.0
+ Microcode           323
+                        LM-3 Local-CADR, with associated machine BRIDGE.
+
+Telnet server here
+
+
+;Reading at top level.
+;Reading in base 10 in package USER with standard traditional syntax readtable.
+
+(+ 123 123)
+246
+>
+
+
+>>> FILE to access local file system ... firewall ..  

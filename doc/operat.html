@@ -1,0 +1,2732 @@
+<!DOCTYPE html>
+<html>
+<!-- Created by GNU Texinfo 7.2, https://www.gnu.org/software/texinfo/ -->
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<title>Operating the Lisp Machine</title>
+
+<meta name="description" content="Operating the Lisp Machine">
+<meta name="keywords" content="Operating the Lisp Machine">
+<meta name="resource-type" content="document">
+<meta name="distribution" content="global">
+<meta name="Generator" content="makeinfo">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+
+<link href="#Top" rel="start" title="Top">
+<link href="#SEC_Contents" rel="contents" title="Table of Contents">
+<style type="text/css">
+<!--
+a.copiable-link {visibility: hidden; text-decoration: none; line-height: 0em}
+kbd.kbd {font-style: oblique}
+span.r {font-family: initial; font-weight: normal; font-style: normal}
+span:hover a.copiable-link {visibility: visible}
+ul.toc-numbered-mark {list-style: none}
+-->
+</style>
+<link rel="stylesheet" type="text/css" href="texinfo.css">
+
+
+</head>
+
+<body lang="en">
+
+<div class="top-level-extent" id="Top">
+<h1 class="top" id="Operating-the-Lisp-Machine"><span>Operating the Lisp Machine<a class="copiable-link" href="#Operating-the-Lisp-Machine"> &para;</a></span></h1>
+
+&#12;
+
+
+<p>This document explains how to use the Lisp Machine from a non-programmer&rsquo;s
+point of view.  It explains the general characteristics of the user interface,
+particularly the window system and the program-control commands.  This document
+is intended to tell you everything you need to know to sit down at a Lisp
+machine and run programs, but does not deal with the writing of programs.
+Many arcane commands and user-interface features are also documented
+herein, although the beginning user can safely ignore them.
+</p>
+<br>
+<br>
+<br>
+<br>
+<br>
+<br>
+<br>
+<br>
+<br>
+<br>
+
+<p>A.I. Laboratory Working Papers are produced for internal circulation,
+and may contain information that is, for example, too preliminary or too
+detailed for formal publication.  It is not intended that they should
+be considered papers to which reference can be made in the literature.
+</p>
+
+<div class="region-contents" id="SEC_Contents">
+<h2 class="contents-heading">Table of Contents</h2>
+
+<div class="contents">
+
+<ul class="toc-numbered-mark">
+  <li><a id="toc-The-Console" href="#The-Console">1 The Console</a>
+  <ul class="toc-numbered-mark">
+    <li><a id="toc-The-Screen" href="#The-Screen">1.1 The Screen</a></li>
+    <li><a id="toc-The-Keyboard" href="#The-Keyboard">1.2 The Keyboard</a>
+    <ul class="toc-numbered-mark">
+      <li><a id="toc-Modifier-Keys" href="#Modifier-Keys">1.2.1 Modifier Keys</a></li>
+      <li><a id="toc-Function-Keys" href="#Function-Keys">1.2.2 Function Keys</a></li>
+    </ul></li>
+    <li><a id="toc-The-Mouse" href="#The-Mouse">1.3 The Mouse</a></li>
+    <li><a id="toc-Booting-the-Machine" href="#Booting-the-Machine">1.4 Booting the Machine</a></li>
+  </ul></li>
+  <li><a id="toc-The-Window-System" href="#The-Window-System">2 The Window System</a>
+  <ul class="toc-numbered-mark">
+    <li><a id="toc-The-Geography-of-the-Display" href="#The-Geography-of-the-Display">2.1 The Geography of the Display</a>
+    <ul class="toc-numbered-mark">
+      <li><a id="toc-Windows" href="#Windows">2.1.1 Windows</a></li>
+      <li><a id="toc-The-Who_002dline-and-Run_002dlights" href="#The-Who_002dline-and-Run_002dlights">2.1.2 The Who-line and Run-lights</a></li>
+      <li><a id="toc-Blinkers-and-Cursors" href="#Blinkers-and-Cursors">2.1.3 Blinkers and Cursors</a></li>
+    </ul></li>
+    <li><a id="toc-Using-the-Mouse" href="#Using-the-Mouse">2.2 Using the Mouse</a>
+    <ul class="toc-numbered-mark">
+      <li><a id="toc-Pointing-at-Something-with-the-Mouse" href="#Pointing-at-Something-with-the-Mouse">2.2.1 Pointing at Something with the Mouse</a></li>
+      <li><a id="toc-Clicking-the-Mouse" href="#Clicking-the-Mouse">2.2.2 Clicking the Mouse</a></li>
+    </ul></li>
+    <li><a id="toc-Manipulating-Windows" href="#Manipulating-Windows">2.3 Manipulating Windows</a>
+    <ul class="toc-numbered-mark">
+      <li><a id="toc-Menus" href="#Menus">2.3.1 Menus</a></li>
+      <li><a id="toc-The-System-Menu" href="#The-System-Menu">2.3.2 The System Menu</a></li>
+      <li><a id="toc-Notification" href="#Notification">2.3.3 Notification</a></li>
+      <li><a id="toc-Selecting-a-Window" href="#Selecting-a-Window">2.3.4 Selecting a Window</a></li>
+      <li><a id="toc-More-Advanced-Window-Selection" href="#More-Advanced-Window-Selection">2.3.5 More Advanced Window Selection</a></li>
+      <li><a id="toc-Creating-New-Windows" href="#Creating-New-Windows">2.3.6 Creating New Windows</a></li>
+      <li><a id="toc-Selecting-a-System" href="#Selecting-a-System">2.3.7 Selecting a System</a></li>
+      <li><a id="toc-Splitting-the-Screen" href="#Splitting-the-Screen">2.3.8 Splitting the Screen</a></li>
+      <li><a id="toc-Destroying-a-Window" href="#Destroying-a-Window">2.3.9 Destroying a Window</a></li>
+      <li><a id="toc-Frames" href="#Frames">2.3.10 Frames</a></li>
+      <li><a id="toc-Invoking-the-Inspector" href="#Invoking-the-Inspector">2.3.11 Invoking the Inspector</a></li>
+      <li><a id="toc-The-Screen-Editor" href="#The-Screen-Editor">2.3.12 The Screen Editor</a></li>
+    </ul></li>
+  </ul></li>
+  <li><a id="toc-The-Lisp-Listener" href="#The-Lisp-Listener">3 The Lisp Listener</a>
+  <ul class="toc-numbered-mark">
+    <li><a id="toc-The-Editing-Lisp-Listener" href="#The-Editing-Lisp-Listener">3.1 The Editing Lisp Listener</a></li>
+  </ul></li>
+  <li><a id="toc-The-Editor" href="#The-Editor">4 The Editor</a>
+  <ul class="toc-numbered-mark">
+    <li><a id="toc-Using-the-Mouse-in-the-Editor" href="#Using-the-Mouse-in-the-Editor">4.1 Using the Mouse in the Editor</a>
+    <ul class="toc-numbered-mark">
+      <li><a id="toc-The-Mouse-and-the-Cursor" href="#The-Mouse-and-the-Cursor">4.1.1 The Mouse and the Cursor</a></li>
+      <li><a id="toc-The-Mouse-and-the-Region" href="#The-Mouse-and-the-Region">4.1.2 The Mouse and the Region</a></li>
+      <li><a id="toc-The-Editor-Menu" href="#The-Editor-Menu">4.1.3 The Editor Menu</a></li>
+      <li><a id="toc-Scrolling" href="#Scrolling">4.1.4 Scrolling</a></li>
+    </ul></li>
+    <li><a id="toc-Ztop-mode" href="#Ztop-mode">4.2 Ztop mode</a>
+    <ul class="toc-numbered-mark">
+      <li><a id="toc-The-I_002dBeam" href="#The-I_002dBeam">4.2.1 The I-Beam</a></li>
+      <li><a id="toc-Leaving-Ztop" href="#Leaving-Ztop">4.2.2 Leaving Ztop</a></li>
+    </ul></li>
+  </ul></li>
+  <li><a id="toc-The-Inspector" href="#The-Inspector">5 The Inspector</a></li>
+  <li><a id="toc-The-Debugger" href="#The-Debugger">6 The Debugger</a>
+  <ul class="toc-numbered-mark">
+    <li><a id="toc-The-Error_002dHandler" href="#The-Error_002dHandler">6.1 The Error-Handler</a></li>
+    <li><a id="toc-The-Window-Error_002dHandler" href="#The-Window-Error_002dHandler">6.2 The Window Error-Handler</a></li>
+  </ul></li>
+  <li><a id="toc-Peek" href="#Peek">7 Peek</a></li>
+  <li><a id="toc-Network-Programs" href="#Network-Programs">8 Network Programs</a></li>
+  <li><a id="toc-Index-of-Function-Keys" href="#Index-of-Function-Keys">9 Index of Function Keys</a></li>
+  <li><a id="toc-Quick-Summary-of-Mouse-Functions" href="#Quick-Summary-of-Mouse-Functions">10 Quick Summary of Mouse Functions</a>
+  <ul class="toc-numbered-mark">
+    <li><a id="toc-Scrolling-1" href="#Scrolling-1">10.1 Scrolling</a></li>
+  </ul></li>
+</ul>
+</div>
+</div>
+<div class="chapter-level-extent" id="The-Console">
+<h2 class="chapter"><span>1 The Console<a class="copiable-link" href="#The-Console"> &para;</a></span></h2>
+
+<p>This chapter describes the basic logical characteristics of the devices
+that are used to talk to the Lisp Machine.  These include one or more
+bit-raster displays, a specially extended keyboard, and a graphical
+input device called a <i class="i">mouse</i>.  Collectively these form a complete and
+extremely flexible user interface, called the <i class="i">console</i>.
+</p>
+<ul class="mini-toc">
+<li><a href="#The-Screen" accesskey="1">The Screen</a></li>
+<li><a href="#The-Keyboard" accesskey="2">The Keyboard</a></li>
+<li><a href="#The-Mouse" accesskey="3">The Mouse</a></li>
+<li><a href="#Booting-the-Machine" accesskey="4">Booting the Machine</a></li>
+</ul>
+<div class="section-level-extent" id="The-Screen">
+<h3 class="section"><span>1.1 The Screen<a class="copiable-link" href="#The-Screen"> &para;</a></span></h3>
+
+<p>The Lisp Machine generally displays its output on one or more bit-raster
+displays.  The <i class="i">window system</i> controls how display space is allocated
+to various programs, systems, menus, and messages, allowing the user to
+shift his attention between these easily.  This is discussed more fully
+later, in the chapter called &quot;The Window System&quot;.
+</p>
+</div>
+<div class="section-level-extent" id="The-Keyboard">
+<h3 class="section"><span>1.2 The Keyboard<a class="copiable-link" href="#The-Keyboard"> &para;</a></span></h3>
+
+<p>We are in the process of changing over from the old Knight keyboard to a
+new type.  Most of the current software can deal with both kinds of
+keyboards.  In particular, the new keyboards can generate all the
+characters that the old keyboards can.  However, transition problems may
+be encountered over the next few months.  New software may have been
+written with specific features of the new keyboards in mind, and thus
+may be difficult to use from the old keyboards.  Most system software
+can still be used fairly easily from the old keyboards, but exceptions
+exist and will probably become more frequent.
+</p>
+<p>These problems will be resolved with time as programs and people become
+adapted to the new keyboards.
+</p>
+<p>This document will assume that a new keyboard is being used.  Where
+applicable, the sequence that would have to be typed on the old
+keyboards to get the same result will also be given.
+</p>
+<p>There are 100 physical keys on the new keyboards.  The keyboard has
+unlimited rollover, meaning that a keystroke is sensed when the key is
+depressed, no matter what other keys are depressed at the time.  
+</p>
+<p>Actually, the hardware can tell exactly what physical keys are being
+pressed at any given moment: it knows when any key is depressed and when
+it is released.  This means that the Lisp Machine <i class="i">could</i> be
+programmed to interpret the keyboard in any manner whatsoever: in this
+sense the keyboard is completely &quot;soft&quot;.  But the Lisp Machine has
+already been programmed to interpret the keyboard input in a useful way,
+and such reprogramming would be necessary only for the most special needs.
+</p>
+<p>The keys are divided into three groups: function keys, character keys,
+and modifier keys.  Character keys are generally small and gray, while
+function keys are generally large and blue.
+</p>
+<dl class="table">
+<dt><b class="b">Function Keys</b></dt>
+<dd><p><kbd class="kbd">ABORT, BREAK, CALL, CLEAR-INPUT, CLEAR-SCREEN, DELETE, END, HELP,
+HOLD-OUTPUT, LINE, MACRO, NETWORK, OVER-STRIKE, QUOTE, RESUME, RETURN,
+RUBOUT, STATUS, STOP-OUTPUT, SYSTEM, TAB, TERMINAL</kbd>
+</p>
+<p>In addition to these, there are some gray function keys: four on the right with fingers
+pointing in various directions, called <kbd class="kbd">HAND-UP</kbd>, <kbd class="kbd">HAND-DOWN</kbd>, <kbd class="kbd">HAND-RIGHT</kbd>,
+and <kbd class="kbd">HAND-LEFT</kbd>; and four on the left with the roman numerals <kbd class="kbd">I, II, III</kbd>,
+and <kbd class="kbd">IV</kbd>.
+</p>
+</dd>
+<dt><b class="b">Character Keys</b></dt>
+<dd><p>a b c d e f g h i j k l m n o p q r s t u v w x y z 0 1 2 3 4 5 6 7 8 9
+: - = { } ( ) &lsquo; \ ; &rsquo; , . / 
+In addition, <kbd class="kbd">ALT-MODE</kbd> and the space bar are character keys, despite
+being blue. 
+</p>
+</dd>
+<dt><b class="b">Modifier Keys</b></dt>
+<dd><p><kbd class="kbd">MODE-LOCK, CAPS-LOCK, REPEAT, ALT-LOCK</kbd>, left <kbd class="kbd">TOP</kbd>, left <kbd class="kbd">GREEK</kbd>,
+left <kbd class="kbd">SHIFT</kbd>, left <kbd class="kbd">HYPER</kbd>, left <kbd class="kbd">SUPER</kbd>, left <kbd class="kbd">META</kbd>, left
+<kbd class="kbd">CTRL</kbd>, right <kbd class="kbd">TOP</kbd>, right <kbd class="kbd">GREEK</kbd>, right <kbd class="kbd">SHIFT</kbd>, right <kbd class="kbd">HYPER</kbd>,
+right <kbd class="kbd">SUPER</kbd>, right <kbd class="kbd">META</kbd>, right <kbd class="kbd">CTRL</kbd>
+</p></dd>
+</dl>
+
+<ul class="mini-toc">
+<li><a href="#Modifier-Keys" accesskey="1">Modifier Keys</a></li>
+<li><a href="#Function-Keys" accesskey="2">Function Keys</a></li>
+</ul>
+<div class="subsection-level-extent" id="Modifier-Keys">
+<h4 class="subsection"><span>1.2.1 Modifier Keys<a class="copiable-link" href="#Modifier-Keys"> &para;</a></span></h4>
+
+<p>Modifier keys are intended to be held down while typing another key.
+</p>
+<p>None of the software distinguishes between the left and right versions
+of <kbd class="kbd">TOP, GREEK, SHIFT, HYPER, SUPER, META,</kbd> and <kbd class="kbd">CTRL</kbd>.  When one of
+these is specified, either physical key (or both) will work.  The
+incantations used for warm-booting and cold-booting
+(<kbd class="kbd">CTRL/META/CTRL/META/RETURN</kbd> and <kbd class="kbd">CTRL/META/CTRL/META/RUBOUT</kbd>,
+respectively) are the only exceptions; these require that both control
+keys and both meta keys be held down.
+</p>
+<p>The <kbd class="kbd">MODE-LOCK</kbd>, <kbd class="kbd">CAPS-LOCK</kbd>, and <kbd class="kbd">ALT-LOCK</kbd> keys hold themselves down
+once depressed, and must be explicitly released by striking them again.
+</p>
+<p>In this document, the action of holding down some modifier keys while
+striking some other key will be represented with a slash notation.  For
+example, if you are told to type <kbd class="kbd">HYPER/META/J</kbd>, you will accomplish
+this by holding down the <kbd class="kbd">HYPER</kbd> and <kbd class="kbd">META</kbd> keys while you strike
+&quot;j&quot;. 
+</p>
+<p>The <kbd class="kbd">SHIFT</kbd>, <kbd class="kbd">TOP</kbd>, and <kbd class="kbd">GREEK</kbd> keys are intended to modify character
+keys to produce printed characters.  Some printed characters can be
+produced in more than one way.  The software never distinguishes between
+the possible ways of producing a particular printed character.  For
+example, typing the &quot;9&quot; key while holding down <kbd class="kbd">SHIFT</kbd> produces an
+open parenthesis, and so does striking the &quot;(&quot; with no modifiers.  There
+is no difference between these two parentheses. 
+</p>
+<p><kbd class="kbd">GREEK</kbd> is also called <kbd class="kbd">FRONT</kbd> since it causes a character key to generate
+the character written on the front of the key.  These characters are greek
+letters on the alphabetic keys and special punctuation symbols on the other keys.
+</p>
+<p>The <kbd class="kbd">HYPER, SUPER, META</kbd>, and <kbd class="kbd">CTRL</kbd> keys are used by programs like
+the Editor whose commands are mostly single characters.  They are
+intended to modify other keys to produce commands for these programs.
+</p>
+<p>The <kbd class="kbd">CAPS-LOCK</kbd> key, when depressed, causes all typed letters (A
+through Z) to be interpreted as if the shift key were down.
+<kbd class="kbd">CAPS-LOCK</kbd> does not affect the interpretation of non-alphabetic
+character keys. 
+</p>
+<p>The functions of the <kbd class="kbd">ALT-LOCK</kbd> and <kbd class="kbd">MODE-LOCK</kbd> keys have not been
+assigned as of this writing.
+</p>
+</div>
+<div class="subsection-level-extent" id="Function-Keys">
+<h4 class="subsection"><span>1.2.2 Function Keys<a class="copiable-link" href="#Function-Keys"> &para;</a></span></h4>
+
+<p>The function keys allow the user to do certain useful operations in
+very few keystrokes.  Some of these operations may be performed
+anytime, no matter what the Lisp Machine is doing at the moment.
+Other operations are only defined in certain contexts, and the
+keys that perform these operations may do different things at
+different times, or may be ignored if the associated operation is not
+relevant to what the Lisp Machine is doing.  
+</p>
+<p>The four finger keys are function keys, but functions have not yet been
+assigned to them.  <kbd class="kbd">HAND-UP</kbd> and <kbd class="kbd">HAND-DOWN</kbd> may eventually be used
+for answering yes-or-no questions.  <kbd class="kbd">FRONT</kbd>-shifting a finger key
+gives a printing character: circle-plus, circle-minus, circle-cross, and
+circle-slash are typed this way.
+</p>
+<p>The roman-numeral keys are not used by the system.  One useful thing you
+can do with them is to put your own editor commands or keyboard macros on them.
+</p>
+<p>The operations performed by the various function keys are summarized
+in the Index of Function Keys (see (index-to-function-keys)).
+</p>
+</div>
+</div>
+<div class="section-level-extent" id="The-Mouse">
+<h3 class="section"><span>1.3 The Mouse<a class="copiable-link" href="#The-Mouse"> &para;</a></span></h3>
+
+<p>The mouse is a pointing device that can be moved around on a flat
+surface.  These motions are sensed by the Lisp Machine, which usually
+responds by moving a cursor around on the screen in a corresponding
+manner.  The shape of the cursor varies, depending on context.
+See (mouse-cursor-shape).
+</p>
+<p>There are three buttons on the mouse, called Left, Middle, and Right.
+They are used to specify operations to be performed.  Typically the user
+points at something with the mouse and specifies an operation by
+clicking the mouse buttons.  Rapid double clicks are conventionally
+distinguished from single clicks.  Thus, in any specific context, there
+are up to six operations that can be performed with the mouse, invoked
+by Left, Left Double, Middle, Middle Double, Right, and Right Double
+clicks.  Some of these operations are local to particular programs such
+as the editor, and some are defined more widely across the system.
+</p>
+<p>Typically the operations available by clicking the mouse buttons are
+listed at the bottom of the screen.  This display changes as you move
+the mouse around or run different programs.
+</p>
+<p>Sometimes holding a mouse button down continuously for a period of time
+may also be defined to perform some operation, for example drawing a
+curve on the screen.  This will be indicated by the word &quot;Hold&quot;.  For
+example, &quot;Middle Hold&quot; means to click the middle mouse button down and
+hold it down, releasing it only when the operation is complete.  &quot;Left
+Double Hold&quot; means to click the left mouse button twice, holding it
+down the second time until the operation is complete.
+</p>
+<p>Occasionally a long click is distinguished from a short one, as a Morse
+Code dash is distinguished from a dot.  In these cases it doesn&rsquo;t matter
+exactly how long the button is held down, as long as it is perceptibly
+longer than the usual rapid strike.  Such a click will be described by
+the word &quot;Long&quot;, as in &quot;Right Long&quot;.
+</p>
+<p>The mouse is completely &quot;soft&quot;, like the keyboard:  The Lisp Machine can
+be programmed to interpret the mouse in any desired fashion.  The
+protocol that has been chosen, however, is extremely general and should
+suffice for almost all needs.
+</p>
+</div>
+<div class="section-level-extent" id="Booting-the-Machine">
+<h3 class="section"><span>1.4 Booting the Machine<a class="copiable-link" href="#Booting-the-Machine"> &para;</a></span></h3>
+
+<p>The Lisp machine can be &quot;booted&quot; by typing special combinations of keys
+on the keyboard.  There are two kinds of booting; cold-booting completely
+reinitializes the machine, while warm-booting crashes it and then restarts
+it.  Cold-booting is what you do when you have just switched on power to
+the machine.  It is also a good idea to cold-boot when done with the machine
+so as to leave it in a completely clean state for the next person.
+</p>
+<p>Warm-booting is a kludgey escape mechanism which allows you to restart
+the machine after it has crashed or when it is in some run-away state
+that for some reason you can&rsquo;t get out of by using the normal function
+keys.  Warm-booting is not guaranteed to work, since it may have to
+restart the machine from any arbitrary, inconsistent state.  However,
+warm-booting makes a reasonable attempt to get the system to come up
+so that you can continue, or save your work and then cold-boot.
+</p>
+<p>Both kinds of booting start by resetting the machine hardware and
+reloading the microcode from the disk.  Cold-booting then reloads the
+entire contents of virtual memory from a fresh copy on the disk, while
+warm-booting recovers the virtual memory you were working in.  The Lisp
+system then comes up and runs for a few seconds, performing various
+initialization tasks, puts a greeting message at the top of the screen,
+and leaves you in a Lisp listener waiting for you to type in Lisp forms to
+be evaluated.  See (lisp-listener).
+</p>
+<p>The incantations used for warm-booting and cold-booting involve holding
+down all four control and meta keys simultaneously (the two to the left
+of the space bar and the two to the right of the space bar), and striking
+<kbd class="kbd">RUBOUT</kbd> for a cold-boot or <kbd class="kbd">RETURN</kbd> for a warm-boot.  This combination
+of keys is extremely difficult to type accidentally.
+</p>
+<p>On terminals where the mouse is plugged into the keyboard rather than the
+base of the display monitor, after a boot the mouse will not work until
+you first type a key.  This is to avoid disturbing the machine while it is
+booting, which could make it forget whether it was to do a cold or warm
+boot.  Normally you will not notice this, as the first thing you ought to
+do after cold-booting is to log in, which involves typing on the keyboard.
+</p>
+</div>
+</div>
+<div class="chapter-level-extent" id="The-Window-System">
+<h2 class="chapter"><span>2 The Window System<a class="copiable-link" href="#The-Window-System"> &para;</a></span></h2>
+
+<p>The <i class="i">window system</i> is responsible for the appearance of the display.
+It allocates display space and allows the user to shift his attention
+between many programs quickly and easily.  Usually, all input and output
+are mediated by the window system.
+</p>
+<ul class="mini-toc">
+<li><a href="#The-Geography-of-the-Display" accesskey="1">The Geography of the Display</a></li>
+<li><a href="#Using-the-Mouse" accesskey="2">Using the Mouse</a></li>
+<li><a href="#Manipulating-Windows" accesskey="3">Manipulating Windows</a></li>
+</ul>
+<div class="section-level-extent" id="The-Geography-of-the-Display">
+<h3 class="section"><span>2.1 The Geography of the Display<a class="copiable-link" href="#The-Geography-of-the-Display"> &para;</a></span></h3>
+
+<ul class="mini-toc">
+<li><a href="#Windows" accesskey="1">Windows</a></li>
+<li><a href="#The-Who_002dline-and-Run_002dlights" accesskey="2">The Who-line and Run-lights</a></li>
+<li><a href="#Blinkers-and-Cursors" accesskey="3">Blinkers and Cursors</a></li>
+</ul>
+<div class="subsection-level-extent" id="Windows">
+<h4 class="subsection"><span>2.1.1 Windows<a class="copiable-link" href="#Windows"> &para;</a></span></h4>
+
+<p>The display shows one or more <i class="i">windows</i>, which are independent
+sub-displays.  Most windows have <i class="i">borders</i> (black outlines) around
+them.  Some have a <i class="i">label</i> which is usually in the lower left-hand
+corner.  If the display is completely taken up by one window, the
+borders and label are often omitted.
+</p>
+<p>Often a window will function as a <i class="i">stream</i>, that is, a place that a
+program can read from and write to.  In this way, a window provides a
+communications channel whereby the user can talk to a program.
+</p>
+<p>Usually one of the windows on the screen is <i class="i">selected</i>.  This means that that
+window is the focus of your attention, and keyboard input is directed to
+it, so that a program reading from that window will read what you type.
+Most often the selected window will have a blinking cursor and the other
+windows on the display (if any) will not.  Usually, what you type will
+be printed in the selected window at the place marked by the blinking
+cursor. 
+</p>
+<p>Windows can be <i class="i">exposed</i>, meaning that they are fully visible on the
+screen, or else <i class="i">deexposed</i>.  A <i class="i">deexposed</i> window may either be
+partially visible and partially covered by other windows, or entirely
+invisible.  Deexposed windows can be brought back to the display in many
+ways, described later.  The selected window is always exposed.
+</p>
+</div>
+<div class="subsection-level-extent" id="The-Who_002dline-and-Run_002dlights">
+<h4 class="subsection"><span>2.1.2 The Who-line and Run-lights<a class="copiable-link" href="#The-Who_002dline-and-Run_002dlights"> &para;</a></span></h4>
+
+<p>At the bottom of the display is the <i class="i">who-line</i>.  Here are displayed
+several pieces of status information.  From left to right the who-line
+shows the date and time, your login name, the current package, the state
+of the process that is connected to the keyboard, and the state of an
+open file or the console idle time, the time since the keyboard was last
+typed upon or the mouse last clicked upon.
+</p>
+<p>Many things can appear in the process state field; here are some of the
+most common and least self-explanatory.  Don&rsquo;t expect to understand everything
+in this table (nor process states you see that are not in this table) completely.
+The process state in the who-line is there to give you a hint as to what is
+going on, but often has to do with internal details of the particular program
+being run, or with the more esoteric features of the Lisp machine process system.
+</p>
+<dl class="table">
+<dt><b class="b">RUN</b></dt>
+<dd><p>The process is running (as opposed to waiting for something).
+</p></dd>
+<dt><b class="b">TYI</b></dt>
+<dd><p>The process is waiting for you to type on the keyboard.
+</p></dd>
+<dt><b class="b">Output Hold</b></dt>
+<dd><p>The process is trying to display on a window which cannot display right now.
+For instance, the window may not be exposed.  [This needs to be explained
+somewhere in this document.]
+</p></dd>
+<dt><b class="b">LOCK</b></dt>
+<dd><p>The process is waiting for some other process to unlock a lock.  This is typical
+of a set of process states whose interpretation depends on knowledge of the
+particular program running.
+</p></dd>
+<dt><b class="b">NIL</b></dt>
+<dd><p>The who-line is not looking at any process.  Typically this is because no window
+is selected.  The who-line normally looks at the process associated with the
+selected window.
+</p></dd>
+<dt><b class="b">ARREST</b></dt>
+<dd><p>The process is <i class="i">arrested</i>, which means it is not allowed to run.  See the
+<kbd class="kbd">TERMINAL A</kbd> command ((terminal-A)).
+</p></dd>
+<dt><b class="b">STOP</b></dt>
+<dd><p>The process is not running because it does not have a &quot;run reason&quot;.
+</p></dd>
+<dt><b class="b">OPEN, NETI, NETO, Net Wait, File Finish, etc.</b></dt>
+<dd><p>The process is waiting for service from another machine, over the Chaosnet.
+Typically the other machine is a file server such as the AI Lab
+timesharing system.
+</p></dd>
+</dl>
+
+<p>Underneath the who-line are three <i class="i">run-lights</i>, small horizontal bars
+which flicker on and off.  The one on the right, approximately under
+the process state, is there when the processor is running. 
+The one in the middle is there when the disk is running.
+The one to the left lights up when the garbage-collector is running.
+</p>
+<p>Above the who-line there is a line of mouse-documentation, which is
+displayed in inverse video to make it easy to move your eyes to it from
+someplace else on the screen.  This line tells you what the buttons on the
+mouse would do if you clicked them with the mouse where it currently is.
+If the line is blank, it means the default mouse buttons are in effect;
+clicking Left will select the window pointed-to, and clicking Right will
+get you the system menu (these are explained later).
+</p>
+</div>
+<div class="subsection-level-extent" id="Blinkers-and-Cursors">
+<h4 class="subsection"><span>2.1.3 Blinkers and Cursors<a class="copiable-link" href="#Blinkers-and-Cursors"> &para;</a></span></h4>
+
+<p>Scattered around the display are markers of various shapes and dynamic
+characteristics.  They are all called <i class="i">blinkers</i> for historical
+reasons, although only some of them blink.
+</p>
+<p>One blinker is associated with the mouse: when you slide the mouse along
+a surface, that blinker moves in a corresponding direction.  When the
+mouse is moved very rapidly, the mouse blinker gets big like Godzilla in
+order to maintain visibility.  Small children should be taken out of the
+room before demonstrating this frightening feature.
+</p>
+<p>Each window on the display normally keeps track of a position called the
+<i class="i">cursor</i>, which is the place at which text will next be displayed in
+the window.  The cursor is almost always marked by a rectangular
+blinker.  In the selected window, this blinker flashes with a period of
+about half a second.   This is how you tell at a glance which window is
+selected. 
+</p>
+<p>Sometimes when the Lisp Machine is very busy, the blinkers will falter
+because the program responsible for maintaining them is not getting
+run regularly.  This does not indicate a malfunction but is part
+of the normal behavior of the Lisp Machine.
+</p>
+</div>
+</div>
+<div class="section-level-extent" id="Using-the-Mouse">
+<h3 class="section"><span>2.2 Using the Mouse<a class="copiable-link" href="#Using-the-Mouse"> &para;</a></span></h3>
+
+<p>One blinker is always associated with the mouse, and whenever the mouse
+is moved, this blinker moves in a corresponding fashion.  The blinker
+controlled by the mouse is often called the <i class="i">mouse cursor</i>.
+</p>
+<p>At any given moment, some program is listening to the mouse and is
+responsible for the appearance of the mouse cursor, the way in which it
+moves around, and what happens when the mouse buttons are pressed.  You
+can tell who is listening to the mouse by looking at the shape of the
+mouse cursor.  The cursor may change shape as you move it around the
+display, indicating that jurisdiction over the mouse is passing from one
+program to another.  Also, individual programs may vary the shape of the
+mouse cursor to show exactly what functions are available in a particular
+context.  See (mouse-cursor-shape).
+</p>
+<ul class="mini-toc">
+<li><a href="#Pointing-at-Something-with-the-Mouse" accesskey="1">Pointing at Something with the Mouse</a></li>
+<li><a href="#Clicking-the-Mouse" accesskey="2">Clicking the Mouse</a></li>
+</ul>
+<div class="subsection-level-extent" id="Pointing-at-Something-with-the-Mouse">
+<h4 class="subsection"><span>2.2.1 Pointing at Something with the Mouse<a class="copiable-link" href="#Pointing-at-Something-with-the-Mouse"> &para;</a></span></h4>
+
+<p>The mouse is almost always used as a pointing device.  One uses the
+mouse to indicate something on the display, and then one clicks the
+mouse buttons to specify an operation to be performed on or with the
+thing indicated.
+</p>
+<p>Graphics-oriented programs may simply use the mouse as a device for
+indicating positions on the screen.  One could imagine using the mouse
+to specify two points to be connected by a line, for example.
+</p>
+<p>More often, however, the mouse is used to point to distinctly displayed
+objects on the screen.  In many cases, an object thus indicated responds
+by changing its appearance in some way.  Such objects are
+<i class="i">mouse-sensitive</i>.  The system convention is that when the mouse
+is pointing at or near a mouse-sensitive object, an outline is drawn
+around that object.
+</p>
+</div>
+<div class="subsection-level-extent" id="Clicking-the-Mouse">
+<h4 class="subsection"><span>2.2.2 Clicking the Mouse<a class="copiable-link" href="#Clicking-the-Mouse"> &para;</a></span></h4>
+
+<p>When you click a mouse button while the mouse is pointing at a
+mouse-sensitive object, the response to the mouse buttons depends
+on that object.  Otherwise the response depends on the window that
+the mouse is pointing at.  Often the shape of the mouse cursor is
+used as a clue to what the mouse buttons will do.  Generally the
+mouse-documentation line at the bottom of the screen will also give a
+brief reminder of what the mouse buttons will do.
+</p>
+<p>Sometimes, clicking the mouse buttons does not do something to the
+object indicated by the mouse, but rather calls up a <i class="i">menu</i> of
+available operations.  In this case options offered by the menu may
+pertain to the object that the mouse was pointing at, or they may be
+more general operations.  Menus are discussed in detail below.
+</p>
+<p>Although the usage of the mouse buttons varies depending on what the mouse
+is pointing at, there are system-wide conventions that most programs adhere
+to.  Generally the Left button on the mouse will do something simple, while
+the Right button will do something more complicated, offering options and
+choices that the beginning user probably does not need to worry about.  The
+use of the Middle button is less standardized.
+</p>
+<p>If there are several things you might mean by pointing to a mouse-sensitive
+object and clicking, typically the Right button will give you a menu of
+operations from which you can choose, and the Left button will do the most
+&quot;obvious&quot; thing.  If there is no &quot;obvious&quot; choice, it will generally do the
+last thing you chose in the same circumstances with the Right button.  If
+there is only one thing you could mean by clicking, no distinction will be
+made among the three buttons.
+</p>
+<p>The system convention is that if there isn&rsquo;t anything better for the mouse
+buttons to do, clicking Left selects the window the mouse is pointing at
+(see (selecting-a-window)) and clicking Right invokes the System Menu
+(see (system-menu)).  In this case, the mouse-documentation line at the
+bottom of the screen will be blank.
+</p>
+<p>The following sections discuss the things you can do by clicking the
+mouse in more detail.
+</p>
+</div>
+</div>
+<div class="section-level-extent" id="Manipulating-Windows">
+<h3 class="section"><span>2.3 Manipulating Windows<a class="copiable-link" href="#Manipulating-Windows"> &para;</a></span></h3>
+
+<p>When you step up to a free Lisp Machine, a window of the Lisp Listener
+type will fill the whole display.  You can tell from the rectangular
+blinker near the upper left corner that this window is selected.  The
+Lisp Listener window is used to talk to the Lisp interpreter.  Its use
+is described in the chapter &quot;The Lisp Listener&quot; ((lisp-listener)).  If you want to start
+using Lisp as soon as possible, you can read that chapter now, as it
+does not depend on any of the others.
+</p>
+<p>As you use the Lisp Machine, you may create new windows, reselect old
+ones, and move windows around the screen or reshape them to suit your
+taste.  This section describes how these operations may be performed.
+</p>
+<ul class="mini-toc">
+<li><a href="#Menus" accesskey="1">Menus</a></li>
+<li><a href="#The-System-Menu" accesskey="2">The System Menu</a></li>
+<li><a href="#Notification" accesskey="3">Notification</a></li>
+<li><a href="#Selecting-a-Window" accesskey="4">Selecting a Window</a></li>
+<li><a href="#More-Advanced-Window-Selection" accesskey="5">More Advanced Window Selection</a></li>
+<li><a href="#Creating-New-Windows" accesskey="6">Creating New Windows</a></li>
+<li><a href="#Selecting-a-System" accesskey="7">Selecting a System</a></li>
+<li><a href="#Splitting-the-Screen" accesskey="8">Splitting the Screen</a></li>
+<li><a href="#Destroying-a-Window" accesskey="9">Destroying a Window</a></li>
+<li><a href="#Frames">Frames</a></li>
+<li><a href="#Invoking-the-Inspector">Invoking the Inspector</a></li>
+<li><a href="#The-Screen-Editor">The Screen Editor</a></li>
+</ul>
+<div class="subsection-level-extent" id="Menus">
+<h4 class="subsection"><span>2.3.1 Menus<a class="copiable-link" href="#Menus"> &para;</a></span></h4>
+
+<p>A particularly common and useful kind of window is the <i class="i">menu</i>.  Menus
+are windows that contain the names of several options.  These options
+are mouse-sensitive, and you select one by pointing at it with
+the mouse and clicking.
+</p>
+<p>Many menus are invisible unless it is time to select an option from
+them.  Then they <i class="i">pop up</i>, or appear suddenly on top of some previous
+display, obscuring what was there before.  After you select an option
+with the mouse, the menu disappears and the operation that you specified
+is performed.  If you don&rsquo;t want to select any of the options, you can
+simply move the mouse far out of the menu and it will disappear.  When this
+is not the case, the menu will contain the word <kbd class="kbd">ABORT</kbd>; clicking on
+that will make it disappear.
+</p>
+</div>
+<div class="subsection-level-extent" id="The-System-Menu">
+<h4 class="subsection"><span>2.3.2 The System Menu<a class="copiable-link" href="#The-System-Menu"> &para;</a></span></h4>
+<a class="anchor" id="system_002dmenu-section_002dpage"></a>
+<p>One important and useful menu is the <i class="i">system menu</i>.  It has a
+repertoire of operations that mostly have to do with windows.  You can
+almost always conjure up a system menu by pointing at some place on the
+screen and clicking Double Right.  The system menu will appear at the
+spot you pointed to.  The mouse cursor appears on the system menu as a
+little cross.
+</p>
+<p>If the mouse cursor is an arrow pointing North by Northwest you can get
+the system menu by clicking either Right Single or Right Double.
+</p>
+<p>To select an operation from the system menu, point at it with the mouse
+and click Left or Right.  If you call up the system menu by mistake, as
+with most menus you can dismiss it without selecting anything by simply
+moving the mouse far off the menu.  This also works for most other kinds of
+pop-up menus.
+</p>
+<p>This subsection describes what the various options on the system menu
+do.  Since this is designed as a quick reference, unfamiliar
+vocabulary may appear.  If you don&rsquo;t understand something, it is
+probably explained elsewhere in this document.
+</p>
+<dl class="table">
+<dt><b class="b">Create</b></dt>
+<dd><p>This allows you to create a new window.  The system will ask you what kind
+of window you want and where to put it on the screen.  See (window-create)
+for the details.
+</p>
+</dd>
+<dt><b class="b">Select</b></dt>
+<dd><p>The system menu is replaced by a menu whose options are all the windows
+currently selectable.  When you pick one with the mouse, that window
+becomes selected.
+</p>
+</dd>
+<dt><b class="b">Inspect</b></dt>
+<dd><p>The Inspector is invoked.  See (inspector).
+</p>
+</dd>
+<dt><b class="b">Trace</b></dt>
+<dd><p>The function-tracing system is invoked (see <kbd class="kbd">trace</kbd> in the Lisp machine manual).
+First a small window appears in which you are asked for the name of the function
+to be traced.  Then a menu of options to the trace system appears.  After selecting
+which trace features you want, click on <kbd class="kbd">Do It</kbd> to do it.  If you decide you don&rsquo;t want
+to do it after all, click on <kbd class="kbd">Abort</kbd>.
+</p>
+</dd>
+<dt><b class="b">Split Screen</b></dt>
+<dd><p>This is a convenient way to divide the screen area among several windows.
+See (split-screen) for the details.
+</p>
+</dd>
+<dt><b class="b">Layouts</b></dt>
+<dd><p>The system menu is replaced by a menu containing at least the options
+<b class="b">Just Lisp</b> and <b class="b">Save This</b>.  If you choose <b class="b">Just Lisp</b>, an idle
+Lisp Listener will be picked, expanded to cover the whole screen, and
+selected.  If you choose <b class="b">Save This</b>, the current configuration of
+exposed windows will be remembered.  You will be prompted for a name to
+remember the configuration under.
+</p>
+<p>All of the previously remembered layouts will appear in future Layouts
+menus.  If you pick that option from the Layouts menu, that layout will
+be restored to the screen.
+</p>
+</dd>
+<dt><b class="b">Edit Screen</b></dt>
+<dd><p>Invokes the screen editor, which allows you to move windows around in
+various ways.  See (screen-editor).
+</p>
+</dd>
+<dt><b class="b">Other</b></dt>
+<dd><p>The system menu is replaced by another menu with more options on it.
+This menu is an extension of the system menu, and its options are
+documented fully in the remaining part of this table.
+</p>
+</dd>
+<dt><b class="b">Arrest</b></dt>
+<dd><p>Often a window has a process associated with it in some way.  Pointing
+the mouse at a window, calling up a system menu, and clicking on
+&quot;Arrest&quot; halts the process associated with that window. 
+</p>
+</dd>
+<dt><b class="b">Un-Arrest</b></dt>
+<dd><p>Pointing at a window, calling a system menu, and clicking on
+&quot;Un-Arrest&quot; starts the process associated with that window from where it
+left off, if it was stopped by mousing &quot;Arrest&quot; from the system menu.
+There are other reasons for a process to be stopped, however, and this
+will not undo all of them.  See &quot;Arrest&quot; above, and also see the &quot;Index to
+Function Keys&quot; under &quot;<kbd class="kbd">TERMINAL A</kbd>&quot; ((terminal-A)).
+</p>
+</dd>
+<dt><b class="b">Reset</b></dt>
+<dd><p>Pointing at a window, calling a system menu, and clicking on
+&quot;Reset&quot; starts the process associated with that window from scratch,
+re-evaluating that process&rsquo; initial form.  Whatever program the process
+had been running is thrown out of.  Before the reset actually happens,
+a window will pop up asking you to confirm the operation; answer yes
+by clicking the mouse or no by moving it away from the confirmation window.
+</p>
+</dd>
+<dt><b class="b">Kill</b></dt>
+<dd><p>Destroys the window that the mouse was pointing to when the system menu
+was summoned.  Before the kill actually happens,
+a window will pop up asking you to confirm the operation; answer yes
+by clicking the mouse or no by moving it away from the confirmation window.
+</p>
+</dd>
+<dt><b class="b">Emergency Break</b></dt>
+<dd><p>Clicking on &quot;Emergency Break&quot; is the same as typing &quot;<kbd class="kbd">TERMINAL
+CALL</kbd>&quot;.  It gets you to the cold-load stream where there is a Lisp
+interpreter running that does not depend on the window system.  See the
+&quot;Index to Function Keys&quot; under &quot;<kbd class="kbd">TERMINAL CALL</kbd>&quot; ((terminal-call)).
+This function is accessible from both the keyboard and the mouse so that
+if you break the software for one of them you still have a chance of
+getting to the cold-load stream and fixing it.
+</p>
+</dd>
+<dt><b class="b">Refresh</b></dt>
+<dd><p>Refreshes the display on the window that the mouse was pointing to when
+the system menu was summoned.  Useful when something dark and sinister
+has munged your screen.
+</p>
+</dd>
+<dt><b class="b">Set Mouse Screen</b></dt>
+<dd><p>The window system&rsquo;s jurisdiction extends not only to the main black-and-white monitor,
+but to any other bit-raster monitors that are connected to the Lisp
+Machine, such as a color monitor.  However, in order to manipulate windows
+on another screen, the mouse must somehow be moved to that screen.  If
+you pick the Set Mouse Screen option from the system menu, and there is
+more than one screen connected to the Lisp Machine, the mouse will be
+moved onto another screen.  If you click Left on Set Mouse Screen, the
+system will pick another screen (this is useful when there are only two).
+If you click Right, the system menu will
+be replaced by a menu whose options are the names of the various
+screens.  When you pick one of these screens, the mouse
+will move to that screen.
+</p></dd>
+</dl>
+
+</div>
+<div class="subsection-level-extent" id="Notification">
+<h4 class="subsection"><span>2.3.3 Notification<a class="copiable-link" href="#Notification"> &para;</a></span></h4>
+<a class="anchor" id="notification-section_002dpage"></a>
+<p>When certain asynchronous events occur, unrelated to what you are
+currently doing with the selected window, the system notifies you by beeping and
+displaying an explanatory message.  Such an event might be an error in
+a process whose window is not exposed, an error or other attempt to
+type out by a &quot;background&quot; process which has no associated window, or
+an attempt to type out on a deexposed window of a kind which notifies
+rather than just waiting for you to expose it.  The system notifies
+you in one of two ways, depending on what windows are currently on
+your screen.
+</p>
+<p>One way that you can be notified is by the appearance of a message
+enclosed in square brackets.  This method is used when the selected
+window is a Lisp listener, or any other type of window that accepts
+notifications.  For instance, in the editor notifications are printed
+this way in the &quot;echo area&quot; below the mode line.
+If the notification informs you of a window waiting to
+type out or to tell you about an error incurred by some program, then
+you can select that window at any time by typing <kbd class="kbd">TERMINAL 0 S</kbd>, or <kbd class="kbd">ESC 0
+S</kbd> on the old keyboards.  You can return from there to your original
+window by typing <kbd class="kbd">TERMINAL S</kbd>, or <kbd class="kbd">ESC S</kbd> on the old keyboards.  See the
+section on &quot;Selecting a Window&quot; ((terminal-S)) for further details.
+</p>
+<p>The other way you can be notified is by the popping-up of a small window
+with the message displayed in it.  This happens when there is no good place
+on the screen to print the message.  In this case you point the mouse at
+the notification window and click the Left button, at which point the
+notification will disappear and the associated window which is waiting to
+type out (if any) will appear.  Typing any normal key (typically space)
+will get rid of the notification and return you to the window you were in
+when the notification popped up.  Alternatively, <kbd class="kbd">TERMINAL 0 S</kbd> will
+select the interesting window, then <kbd class="kbd">TERMINAL S</kbd> will reselect the window
+that you were typing at when the notification occurred.  Selecting that
+window with the mouse by clicking Left at it also works.
+</p>
+<p>If a notification pops up while you are typing, the system saves your typing
+in the window you were typing at before the notification popped up.  After
+beeping, it gives you a second or two to notice and stop typing before it
+listens to the keyboard; at this point if you hit a key this means that you
+have read the notification and want it to go away now.
+</p>
+<p>Notifications are saved.  If you want to see old notifications again, call
+the function <code class="code">tv:print-notifications</code>, which will print each notification
+with the time that it occurred.  This can be useful when a notification is
+accidentally erased before you have had time to read it.
+</p>
+</div>
+<div class="subsection-level-extent" id="Selecting-a-Window">
+<h4 class="subsection"><span>2.3.4 Selecting a Window<a class="copiable-link" href="#Selecting-a-Window"> &para;</a></span></h4>
+<a class="anchor" id="selecting_002da_002dwindow-section_002dpage"></a>
+<p>There are several ways to cause a particular window to become
+selected.  If any part of the desired window is visible on the screen,
+you can select it by pointing at it with the mouse and clicking Left.
+If the desired window is completely invisible, you can call up a
+system menu and pick the &quot;Select&quot; option.  The system menu will be
+replaced by a menu of all the currently selectable windows.  Pick the
+one you want by clicking Left on it.
+</p>
+<p>When a window is selected, it will become exposed if it was not
+exposed already.  If the selected window has a standard rectangular
+blinker, the blinker will wake up and start to flash.  The window is
+now fully awake and anything you type will be directed to it.
+</p>
+</div>
+<div class="subsection-level-extent" id="More-Advanced-Window-Selection">
+<h4 class="subsection"><span>2.3.5 More Advanced Window Selection<a class="copiable-link" href="#More-Advanced-Window-Selection"> &para;</a></span></h4>
+
+<a class="anchor" id="terminal_002dS-section_002dpage"></a>
+<p>All the currently selectable windows are arranged in a kind of stack
+with the selected window on top.  This has no relation to the
+arrangement of windows on the display, but rather refers to the way the
+window system keeps track of selectable windows.  When you select a
+window with the mouse, it is dredged up and put on top of the stack.
+The windows are thus arranged with the most recently selected ones near
+the top of the stack.  If you type <kbd class="kbd">TERMINAL 1 S</kbd>, the currently selected
+window will be moved to the bottom, and the next most recently selected
+window will come to the top and be selected.  Repeatedly typing
+<kbd class="kbd">TERMINAL 1 S</kbd> will select each of the selectable windows in turn.
+</p>
+<p>Typing <kbd class="kbd">TERMINAL - S</kbd> (or <kbd class="kbd">TERMINAL -1 S</kbd>: the two are equivalent) will drag
+the window on the bottom of the stack to the top.  Repeatedly typing
+<kbd class="kbd">TERMINAL - S</kbd> will select each of the selectable windows in reverse
+order.  Note that <kbd class="kbd">TERMINAL 1 S</kbd> and <kbd class="kbd">TERMINAL - S</kbd> do not alter the cyclic
+order of the selectable windows.
+</p>
+<p>You can select any selectable window with some variant of the <kbd class="kbd">TERMINAL S</kbd>
+command.  To select the <i class="i">n</i>th window in the stack, where the currently
+selected window is considered the first, type <kbd class="kbd">TERMINAL <i class="i">n</i> S</kbd>.  This
+is just like selecting that window with the &quot;Select&quot; option to the
+system menu.  The window in question is extracted from the stack and
+pushed on top.
+</p>
+<p>Typing <kbd class="kbd">TERMINAL 2 S</kbd> repeatedly flips back and forth between the two top
+windows on the stack.  When you type <kbd class="kbd">TERMINAL S</kbd> with no argument, the
+argument defaults to 2, and this is the behavior you get.  Typing
+<kbd class="kbd">TERMINAL 3 S</kbd> repeatedly cycles through the top three windows on the
+stack, and so on.  If there are <i class="i">k</i> selectable windows, giving
+<kbd class="kbd">TERMINAL S</kbd> an argument larger than <i class="i">k</i> is the same as giving an
+argument of <i class="i">k</i>, which is the same as giving an argument of -1; it brings up
+the &quot;oldest&quot; window.
+</p>
+<p>Giving <kbd class="kbd">TERMINAL S</kbd> a negative argument (other than -1, which was
+discussed above) of -<i class="i">k</i> takes the currently selected window and
+stashes it in the <i class="i">k</i>th slot down, bringing the <i class="i">k</i>-1 windows
+beneath it up.  The window that was in second position becomes Top Dog
+and is selected.  Repeated <i class="i">k</i> times, this cycles through the top
+<i class="i">k</i> windows on the stack in reverse order.  This is exactly the
+inverse of a positive argument.  <kbd class="kbd">TERMINAL <i class="i">n</i> S</kbd> and <kbd class="kbd">TERMINAL -<i class="i">n</i> S</kbd>
+undo each other.
+</p>
+<p>There is also a way to select a window that is trying to talk to you.
+When a deexposed window has a process doing something interesting in it,
+such as waiting to type out or waiting to tell you about an error it
+encountered, you can select it by typing <kbd class="kbd">TERMINAL 0 S</kbd>.  When a window goes
+into such a condition, it sends you a notification (see (notification)).
+When there is no window in such a condition, <kbd class="kbd">TERMINAL 0 S</kbd> does nothing.
+When there is more than one such window, the first one found in the stack
+will be selected.  Repeatedly typing <kbd class="kbd">TERMINAL 0 S</kbd> will get all of them.
+</p>
+</div>
+<div class="subsection-level-extent" id="Creating-New-Windows">
+<h4 class="subsection"><span>2.3.6 Creating New Windows<a class="copiable-link" href="#Creating-New-Windows"> &para;</a></span></h4>
+
+<a class="anchor" id="window_002dcreate-section_002dpage"></a>
+<p>Starting up new Editors, Lisp Listeners, Supdups, and so on, is done by
+creating new windows of the appropriate type.  This section explains
+one way to create new windows of various types.
+</p>
+<p>Call up a system menu and pick the &quot;Create&quot; option.  The system menu will
+be replaced by a menu of window types to create.  At present there are six
+kinds of windows on this menu: Supdup, Telnet, Lisp, Lisp (Edit), Edit,
+and Peek.  There is also Any, which allows you to type in the flavor of
+window you want from the keyboard.  User-defined windows may be added to
+this menu through the variable <code class="code">tv:default-window-types-item-list</code>, so
+you may see more choices in the menu than those listed here.  The various
+window types are explained in other sections of this document.
+</p>
+<a class="anchor" id="mouse_002dspecify_002drectangle-page"></a><p>Click on the type of window you wish to create.
+The menu will vanish and the mouse blinker will change into an upper
+left corner bracket.  With this corner bracket, point to the spot on
+the screen where you want the upper left corner of the new window to
+be and click Left. The bracket will freeze on that spot in
+order to mark it, and the mouse blinker will change into a lower right
+corner bracket.  Use this bracket in the same way to define the lower
+right corner of the new window.  The new window will take shape
+between the corners thus delimited.
+</p>
+<p>To make the new window occupy the whole screen, simply place the lower
+right corner above or to the left of the upper left corner.
+</p>
+<p>When you are giving the system a rectangle with the mouse in this way,
+clicking Left will place the bracket where it is now, while clicking Right
+will place it at the nearest &quot;suitable&quot; place.  The exact definition of
+&quot;suitable&quot; is complicated, but it tries to put it at a nearby window edge
+or corner, if one is close enough.  Note that the bracket will only move in
+the direction it points, thus you point at a corner of a rectangle from
+<i class="i">inside</i> the rectangle.
+</p>
+<p>Usually clicking Middle will abort the whole operation.
+Click Middle if you decide you don&rsquo;t want to create a window after all.
+</p>
+<p>Whenever you create a new window, it is immediately selected, and pushed
+onto the stack of selectable windows.  Usually the new window will stay
+around on that stack as a selectable window until it is explicitly
+destroyed.
+</p>
+<p>Another way that windows get created is explained in the next section.
+</p>
+</div>
+<div class="subsection-level-extent" id="Selecting-a-System">
+<h4 class="subsection"><span>2.3.7 Selecting a System<a class="copiable-link" href="#Selecting-a-System"> &para;</a></span></h4>
+
+<a class="anchor" id="system_002dkey-section_002dpage"></a>
+<p>The <kbd class="kbd">SYSTEM</kbd> function key can be used to find a window of a particular
+type, and if one does not exist, to create one.  
+</p>
+<p>The <kbd class="kbd">SYSTEM</kbd> key should be followed by one of these code letters:
+</p>
+<dl class="table">
+<dt><kbd class="kbd">E</kbd></dt>
+<dd><p>Editor.
+</p></dd>
+<dt><kbd class="kbd">I</kbd></dt>
+<dd><p>Inspector.
+</p></dd>
+<dt><kbd class="kbd">L</kbd></dt>
+<dd><p>Lisp Listener.
+</p></dd>
+<dt><kbd class="kbd">M</kbd></dt>
+<dd><p>Mail-reading system.
+</p></dd>
+<dt><kbd class="kbd">P</kbd></dt>
+<dd><p>Peek.
+</p></dd>
+<dt><kbd class="kbd">S</kbd></dt>
+<dd><p>Supdup.
+</p></dd>
+<dt><kbd class="kbd">T</kbd></dt>
+<dd><p>Telnet.
+</p></dd>
+</dl>
+
+<p>When you type <kbd class="kbd">SYSTEM</kbd> followed by one of these letters, the stack of
+selectable windows is scanned, from the top down, for a window of the
+specified type.  As soon as one is found, it is selected and moved to
+the top of the stack.  If there are no windows of the specified type,
+one is created.
+</p>
+<p>If you hold down <kbd class="kbd">CTRL</kbd> while typing the code letter, a new window of
+that type will be created even if one already exists.
+</p>
+<p>In the event that the currently selected window is itself of the
+specified type, it is moved to the bottom of the stack before the scan
+begins.  Typing <kbd class="kbd">SYSTEM L</kbd> repeatedly, for example, cycles through all
+selectable Lisp Listener windows.  If there is only one window of the
+specified type, and it is current, it remains current and the system beeps
+to tell you that you probably goofed.
+</p>
+<p>Invoking the function <code class="code">ed</code> from a Lisp Listener is almost exactly the
+same as typing <kbd class="kbd">SYSTEM E</kbd>.  The same Editor window gets selected in both
+cases.  One minor difference is that the next time that particular Lisp
+Listener window is selected, the first thing that will happen is that
+the <code class="code">ed</code> function will return <code class="code">t</code>.  (Actually, the <code class="code">ed</code> function
+returns <code class="code">t</code> right away, but the value can&rsquo;t be typed out until the
+Lisp listener window is exposed again.)
+</p>
+<p>Typing <kbd class="kbd">CTRL/Z</kbd> to an Editor is not the same as typing <kbd class="kbd">SYSTEM L</kbd>.
+<kbd class="kbd">SYSTEM L</kbd> gets you to the most-recently selected Lisp Listener,
+while <kbd class="kbd">CTRL/Z</kbd> gets you to the last place you ran the <code class="code">ed</code> function.
+</p>
+<p>Additional code letters for the <kbd class="kbd">SYSTEM</kbd> key can be added through the
+<b class="b">Split Screen</b> command in the system menu, or via the variable
+<code class="code">tv:*system-keys*</code>.  Typing <kbd class="kbd">SYSTEM HELP</kbd> will always tell you
+all the available choices.
+</p>
+</div>
+<div class="subsection-level-extent" id="Splitting-the-Screen">
+<h4 class="subsection"><span>2.3.8 Splitting the Screen<a class="copiable-link" href="#Splitting-the-Screen"> &para;</a></span></h4>
+<a class="anchor" id="split_002dscreen-section_002dpage"></a>
+<p>The Split Screen option of the system menu is a convenient way to divide
+the screen area among several windows.  If you select Split Screen,
+the system menu is replaced by a menu whose options are detailed below.
+By selecting items from this menu, the user specifies a set of windows
+that are to share the screen.  Typically these are newly-created windows,
+but there are also options to incorporate existing windows into a split
+screen arrangement.  As the specification proceeds, a small
+diagram of the proposed display appears next to the Split Screen menu
+and is updated as you make selections.
+</p><dl class="table">
+<dt><b class="b">Supdup</b></dt>
+<dd><p>Incorporate a new Supdup window into the split-screen layout.  See (supdup). 
+</p>
+</dd>
+<dt><b class="b">Telnet</b></dt>
+<dd><p>Incorporate a new Telnet window into the split-screen layout.  See (telnet). 
+</p>
+</dd>
+<dt><b class="b">Lisp</b></dt>
+<dd><p>Incorporate a new Lisp Listener window into the split-screen layout.
+See (lisp-listener).
+</p>
+</dd>
+<dt><b class="b">Lisp (Edit)</b></dt>
+<dd><p>Incorporate a new Editing Lisp Listener window into the split-screen layout.
+See (lisp-listener).
+</p>
+</dd>
+<dt><b class="b">Edit</b></dt>
+<dd><p>Incorporate a new Editor window into the split-screen layout.  See (editor). 
+</p>
+</dd>
+<dt><b class="b">Peek</b></dt>
+<dd><p>Incorporate a new Peek window into the split-screen layout.  See (peek).
+</p>
+</dd>
+<dt><b class="b">Any</b></dt>
+<dd><p>Will ask what flavor of new window you want.
+</p>
+</dd>
+<dt><b class="b">Existing Window</b></dt>
+<dd><p>A menu will pop up containing the names of all the selectable windows.
+Pick one with the mouse, and it will be incorporated into the
+split-screen layout.
+</p>
+</dd>
+<dt><b class="b">Existing Lisp</b></dt>
+<dd><p>An idle Lisp Listener will be chosen and incorporated into the
+split-screen layout.  Since it doesn&rsquo;t matter which one is incorporated,
+the user is not asked to pick one.  
+</p>
+</dd>
+<dt><b class="b">Plain Window</b></dt>
+<dd><p>Incorporate a new window with no interesting features at all.
+</p>
+</dd>
+<dt><b class="b">Trace &amp; Error</b></dt>
+<dd><p>Incorporate a new window which will be used for output from the trace package
+and interaction with the error-handler.  This allows you to use those
+debugging facilities without interfering with the window in which you
+are running your program, which might contain a graphic display, for example.
+</p>
+</dd>
+<dt><b class="b">Trace</b></dt>
+<dd><p>Incorporate a new window which receives just trace output.
+</p>
+</dd>
+<dt><b class="b">Error</b></dt>
+<dd><p>Incorporate a new window which is used just for error-handler interaction.
+</p>
+</dd>
+<dt><b class="b">Frame</b></dt>
+<dd><p>The default is to split the screen simply by creating windows with the
+appropriate sizes, shapes, and positions.  If you select the Frame
+option, however, the windows in the split-screen layout will be bound
+together as inferiors of a frame (see (frame)).  The main
+effect of this is that they will be exposed and de-exposed together;
+selecting one of the windows, for instance with the Select operation
+in the system menu, will expose the whole set.
+</p>
+<p>Selecting Frame pops up an additional window which lets you specify
+parameters for the frame: whether it should exist (so you can turn it
+off if you decide you don&rsquo;t want it), its name,
+and a key which can be typed after the <kbd class="kbd">SYSTEM</kbd> key to select it.
+You can change one of these parameters by pointing the mouse at it, so
+that a box appears around it, and clicking.
+</p>
+</dd>
+<dt><b class="b">Mouse Corners</b></dt>
+<dd><p>Allows you to use the mouse to point to the upper-left and lower-right
+corners of the screen area to be divided among the windows you select,
+just as in the Create operation (see (mouse-specify-rectangle)).  If you
+don&rsquo;t use Mouse Corners, the entire screen will be split.
+</p>
+</dd>
+<dt><b class="b">Undo</b></dt>
+<dd><p>Remove the last window you added to the layout you are building up.
+</p>
+</dd>
+<dt><b class="b">Do It</b></dt>
+<dd><p>Create all the windows that need to be created, and assemble them with
+the other specified windows into the split-screen layout.  Expose the
+entire layout, and select the first selectable window that was specified.
+</p>
+</dd>
+<dt><b class="b">Abort</b></dt>
+<dd><p>Flush the proposed layout and go back to the previously selected window.
+Use this if you decide you didn&rsquo;t really want to split the screen after all.
+</p></dd>
+</dl>
+
+</div>
+<div class="subsection-level-extent" id="Destroying-a-Window">
+<h4 class="subsection"><span>2.3.9 Destroying a Window<a class="copiable-link" href="#Destroying-a-Window"> &para;</a></span></h4>
+
+<p>To destroy a window, point at it with the mouse and click Double Right.
+This calls up a system menu.  Pick the &quot;Other&quot; option.  The system menu
+will be replaced with another menu containing additional options.  This
+&quot;Other&quot; menu is in some sense the second page of the system menu.  To kill
+the window you indicated, choose the &quot;Kill&quot; option from this auxiliary
+menu.  You will be asked to confirm that you really wanted to kill that
+window by the popping-up of a small confirmation window.  To answer yes,
+click the mouse on the confirmation window.  To answer no, move the mouse
+away from the window so that it disappears.
+</p>
+</div>
+<div class="subsection-level-extent" id="Frames">
+<h4 class="subsection"><span>2.3.10 Frames<a class="copiable-link" href="#Frames"> &para;</a></span></h4>
+
+<a class="anchor" id="frame-section_002dpage"></a>
+<p>Sometimes windows are grouped into <i class="i">frames</i>.  A frame is a window which
+acts like a screen; it can have several windows displayed on it.  The purpose
+of frames is to group related windows together so that they can be manipulated
+as a unit, while still keeping them separate so that each window can do
+a different thing.
+</p>
+<p>Programs that have a display made up of several windows always group them into
+a frame.  The editor, the inspector, and the window error-handler are examples.
+</p>
+</div>
+<div class="subsection-level-extent" id="Invoking-the-Inspector">
+<h4 class="subsection"><span>2.3.11 Invoking the Inspector<a class="copiable-link" href="#Invoking-the-Inspector"> &para;</a></span></h4>
+
+<p>There are three ways to enter the Inspector system.  You may type
+<kbd class="kbd">SYSTEM I</kbd>, the function <code class="code">inspect</code> may be invoked from a Lisp
+Listener, or the &quot;Inspect&quot; option may be chosen from the system menu.
+For full documentation of the inspector, see (inspector).
+</p>
+</div>
+<div class="subsection-level-extent" id="The-Screen-Editor">
+<h4 class="subsection"><span>2.3.12 The Screen Editor<a class="copiable-link" href="#The-Screen-Editor"> &para;</a></span></h4>
+
+<a class="anchor" id="screen_002deditor-section_002dpage"></a>
+<p>The screen editor is a mouse-controlled program for manipulating the
+layout of your screen.  It can be used to move windows around, to
+change the size and shape of windows, and to change which windows are
+displayed.
+</p>
+<p>The screen editor is gotten from the system menu by clicking on Edit
+Screen.  Ordinarily it will enter the screen editor immediately, editing
+the whole screen.  However, if you select Edit Screen by clicking Right
+(indicating you want the hairier version of the command), and the window
+that the mouse is in is a frame, you have the option of editing that frame
+or the whole screen; another pop-up menu will appear asking you to choose.
+</p>
+<p>The screen editor works by displaying a menu of commands.  You select a
+command by clicking on it with the mouse and the menu disappears.  If you
+need to point to any windows, edges, or corners needed as arguments to the
+command, the screen-editor will prompt you with a message in the
+mouse-documentation line above the who-line and will change the shape of
+the mouse cursor.  When you are to point to a window, the mouse cursor
+changes to a small reticule, which should be positioned over the desired
+window.
+</p>
+<p>When the screen editor is asking you to point to something, clicking
+Left will select what the mouse is pointing at.  Clicking either of
+the other two buttons will abort the current command and bring back
+the screen editor&rsquo;s command menu.
+</p>
+<p>After executing the command, the screen editor&rsquo;s menu will appear again.
+To exit the screen editor, choose &quot;Exit&quot;.
+</p>
+<p>This is a summary of the options in the Edit Screen menu.
+</p><dl class="table">
+<dt><b class="b">Bury</b></dt>
+<dd><p>Bury the specified window, deexposing it and allowing whatever display
+it was obscuring to be seen.
+</p>
+</dd>
+<dt><b class="b">Expose</b></dt>
+<dd><p>Completely expose the specified window.  This is used for displaying
+windows that have been partially obscured by others.
+</p>
+</dd>
+<dt><b class="b">Expose (menu)</b></dt>
+<dd><p>Like Expose but pops up a menu of all active deexposed windows.  This is good
+for exposing a window which you can&rsquo;t point to because you can&rsquo;t see any part of it.
+</p>
+</dd>
+<dt><b class="b">Create</b></dt>
+<dd><p>Create a new window inferior to the frame or screen you are editing.  This
+is just like the Create operation in the system menu (see (window-create)),
+except that if you are editing a frame the choice of window types to
+create may be different, or there may be no choice at all.  For instance,
+when screen-editing an editor frame, you are only allowed to create editor
+windows.
+</p>
+</dd>
+<dt><b class="b">Create (expand)</b></dt>
+<dd><p>This is the same as Create, except that instead of prompting you for an
+upper-left corner and a lower-right corner, it only prompts you for a
+single point.  The window is created in such a way that it occupies
+any unused area surrounding that point.  An unused area is any part of
+the screen that doesn&rsquo;t contain an exposed window; it may contain
+nothing (blank) or it may contain a visible portion of a deexposed
+window.
+</p>
+</dd>
+<dt><b class="b">Kill</b></dt>
+<dd><p>Destroy the specified window.  Before the kill actually happens,
+a window will pop up asking you to confirm the operation; answer yes
+by clicking the mouse or no by moving it away from the confirmation window.
+</p>
+</dd>
+<dt><b class="b">Exit</b></dt>
+<dd><p>Exit the Screen Editor.
+</p>
+</dd>
+<dt><b class="b">Undo</b></dt>
+<dd><p>Attempt to reverse the last Edit Screen operation.  <b class="b">Kill</b> cannot be undone.
+Undoing <b class="b">Create</b> simply buries the window rather than killing it.
+<b class="b">Undo</b> can itself be undone.
+</p>
+</dd>
+<dt><b class="b">Move Window</b></dt>
+<dd><p>Keeping its size and shape constant, move the specified window to
+another place on the display.  After you pick a window, a rectangle the size
+and shape of the window will follow the mouse around.  Click Left to move the
+window to where the rectangle is; click Middle or Right to abort and leave
+the window where it is.  If the window cannot be moved to where you tell it,
+you will get a beep.
+</p>
+</dd>
+<dt><b class="b">Reshape</b></dt>
+<dd><p>The user is asked to pick a window, and then is prompted to
+reposition the upper left and lower right corners of that window
+(see (mouse-specify-rectangle)).
+</p>
+</dd>
+<dt><b class="b">Move Multiple</b></dt>
+<dd><p>The mouse blinker becomes a Move blinker which is used for pointing at
+exposed corners and edges of windows.  (See Move Single.)  Clicking
+Left at a feature adds that feature to a list of things to be moved.
+Features that are on the list are highlighted.  If a feature is
+already a member of the list, it is removed when you click at it.
+</p>
+<p>When you have selected the features you wish to move, click Right
+(meaning &quot;Do It&quot;).  All of the features are moved together, and
+nailed down in a new location at the next Left or Right click.
+</p>
+<p>Clicking Left Long at a feature is the same as clicking Left, but it
+also commences the move.
+</p>
+<p>If you want to abort the operation, either while selecting features or
+while moving them, click Middle.  This returns to the screen editor&rsquo;s
+command menu and leaves all the features where they were originally.
+</p>
+<p>When one of a set of coincident edges or corners is picked to be added to
+the list, the rest are also added.  This facilitates the rearrangement
+of groups of adjacent windows.  If the user does not desire to do this,
+the extra features can be deleted from the list of things to be moved by
+clicking Left at them in the usual way.
+</p>
+</dd>
+<dt><b class="b">Move Single</b></dt>
+<dd><p>The mouse blinker becomes a Move blinker which is used for pointing at
+exposed corners and edges of windows.  The Move blinker is a large
+arrow which points at the feature in question.  It always points at
+features from inside the window with which that feature is associated.
+It has two states: pointing at an edge and pointing at a corner.  When
+pointing at an edge, it points steadily in a direction perpendicular
+to that edge.  When pointing at a corner, the arrow rotates smoothly
+as it is moved, so that it continues to point directly at the corner.
+</p>
+<p>Using the Move blinker, select a feature by clicking Left at it.  The
+feature will be highlighted in boldface, and the Move blinker will vanish.  The
+feature will now follow the mouse to a new position.  Another click Left
+fixes it in the new position.  Clicking Middle aborts the move
+and leaves the feature where it was originally.
+</p>
+</dd>
+<dt><b class="b">Expand Window</b></dt>
+<dd><p>Reshape the specified window so that it occupies any unused area
+surrounding it.  An unused area is any part of the screen that doesn&rsquo;t
+contain an exposed window; it may contain nothing (blank) or it may
+contain a visible portion of a deexposed window.
+</p>
+</dd>
+<dt><b class="b">Expand All</b></dt>
+<dd><p>Reshape all the currently exposed windows so that together they occupy
+as much of the screen as possible, subject to the restriction that no
+window gives up any of its former territory (all its edges move
+outward if at all).  There are several possible algorithms: the one
+implemented seems to do the right thing most of the time, and is
+stable with respect to itself, so that if Expand All is called twice
+in succession, the second invocation does nothing.
+</p></dd>
+</dl>
+
+</div>
+</div>
+</div>
+<div class="chapter-level-extent" id="The-Lisp-Listener">
+<h2 class="chapter"><span>3 The Lisp Listener<a class="copiable-link" href="#The-Lisp-Listener"> &para;</a></span></h2>
+
+<a class="anchor" id="lisp_002dlistener-section_002dpage"></a>
+<p>A Lisp Listener window allows you to talk to the Lisp Machine Lisp
+interpreter.  When you cold-boot a Lisp Machine, a newly-created Lisp
+Listener window is the first thing you see, filling the whole display
+except for the who-line at the bottom.  When you type to a new Lisp
+Listener, you are typing to a read-eval-print loop of the usual kind.
+Most simple user programs are run from a Lisp Listener.  
+</p>
+<p>The mouse always points North by Northwest when it is pointing at a Lisp
+Listener window.  This means that the system menu can be summoned by a
+single click Right and there are no unusual functions on the mouse buttons.
+</p>
+<p>All of the interesting things that can be done from a Lisp Listener
+are done by typing Lisp forms.  Consult the Lisp Machine Manual for
+further details.
+</p>
+<ul class="mini-toc">
+<li><a href="#The-Editing-Lisp-Listener" accesskey="1">The Editing Lisp Listener</a></li>
+</ul>
+<div class="section-level-extent" id="The-Editing-Lisp-Listener">
+<h3 class="section"><span>3.1 The Editing Lisp Listener<a class="copiable-link" href="#The-Editing-Lisp-Listener"> &para;</a></span></h3>
+
+<p>The Editing Lisp Listener is a Lisp listener which allows you to edit your
+input with all the commands of the editor, rather than just Rubout.  (The
+editor is discussed in the next chapter.)  The <b class="b">Lisp (Edit)</b> option
+of the <b class="b">Create</b> system-menu command is used to create an editing Lisp
+listener (see (window-create)).  If you type Lisp forms at this window, the
+forms will be evaluated and the value will be printed, exactly like the way a
+regular Lisp Listener works.
+</p>
+<p>If you mistype a character, you can rub it out exactly as you would in an
+ordinary Lisp Listener.  However, you may also use all the correcting
+features of the Editor: if you mistype a form, you can edit it with the
+editor functions, inserting characters, deleting words and forms,
+exchanging characters, words, and forms, and so on.  You can go back and
+retrieve earlier elements (input <i class="i">or</i> output) of your conversation with
+the interpreter and insert them into the form you are currently typing.
+</p>
+<p>Each time a complete form is read, it is put into the editor&rsquo;s kill ring.
+This means that the <kbd class="kbd">CTRL/Y</kbd> command will retrieve the last form.  You
+may edit it and then evaluate the resulting modified form.  As usual,
+previous forms may be retrieved by giving <kbd class="kbd">CTRL/Y</kbd> a numeric argument
+or by typing <kbd class="kbd">META/Y</kbd>.
+</p>
+<p>You can also use the specific features of Lisp Mode, such as automatic
+indentation, printing of functions&rsquo; argument names (<kbd class="kbd">CTRL/SHIFT/A</kbd>), and
+parenthesis matching.
+</p>
+<p>Input is complete and evaluation takes place whenever you finish typing a
+complete Lisp form, or a complete expression of whatever syntax is accepted
+by the program you are typing at.  To &quot;finish typing&quot; is to type a printing
+character when the cursor is at the end of the buffer (not in the middle of
+editing something) and that character completes the expression (it might be
+a close parenthesis).
+</p>
+<p>When you edit your input you may complete an expression by a means other
+than finishing typing it.  For instance, you may delete an unmatched open
+parenthesis, causing a close parenthesis at the end of the buffer to
+complete an expression when it did not before.  In this case input does not
+automatically complete, since you might not be finished editing.  You might
+create a syntactically-complete S-expression temporarily while editing a
+larger expression, and you would not want the Lisp listener to go off
+half-cocked and read it.  For instance, you might yank in a complete
+expression with <kbd class="kbd">CTRL/Y</kbd>, intending to edit it before sending it off to
+the reader.
+</p>
+<a class="anchor" id="editor_002dtop_002dlevel_002dend_002dkey-page"></a><p>Once you <i class="i">are</i> done editing, you tell the editor that you are done with
+the <kbd class="kbd">END</kbd> key (or <kbd class="kbd">CTRL/RETURN</kbd>).  The exact details depend on whether
+there is a region.  If there is not, the cursor simply jumps to the end of
+the buffer and the characters that have not yet been read are released to
+the Lisp listener for reading.
+</p>
+<p>If there is a region, it is copied to the end of the buffer, and the
+editing Lisp listener pretends that you had just typed it in.  If you had
+been in the middle of typing a form at the end of the buffer, that old form
+is flushed and replaced by the region you specified.  If the region does
+not contain a complete form, it is left for you to finish it after it has
+been copied to the end of the buffer.  If the region contains exactly one
+complete form, it will be copied to the end of the buffer and evaluated.
+If the region contains several forms, they will be moved to the end of the
+buffer and evaluated one at a time, so that the results of the evaluations
+will be inserted between the forms.
+</p>
+<p>All of the Lisp Mode commands for getting lines, forms, and DEFUNs into
+the current region are useful in conjunction with the <kbd class="kbd">END</kbd> key.
+</p>
+<p>If you use an editor command that requires the echo area, for example
+<kbd class="kbd">CTRL/S</kbd> (Search), an echo area will temporarily pop up over the
+bottom several lines of the window.
+</p>
+<p>You may save a transcript of part or all of your session in a file by
+marking the desired portion as a region and then issuing the <kbd class="kbd">META/X Write
+Region</kbd> command.
+</p>
+<p>All editors share the same kill ring, so text can be moved from one editing
+Lisp listener to another, or between an editing Lisp listener and the ZMacs
+editor, by putting it in the kill ring, selecting another window, and
+yanking it back.
+</p>
+</div>
+</div>
+<div class="chapter-level-extent" id="The-Editor">
+<h2 class="chapter"><span>4 The Editor<a class="copiable-link" href="#The-Editor"> &para;</a></span></h2>
+
+<a class="anchor" id="editor-section_002dpage"></a>
+<p>When an Editor window is selected, you are talking to ZMacs, the Lisp
+Machine&rsquo;s display-oriented editor.  ZMacs is an extremely sophisticated
+program with hundreds of useful features.  The beginning user can pretend
+that ZMacs is Emacs (the pdp-10 display editor) and be right most of the
+time.
+</p>
+<p>The Lisp function <kbd class="kbd">ed</kbd> selects an Editor window.  One (at least) has
+already been created by default when you cold-boot the machine.  Other
+ways to select an Editor window include typing <kbd class="kbd">SYSTEM E</kbd> and calling up
+a system menu and explicitly selecting an Editor.
+</p>
+<p>The Editor is an extremely large and rich system, and should get a document
+all its own.  However, we discuss here some aspects of using the mouse in
+the Editor, so as to have most of the mouse functions under one roof.
+</p>
+<ul class="mini-toc">
+<li><a href="#Using-the-Mouse-in-the-Editor" accesskey="1">Using the Mouse in the Editor</a></li>
+<li><a href="#Ztop-mode" accesskey="2">Ztop mode</a></li>
+</ul>
+<div class="section-level-extent" id="Using-the-Mouse-in-the-Editor">
+<h3 class="section"><span>4.1 Using the Mouse in the Editor<a class="copiable-link" href="#Using-the-Mouse-in-the-Editor"> &para;</a></span></h3>
+
+<a class="anchor" id="editor_002dmouse_002dbuttons-section_002dpage"></a>
+<ul class="mini-toc">
+<li><a href="#The-Mouse-and-the-Cursor" accesskey="1">The Mouse and the Cursor</a></li>
+<li><a href="#The-Mouse-and-the-Region" accesskey="2">The Mouse and the Region</a></li>
+<li><a href="#The-Editor-Menu" accesskey="3">The Editor Menu</a></li>
+<li><a href="#Scrolling" accesskey="4">Scrolling</a></li>
+</ul>
+<div class="subsection-level-extent" id="The-Mouse-and-the-Cursor">
+<h4 class="subsection"><span>4.1.1 The Mouse and the Cursor<a class="copiable-link" href="#The-Mouse-and-the-Cursor"> &para;</a></span></h4>
+
+<p>When the mouse is pointing to the central portion of an exposed Editor
+window, the mouse blinker takes the form of an arrow pointing North by
+Northeast.  When the mouse cursor has this shape, there is always a
+character nearby that is flashing.  A blank space or newline is flashed
+by blinking an underline underneath it.  This is the character the mouse
+is pointing to.
+</p>
+<p>You can bring the editor cursor to the mouse by clicking Left; alternatively
+you can bring the mouse to the cursor by clicking Left Double.
+</p>
+<p>If you click Left Hold, not only will the cursor come to the moused
+character, but a mark will be set there as soon as the mouse is moved off
+the original character.  As long as the left mouse button is held down,
+the cursor will continue to follow the mouse, but the mark will remain
+where it was placed.  This enables the user to delimit an arbitrary
+region, so that the region-manipulation commands can be used.
+The current region is marked by underlining, so that you can see its
+exact scope.
+</p>
+<p>If you click Left Double Hold (like a Morse Code &quot;A&quot;: dit-dah), the
+mouse will move to the cursor and grab it, so that when the mouse moves,
+the cursor will move with it.  This does not set any mark, but merely
+allows you to slide the cursor around the buffer.  When you release the
+mouse button, the mouse will let go of the blinker.
+</p>
+</div>
+<div class="subsection-level-extent" id="The-Mouse-and-the-Region">
+<h4 class="subsection"><span>4.1.2 The Mouse and the Region<a class="copiable-link" href="#The-Mouse-and-the-Region"> &para;</a></span></h4>
+
+<p>Very often you will want to select some particular word, line,
+sentence, or Lisp form by setting the region around it.  The middle
+mouse button is very useful for manipulating the region.  Clicking
+Middle sets the region in various ways depending on what the mouse is
+pointing at.  
+</p>
+<p>To select a word, point to one of the letters of the word and click
+Middle.  The Editor will always try to include a space in the region
+with the specified word.  If it has a choice, the space to the right of
+the word will be included, but sometimes it will be forced to choose the
+space to the left, because the word appears just before some punctuation
+mark.  If for some reason you especially want the space on the left
+included, rather than the space on the right, point to that space when
+you click Middle, rather than to a letter of the word.
+</p>
+<p>To select a line, point at the end of the line and click Middle.  To
+select a sentence, point to the period at the end of the sentence and
+click Middle.  Clicking Middle on either of a pair of balanced
+parentheses will select all the text between (and including) them.
+</p>
+<p>The only difference between clicking Middle Hold and clicking Middle is
+that the region moves with the mouse as long as the middle button is
+held down.  The region chases the mouse, by turns encompassing words,
+sentences, lines, or parenthesized text, depending on where the mouse is
+pointing at any particular moment.  When the region has been properly
+placed, release the middle button.
+</p>
+<p>Clicking Middle Double performs some of the operations normally associated
+with <kbd class="kbd">CTRL/W</kbd>, <kbd class="kbd">META/W</kbd>, <kbd class="kbd">CTRL/Y</kbd>, and <kbd class="kbd">META/Y</kbd>.  Its exact
+behavior is fairly involved, and depends on whether or not there is a
+region and on what the last command was.
+</p>
+<p>If there is no region, the first Middle Double acts like a <kbd class="kbd">CTRL/Y</kbd> and
+successive ones act like <kbd class="kbd">META/Y</kbd>, trying to insert at the current
+cursor position all the pieces of text which have recently been deleted or saved,
+starting with the most recent and progressing backwards with each Middle
+Double click.
+</p>
+<p>If there is a region, the first Middle Double acts like <kbd class="kbd">META/W</kbd>.
+This has the effect of pushing the region onto the kill ring.
+At this point, the underline showing where the region is disappears,
+showing that there is now no region.  The next Middle Double
+click deletes the text that had been underlined, like <kbd class="kbd">CTRL/W</kbd>.  From then
+on, Middle Double behaves as described in the preceding paragraph.
+</p>
+</div>
+<div class="subsection-level-extent" id="The-Editor-Menu">
+<h4 class="subsection"><span>4.1.3 The Editor Menu<a class="copiable-link" href="#The-Editor-Menu"> &para;</a></span></h4>
+
+<p>Clicking Right Double in an Editor window calls up the system menu, as it
+does almost everywhere.  
+</p>
+<p>Clicking Right (Single), however, calls up a menu of useful Editor
+operations.  If you call up this menu by mistake, you can get rid of it
+simply by moving the mouse far off the menu.  Below are listed the options
+offered by the Editor menu, and what they do when you click Left or Right on them.
+</p>
+<dl class="table">
+<dt><b class="b">Arglist</b></dt>
+<dd><p>All the function names in the Editor window become mouse sensitive, and
+the mouse cursor becomes an arrow pointing North.  Clicking Left on the name
+of a function causes the argument list from that function&rsquo;s original
+definition to be displayed below the mode line.  You can also type the
+name of the function whose argument list you want to see.
+</p>
+</dd>
+<dt><b class="b">Edit Definition</b></dt>
+<dd><p>Prompts you to point to or type a function name, just like the Arglist
+option, but actually reads the source file into an editor buffer, finds
+the definition of the function, and allows you to edit the code.
+</p>
+</dd>
+<dt><b class="b">List Callers</b></dt>
+<dd><p>Prompts you to point to or type a function name, just like the Arglist
+option, and scans the current package for functions that call the
+specified function.  The names of these functions are listed, and
+<kbd class="kbd">CTRL/.</kbd> can be used to edit their definitions.
+</p>
+</dd>
+<dt><b class="b">List Functions</b></dt>
+<dd><p>Prompts you for the name of an Editor buffer, and lists the names of all
+the functions defined in that buffer.  The function names are mouse-sensitive;
+clicking Left jumps the editor cursor to that function definition.  Clicking
+Right gives a menu of possible operations.
+</p>
+</dd>
+<dt><b class="b">List Buffers</b></dt>
+<dd><p>Lists all your Editor buffers.  The buffer names are mouse-sensitive; clicking
+Left selects that buffer, clicking Right gives a menu of things to do to that buffer.
+</p>
+</dd>
+<dt><b class="b">Kill Or Save Buffers</b></dt>
+<dd><p>Displays a window with one line for each editor buffer.  To the right of
+each buffer name are three choice-boxes, labelled <i class="i">Save</i>, <i class="i">Kill</i>,
+and <i class="i">UnMod</i>.  Clicking the mouse on a choice-box selects that choice
+and puts an &quot;X&quot; in the box, or gets rid of the &quot;X&quot; if there is one already there.
+An &quot;X&quot; next to <i class="i">Save</i> writes out the file, next to <i class="i">Kill</i>
+kills the buffer, and next to <i class="i">UnMod</i> marks the buffer as not needing saving,
+like the <kbd class="kbd">META/~</kbd> command.  Note that all the buffers that need to be 
+saved have an &quot;X&quot; in their <i class="i">Save</i> box initially.  At the bottom are
+two choice-boxes marked <i class="i">Do It</i> and <i class="i">Abort</i>.  Clicking on <i class="i">Do It</i>
+will go ahead and do the file-saving, buffer-killing, and buffer-unmoding
+specified by the choice-boxes you have marked.  Clicking on <i class="i">Abort</i>
+will forget the whole thing.
+</p>
+</dd>
+<dt><b class="b">Split Screen</b></dt>
+<dd><p>This is just like the Split Screen option of the system menu (see (split-screen)), but the
+options in this case are the names of all the Editor buffers, &quot;New
+Buffer&quot;, &quot;Find File&quot;, &quot;Do It&quot;, and &quot;Abort&quot;.  &quot;New Buffer&quot; prompts for a
+buffer name and &quot;Find File&quot; prompts for a file name.
+</p>
+</dd>
+<dt><b class="b">Compile Defun</b></dt>
+<dd><p>Compiles the function the cursor is in.  This is the same as <kbd class="kbd">CTRL/SHIFT/C</kbd>.
+</p>
+</dd>
+<dt><b class="b">Indent Region</b></dt>
+<dd><p>Does the same thing as the <kbd class="kbd">TAB</kbd> key on each line of the region.  In Lisp
+mode this corrects the indentation of all the lines.
+</p>
+</dd>
+<dt><b class="b">Change Default Font</b></dt>
+<dd><p>Changes the font of typed-in text.  This is the same as <kbd class="kbd">CTRL/META/J</kbd>.
+When prompted &quot;Font ID:&quot; you may type <kbd class="kbd">HELP</kbd> for help.
+</p>
+</dd>
+<dt><b class="b">Change Font Region</b></dt>
+<dd><p>Changes the font of the text in the region.  This is the same as <kbd class="kbd">CTRL/X CTRL/J</kbd>.
+When prompted &quot;Font ID:&quot; you may type <kbd class="kbd">HELP</kbd> for help.
+</p>
+</dd>
+<dt><b class="b">Uppercase Region</b></dt>
+<dd><p>Makes the alphabetic characters in the region all upper case.
+</p>
+</dd>
+<dt><b class="b">Lowercase Region</b></dt>
+<dd><p>Makes the alphabetic characters in the region all lower case.
+</p>
+</dd>
+<dt><b class="b">Mouse Indent Rigidly</b></dt>
+<dd><p>Clicking this and holding down the button will allow you to change the indentation
+of all the lines in the region.  Moving the mouse to left or right while holding
+the button down decreases or increases the amount of indentation.
+</p>
+</dd>
+<dt><b class="b">Mouse Indent Under</b></dt>
+<dd><p>Indents the current line to a specified place.  You may point with the mouse
+to the column where you want it indented and click Left.  Or you may type a string on the
+keyboard; the line will be indented to line up with the beginning of the
+most recent occurrence of that string previously in the buffer.
+</p></dd>
+</dl>
+
+</div>
+<div class="subsection-level-extent" id="Scrolling">
+<h4 class="subsection"><span>4.1.4 Scrolling<a class="copiable-link" href="#Scrolling"> &para;</a></span></h4>
+
+<p>The Editor window really functions as a &quot;window&quot; through which you can
+see a part of a larger object, the Editor buffer.  Conceptually, the
+buffer continues invisibly above and below the actual window.  
+</p>
+<p>The Editor window, and some other windows which display only a part of
+their conceptual contents, have a feature called <i class="i">scrolling</i> which
+allows the user to move the window&rsquo;s view so as to display any part of
+these contents. 
+</p>
+<p>The scrolling feature is really two distinct features, one for scanning
+slowly through the buffer and one for jumping around rapidly.
+</p>
+<p>Toward the right side of the upper and lower edge of the Editor window
+is the <i class="i">scrolling zone</i>.  If you try to move the mouse out of the
+window across this part of the window&rsquo;s boundary, the mouse will not
+leave the window, but its cursor will change into a very fat arrow
+pointing at the edge you tried to go over.  For example, if you tried to
+move the mouse out of the Editor window through the rightmost part of
+the upper edge, the mouse cursor would not leave the window, but would
+change into a fat arrow pointing up.  If you now continued to move the
+mouse gently upwards, the mouse cursor would not move, but the text in
+the window would slide <i class="i">down</i>.  New text would appear at the top, and
+the text moving off the bottom edge of the window would be lost to view.
+When you pull the mouse away from this edge, the mouse cursor changes
+back to its normal Editor shape.
+</p>
+<p>The rightmost part of the bottom edge of the window behaves the same
+way, but of course the fat arrow points down, and the text moves up as
+you scan downward.
+</p>
+<p>The other scrolling feature is the <i class="i">scroll bar</i>.  The left edge of the
+Editor window resists violation in the same way as the scrolling zones
+do, but in this case the mouse cursor changes to a double-headed arrow
+pointing up and down.  In addition, a thin line appears somewhere along
+the left edge, just inside the border and parallel to it.  The length of
+this line and its position with respect to the entire left edge are in
+proportion to the length and position of the Editor window with
+respect to the entire Editor buffer.
+</p>
+<p>See (scrolling) for more information on scrolling.
+</p>
+</div>
+</div>
+<div class="section-level-extent" id="Ztop-mode">
+<h3 class="section"><span>4.2 Ztop mode<a class="copiable-link" href="#Ztop-mode"> &para;</a></span></h3>
+
+<p>A Ztop buffer is a hybrid between a Lisp listener and the ZMacs editor.  It is
+an interactive alternative to more traditional programming environments.
+Traditionally, the Lisp programmer shifts his attention back and forth
+between an Editor and a Lisp Listener.  With Ztop, the programmer has
+the power to manipulate his own conversation with the Lisp interpreter
+with all the flexibility that the editor provides.  By using multiple
+buffers, the program source file can be in one buffer and the interaction
+can be in another buffer.
+</p>
+<p>Ztop mode is very similar to the editing Lisp listener described above.
+The difference is that a Ztop buffer is an editor buffer, rather than a separate
+window, and therefore interacts more closely with the editor.  It is largely
+a matter of personal preference which you use.
+</p>
+<p>To enter Ztop mode, call up an Editor and get a new, empty buffer.  Then
+invoke the extended command &quot;Ztop Mode&quot;.  The mode line will change to
+reflect the fact that this buffer is now in Ztop mode.  If you type Lisp
+forms at Ztop, the forms will be evaluated and the value will be printed,
+exactly like the way a regular Lisp Listener works.
+</p>
+<p>If you mistype a character, you can rub it out exactly as you would in a
+Lisp Listener.  But Ztop has all the correcting features of the Editor:
+if you mistype a form, you can edit it with the editor functions,
+inserting characters, deleting words and forms, exchanging characters,
+words and forms, and so on.  You can go back and retrieve earlier
+elements of your conversation with the interpreter and insert them into
+the form you are currently typing.  Whenever you finish typing a form,
+Ztop will evaluate it and print the value.
+</p>
+<p>You can also use the specific features of Lisp Mode, such as automatic
+indentation, printing of functions&rsquo; argument names, and parenthesis matching.
+</p>
+<ul class="mini-toc">
+<li><a href="#The-I_002dBeam" accesskey="1">The I-Beam</a></li>
+<li><a href="#Leaving-Ztop" accesskey="2">Leaving Ztop</a></li>
+</ul>
+<div class="subsection-level-extent" id="The-I_002dBeam">
+<h4 class="subsection"><span>4.2.1 The I-Beam<a class="copiable-link" href="#The-I_002dBeam"> &para;</a></span></h4>
+
+<p>Sometimes Ztop will display a large slowly-blinking I-beam between two characters
+of the text.  This is to show you how much of the typein has been read so far.
+Editing you do before the I-beam will not affect what the Lisp listener reads,
+while editing after the I-beam will.  The I-Beam appears whenever you are actually
+editing rather than simply typing in, except that the I-Beam is suppressed if
+it would come out on top of the cursor.
+</p>
+<p>Input is complete and evaluation takes place whenever you finish typing a
+complete S-expression (assuming you are talking to the normal read-eval-print
+loop.)  However, when there is an I-Beam you may complete an S-expression
+by a means other than finishing typing it.  For instance, you may delete
+an unmatched open parenthesis, causing a close parenthesis at the end of
+the buffer to complete an S-expression when it did not before.  In this
+case input does not automatically complete, since you might not be done
+editing.  You might create a syntactically-complete S-expression temporarily
+while editing a larger S-expression, and you would not want the Lisp listener
+to go off half-cocked and read it.  For instance, you might
+yank in a complete S-expression with <kbd class="kbd">CTRL/Y</kbd>, intending to edit it
+before sending it off to the reader.
+</p>
+<p>Once you <i class="i">are</i> done editing, you tell the editor that you are done with
+the <kbd class="kbd">END</kbd> key (or <kbd class="kbd">CTRL/RETURN</kbd>); the I-Beam is a reminder that you
+need to do this.  The <kbd class="kbd">END</kbd> key is used the same way as in the editing
+Lisp listener (see (editor-top-level-end-key)).
+</p>
+</div>
+<div class="subsection-level-extent" id="Leaving-Ztop">
+<h4 class="subsection"><span>4.2.2 Leaving Ztop<a class="copiable-link" href="#Leaving-Ztop"> &para;</a></span></h4>
+
+<p>You can leave Ztop by going to another Editor buffer, or by leaving the
+Editor.  In these cases, the Ztop buffer will be left just as it was and
+you can re-enter it and continue your session at any time.  The extended
+command &quot;Select Last Ztop Buffer&quot; can be used to do just that from
+another editor buffer.
+</p>
+<p>Alternatively, you could leave Ztop by changing your mode to Lisp or
+Text.  This would end the Ztop session, and you could then edit your
+buffer normally.  Of course, you can use the file-writing commands to
+write out your buffer at any time, whether you are in Ztop mode or not.
+</p>
+</div>
+</div>
+</div>
+<div class="chapter-level-extent" id="The-Inspector">
+<h2 class="chapter"><span>5 The Inspector<a class="copiable-link" href="#The-Inspector"> &para;</a></span></h2>
+
+<a class="anchor" id="inspector-section_002dpage"></a>
+<p>The Inspector is a window-oriented program for poking around in data
+structures.  When you ask to inspect a particular object, its
+components are displayed.  What the &quot;components&quot; are depends on the
+type of object; for example, the components of a list are its
+elements, and those of a symbol are its value binding, function
+definition, and property list.  The objects displayed on the screen by
+the Inspector are mouse-sensitive; when you point the mouse at an
+object a box appears around it.  Clicking a mouse button will do
+something to that object, such as inspecting it, modifying it, or
+giving it as the argument to a function.
+</p>
+<p>The following documentation is on the current version.  As this is
+still an evolving program, it may change without notice.
+</p>
+<p>The Inspector can be part of another program, such as the Window
+Error-Handler, or it can be used &quot;stand-alone&quot;.  The stand-alone
+Inspector can be entered via the <b class="b">Inspect</b> command in the system
+menu, or by the <code class="code">inspect</code> function which inspects its argument,
+if any.
+</p>
+<p>The stand-alone Inspector is a frame consisting of a small interaction
+window on the top, a history window and menu immediately below that,
+followed by some number of inspection windows (three by default).  Each
+inspection window can inspect a different object.  When you inspect an
+object it appears in the large window at the bottom, and the previously
+inspected objects shift upward.
+</p>
+<p>Other programs, such as the Window Error-Handler, may utilize
+inspection and history windows, and though the display will look the
+same, the handling of mouse buttons may depend upon the particular
+program being run.  The discussion below focuses primarily on the
+stand-alone Inspector.
+</p>
+<p>The history window maintains a list of all objects that have been
+inspected.  It is usually kept in LRU order&ndash;the least recently
+displayed object is at the top, and the most recently displayed object
+is at the bottom.  Any mouse sensitive object in the history window can
+be inspected by clicking on it.  There is a &quot;line region&quot; at the left
+hand side of the history window, which allows other operations.  In the
+line region the mouse cursor changes to a rightward-pointing arrow.
+Clicking Left in the line region inspects the object.  This is
+sometimes useful when the object is a list and it is inconvenient to
+position the mouse at the open paren.  Clicking Middle deletes the
+object from the history.  The history window has a scroll bar at the far
+left, as well as scrolling zones in the middle of its top and bottom edges.
+The last three lines of the history are always the objects being inspected
+in the three inspection windows.
+</p>
+<p>The history window also maintains a cache allowing quick redisplay of
+previously displayed objects.  This means that merely reinspecting an
+object will not reflect any changes in its state.  Clicking Middle in
+the line region deletes the object from
+the cache as well as deleting it from the history window.  The DeCache
+command in the menu may be used to clear everything from the cache.
+</p>
+<p>At the top of an inspection window is a label, which is the printed
+representation of the object being inspected in that window, or else
+the words &quot;a list&quot; meaning that a list is being inspected.  The main
+body of an inspection window is a display of the components of the
+object, labelled with their names if any.  This display may be scrolled
+using the scroll bar on the left or the &quot;more above&quot; and &quot;more below&quot;
+scrolling zones at the top and bottom.
+</p>
+<p>Clicking on any mouse sensitive object in an inspection window
+inspects that object.  The three mouse buttons have different
+meanings, though.  Clicking Left inspects the object in the bottom
+window, pushing the previous objects up.  Clicking Middle inspects
+the object, but leaves the source (namely, the object being inspected
+in the window in which the mouse was clicked) in the second window
+from the bottom.  Clicking Right tries to find and inspect the
+function associated with the selected object (e.g. the function
+binding if a symbol was selected).
+</p>
+<p>The inspection display that is chosen depends upon the type of the object:
+</p><dl class="table">
+<dt><b class="b">Symbol</b></dt>
+<dd><p>The name, value, function, property list, and package of the symbol
+are displayed.  All but the name and package are modifiable.
+</p>
+</dd>
+<dt><b class="b">List</b></dt>
+<dd><p>The list is displayed ground by the system grinder.  Any piece of
+substructure is selectable, and any &quot;car&quot; or atom in the list can be
+modified.
+</p>
+</dd>
+<dt><b class="b">Instance</b></dt>
+<dd><p>The flavor of the instance, the method table, and the names and values
+of the instance-variable slots are displayed.  The instance-variables
+are modifiable.
+</p>
+</dd>
+<dt><b class="b">Closure, Entity</b></dt>
+<dd><p>The function, and the names and values of the closed variables are
+displayed.  For an entity the type or class is displayed as well.  The
+values of the closed variables are modifiable.
+</p>
+</dd>
+<dt><b class="b">Named structure</b></dt>
+<dd><p>The names and values of the slots are displayed.  The values are
+modifiable.
+</p>
+</dd>
+<dt><b class="b">Array</b></dt>
+<dd><p>The leader of the array is displayed if present.  For one dimensional
+arrays, the elements of the array are also displayed.  The elements
+are modifiable.
+</p>
+</dd>
+<dt><b class="b">FEF</b></dt>
+<dd><p>The disassembled code is displayed.
+</p>
+</dd>
+<dt><b class="b">Select Method</b></dt>
+<dd><p>The keyword/function pairs are shown, in alphabetical order by
+keyword.  The function associated with a keyword is settable via the
+keyword.
+</p>
+</dd>
+<dt><b class="b">Stack Frame</b></dt>
+<dd><p>This is a special internal type that is used by the window error
+handler.  It is displayed as either interpreted code (a list), or as a
+FEF with an arrow pointing to the next instruction to be executed.
+</p>
+</dd>
+</dl>
+
+<p>The interaction window is used to prompt the user and to receive
+input.  If the user is not being asked a question, then a
+<b class="b">read-eval-inspect</b> loop is active.  Forms typed will be echoed in
+the interaction window and evaluated.  The result is not printed, but
+inspected instead.  When the user is prompted for input, usually due
+to having invoked a menu operation, any input being typed at the
+<b class="b">read-eval-inspect</b> loop is saved away and erased from the
+interaction window.  When the interaction with the user is over, the
+input is re-echoed and the user may continue to type the form.
+</p>
+<p>Some special keyboard characters are recognized when not in the middle
+of typing in a form.
+</p><dl class="table">
+<dt><kbd class="kbd">Control-Z</kbd></dt>
+<dd><p>Exits and deactivates the Inspector.
+</p>
+</dd>
+<dt><kbd class="kbd">Break</kbd></dt>
+<dd><p>Runs a break loop in the typeout window of the lower inspection pane.
+</p>
+</dd>
+<dt><kbd class="kbd">Quote</kbd></dt>
+<dd><p>Reads a form, evaluates it, and prints the result instead of inspecting it.
+</p>
+</dd>
+</dl>
+
+<p>The menu is for infrequently used but useful commands:
+</p>
+<dl class="table">
+<dt><code class="code">Exit</code></dt>
+<dd><p>Equivalent to Control-Z.  Exits the Inspector and deactivates the
+frame.
+</p>
+</dd>
+<dt><code class="code">Return</code></dt>
+<dd><p>Similar to Exit, but allows selection of an object to be returned as
+the value of the call to <code class="code">inspect</code>.
+</p>
+</dd>
+<dt><code class="code">Modify</code></dt>
+<dd><p>Allows simple editing of objects.  Selecting Modify changes the mouse
+sensitivity of items on the screen to only include fields that are
+modifiable.  In the typical case of named slots, the names are the
+sensitive parts.  When the field to modify has been selected, a new
+value may be specified either by typing a form to be evaluated or by
+selecting any normally mouse selectable object with the mouse.  The
+object being modified is redisplayed.  Clicking Right at any time
+aborts the modification.
+</p>
+</dd>
+<dt><code class="code">DeCache</code></dt>
+<dd><p>Flushes all knowledge about the insides of previously displayed objects
+and redisplays the currently displayed objects.
+</p>
+</dd>
+<dt><code class="code">Clear</code></dt>
+<dd><p>Clears out the history, the cache, and all the inspection windows.
+</p>
+</dd>
+</dl>
+
+</div>
+<div class="chapter-level-extent" id="The-Debugger">
+<h2 class="chapter"><span>6 The Debugger<a class="copiable-link" href="#The-Debugger"> &para;</a></span></h2>
+
+<ul class="mini-toc">
+<li><a href="#The-Error_002dHandler" accesskey="1">The Error-Handler</a></li>
+<li><a href="#The-Window-Error_002dHandler" accesskey="2">The Window Error-Handler</a></li>
+</ul>
+<div class="section-level-extent" id="The-Error_002dHandler">
+<h3 class="section"><span>6.1 The Error-Handler<a class="copiable-link" href="#The-Error_002dHandler"> &para;</a></span></h3>
+
+<p>Refer to section 26.2 of the Lisp Machine Manual, for now.
+</p>
+</div>
+<div class="section-level-extent" id="The-Window-Error_002dHandler">
+<h3 class="section"><span>6.2 The Window Error-Handler<a class="copiable-link" href="#The-Window-Error_002dHandler"> &para;</a></span></h3>
+
+<p>This section describes the window oriented error handler, which can be
+gotten from the standard keyboard error handler by typing
+Control-Meta-W to the <kbd class="kbd"></kbd> prompt.
+</p>
+<p>The error handler window is divided into seven panes.  At the bottom is a
+lisp window, which ordinarily provides a read-eval-print loop, similar
+to the regular keyboard error handler.  More commands are available by
+using the mouse in the other windows as described below.
+</p>
+<p>At the top is a display of the disassembled or ground code for the
+currently selected stack frame, depending on whether or not it is
+compiled.  This is an inspection window.  The window immediately below
+this is a history window as in the Inspector (see below).  Clicking
+on any mouse sensitive item with the right button in either of these
+windows inspects it, and clicking with the middle button stuffs
+it into the lisp window, echoing it and making it the value of <code class="code">*</code>.
+</p>
+<p>Next are the args and locals windows, side by side, displaying the
+names and values of the arguments to the current stack frame and its
+local variables and special-variable bindings.  These windows are
+grayed out if the frame has no variables of the corresponding type.
+They also have a scroll bar.  Clicking the mouse on the name of a
+variable will print the name and the value in the lisp window.
+Clicking on just the value will print it in the lisp window.  The
+mouse will highlight any relevant quantity that you are pointing to.
+</p>
+<p>When something is printed in the Lisp window by pointing at it with
+the mouse, the variable <code class="code">*</code> is set to the value printed, and the
+variable <code class="code">+</code> is set to a locative to the stack slot containing the
+value, or (in the case of a special-variable binding) is set to the
+symbol.  You can use <code class="code">*</code> to feed the value to any Lisp function, and
+<code class="code">+</code> to alter the value.
+</p>
+<p>Next is the stack window, which displays in a pseudo-list format the
+functions and arguments on the stack.  Clicking on a function or
+argument or a sublist of one will cause it to be printed in the lisp
+window as in the argument or local windows.  Also, clicking the mouse
+to the left of a line containing a particular stack frame (when the
+cursor is a right-pointing arrow) will make the error handler select
+that frame, changing what the code, arguments, and locals windows
+show.
+</p>
+<p>Below this, and above the lisp window, is the command menu for the error
+handler.  The available commands and what they do are:
+</p><dl class="table">
+<dt><b class="b">What error</b></dt>
+<dd><p>Reprints the error message for the current error, in the lisp window.
+</p>
+</dd>
+<dt><b class="b">Exit Window EH</b></dt>
+<dd><p>Returns to the regular error handler.
+</p>
+</dd>
+<dt><b class="b">Abort Program</b></dt>
+<dd><p>Like <kbd class="kbd">ABORT</kbd> or <kbd class="kbd">CTRL/Z</kbd> in the keyboard error handler.  Throws back to command-level
+of the erring program.
+</p>
+</dd>
+<dt><b class="b">Arglist</b></dt>
+<dd><p>Asks for the name of a function, which can be typed on the keyboard,
+or moused if it is on the screen.  Picking an actor or a closure will
+ask for the message name to that actor and print the arguments to its
+method for that message.
+Picking a line of a stack frame from the stack window will try to
+align the printout of the arguments with what value was supplied in
+that position in that frame.
+</p>
+</dd>
+<dt><b class="b">Inspect</b></dt>
+<dd><p>Asks for an object which can be pointed-to with the mouse or typed in,
+and inspects it in the upper window.  See (inspector) for
+information on the Inspector.
+</p>
+</dd>
+<dt><b class="b">Edit</b></dt>
+<dd><p>Reads the name of a function in the same fashion as the Arglist
+command and invokes the editor on that function.  The editor will
+find the source code of the function, reading in the file if necessary,
+and let you edit it.
+</p>
+</dd>
+<dt><b class="b">Retry</b></dt>
+<dd><p>Attempts to restart the current frame, like the Control-Meta-R
+command.
+</p>
+</dd>
+<dt><b class="b">Return a value</b></dt>
+<dd><p>Asks for a value (which can be selected with the mouse)
+and returns it from the current frame, like Control-R.
+</p>
+</dd>
+<dt><b class="b">Continue</b></dt>
+<dd><p>Like Control-C, except that the mouse can be used to select the object
+it asks you for in order to continue.
+</p>
+</dd>
+<dt><b class="b">Set arg</b></dt>
+<dd><p>Select an argument or local with the mouse and type or mouse a new
+value to be substituted in.
+</p>
+</dd>
+<dt><b class="b">Search</b></dt>
+<dd><p>Like the Control-S command, except that the mouse can be used.
+</p>
+</dd>
+<dt><b class="b">Throw</b></dt>
+<dd><p>Like Control-T, it asks for a tag and a value and throws there; the
+mouse of course can be used.
+</p>
+</dd>
+<dt><b class="b">T</b></dt>
+<dt><b class="b">NIL</b></dt>
+<dd><p>Clicking one of these supplies that symbol as an argument or value for
+other commands.  These can also be used to answer yes-or-no questions.
+</p></dd>
+</dl>
+
+</div>
+</div>
+<div class="chapter-level-extent" id="Peek">
+<h2 class="chapter"><span>7 Peek<a class="copiable-link" href="#Peek"> &para;</a></span></h2>
+<a class="anchor" id="peek-section_002dpage"></a>
+<p>The Peek program gives a dynamic display of various kinds of system
+status.  When you start up a Peek, this table is displayed:
+</p>
+<dl class="table">
+<dt><kbd class="kbd">P</kbd></dt>
+<dd><p>Active processes
+</p></dd>
+<dt><kbd class="kbd">M</kbd></dt>
+<dd><p>Memory usage by area
+</p></dd>
+<dt><kbd class="kbd">C</kbd></dt>
+<dd><p>Chaosnet connections
+</p></dd>
+<dt><kbd class="kbd">A</kbd></dt>
+<dd><p>Areas
+</p></dd>
+<dt><kbd class="kbd">H</kbd></dt>
+<dd><p>Hostat
+</p></dd>
+<dt><kbd class="kbd">%</kbd></dt>
+<dd><p>Statistics counters
+</p></dd>
+<dt><kbd class="kbd">F</kbd></dt>
+<dd><p>File system display
+</p></dd>
+<dt><kbd class="kbd">W</kbd></dt>
+<dd><p>Window hierarchy
+</p></dd>
+<dt><kbd class="kbd">Q</kbd></dt>
+<dd><p>Quit
+</p></dd>
+<dt><kbd class="kbd">nZ</kbd></dt>
+<dd><p>Set sleep time between updates
+</p></dd>
+<dt><kbd class="kbd">?</kbd></dt>
+<dd><p>Prints this message
+</p></dd>
+</dl>
+
+<p>Under this table is a message reading &quot;Type any character to flush:&quot;
+</p>
+<p>The left column shows a repertoire of commands to Peek.  The commands
+A, C, F, M, P, W, and % each place you in a different Peek subsystem,
+to examine the status of different aspects of the Lisp Machine system.
+The various subsystems are described in the sections that follow.
+</p>
+<p>The commands H and ? do not place you in full subsystems, but merely
+display some information at the top of the Peek window, followed by
+the &quot;Type any character to flush:&quot; message.  Typing a space restores
+you to the subsystem that you were in before you typed H or ?.  Typing
+a subsystem command places you in that subsystem, as usual.
+The ? command displays the table described above.  The <kbd class="kbd">HELP</kbd> key
+does the same.
+</p>
+<p>The Q command exits Peek and returns you to the window from whick Peek
+was invoked.
+</p>
+<p>Most of the subsystems are dynamic: they update some part of the
+displayed status periodically.  The time interval between updates can
+be set using the Z command.  Typing nZ, where n is some number, sets
+the inter-update time interval to n sixtieths of a second.  Using the
+Z command does not otherwise affect the subsystem that is running.
+</p>
+<p>Some of the items displayed in the subsystems are mouse-sensitive.
+These items, and the operations that can be performed by clicking the
+mouse at them, vary from subsystem to subsystem and are described in
+the sections that follow.  Often clicking the mouse on an item will
+give you a menu of things to do to that object.
+</p>
+<p>The Peek window has scrolling capabilities, for use when the status
+display overruns the available display area.  For details on these
+capabilities, see (scrolling).
+</p>
+<p>As long as the Peek window is exposed, it will continue to update its
+display.  Thus a Peek window can be used to examine things being done
+in other windows in real time.
+</p>
+<p>This document does not attempt to describe the individual Peek subsystems.
+They are generally more or less self-explanatory.
+</p>
+</div>
+<div class="chapter-level-extent" id="Network-Programs">
+<h2 class="chapter"><span>8 Network Programs<a class="copiable-link" href="#Network-Programs"> &para;</a></span></h2>
+
+<a class="anchor" id="supdup-section_002dpage"></a><a class="anchor" id="telnet-section_002dpage"></a>
+<p>The <code class="code">supdup</code> and <code class="code">telnet</code> programs allow you to use the Lisp machine as
+a terminal to another host.  Supdup acts like a display terminal, while
+Telnet acts like a printing terminal for systems that don&rsquo;t know about
+displays.  There are window types called <code class="code">supdup</code> and <code class="code">telnet</code>, as well
+as <kbd class="kbd">SYSTEM</kbd> keys and Lisp functions.
+</p>
+<p>When you go into a Supdup or a Telnet, it will ask you what host to connect to.
+Once you are connected to a host, all the keys on the keyboard are sent through
+to that host, instead of having their normal functions, except for the three
+escape keys, <kbd class="kbd">TERMINAL</kbd>, <kbd class="kbd">SYSTEM</kbd>, and <kbd class="kbd">NETWORK</kbd>.  <kbd class="kbd">TERMINAL</kbd> and
+<kbd class="kbd">SYSTEM</kbd> retain their normal functions, while <kbd class="kbd">NETWORK</kbd> is used to give
+commands to the Supdup or Telnet itself.  These commands are:
+</p>
+<dl class="table">
+<dt><kbd class="kbd">CALL</kbd></dt>
+<dd><p>Switch back to the previous window, leaving the connection open.
+</p>
+</dd>
+<dt><kbd class="kbd">B</kbd></dt>
+<dd><p>Call <code class="code">break</code>, getting into a read-eval-print loop.
+</p>
+</dd>
+<dt><kbd class="kbd">C</kbd></dt>
+<dd><p>Change the escape character.  This is normally <kbd class="kbd">BREAK</kbd>.  Typing the escape
+character is the same as typing <kbd class="kbd">NETWORK</kbd>, for the benefit of old keyboards.
+</p>
+</dd>
+<dt><kbd class="kbd">D</kbd></dt>
+<dd><p>Disconnect from the host and ask for another host to connect to.
+</p>
+</dd>
+<dt><kbd class="kbd">I</kbd></dt>
+<dd><p>Turn Imlac simulation on or off.  This applies to Telnet only, and is only
+used when talking to TOPS-20.
+</p>
+</dd>
+<dt><kbd class="kbd">L</kbd></dt>
+<dd><p>Log out of the foreign host, disconnect, and switch back to the previous window.
+This is the normal way of exiting the program.
+</p>
+</dd>
+<dt><kbd class="kbd">M</kbd></dt>
+<dd><p>Turn <b class="b">**MORE**</b> processing on or off.  This applies to Telnet only.
+</p>
+</dd>
+<dt><kbd class="kbd">P</kbd></dt>
+<dd><p>Switch back to the previous window, leaving the connection open.
+</p>
+</dd>
+<dt><kbd class="kbd">Q</kbd></dt>
+<dd><p>Disconnect from the foreign host and switch back to the previous window.
+</p>
+</dd>
+<dt><kbd class="kbd">? <span class="r">or</span> HELP</kbd></dt>
+<dd><p>Prints documentation on these commands.
+</p>
+</dd>
+</dl>
+
+</div>
+<div class="chapter-level-extent" id="Index-of-Function-Keys">
+<h2 class="chapter"><span>9 Index of Function Keys<a class="copiable-link" href="#Index-of-Function-Keys"> &para;</a></span></h2>
+
+<a class="anchor" id="index_002dto_002dfunction_002dkeys-section_002dpage"></a>
+<dl class="table">
+<dt><kbd class="kbd">ABORT</kbd></dt>
+<dd><p>By convention when this is read by a program it aborts what it is doing
+and returns to its &quot;command loop&quot;.  Lisp listeners, for example, respond
+to <kbd class="kbd">ABORT</kbd> by throwing back to the read-eval-print loop (top-level or <code class="code">break</code>) and typing
+a star.  Note that <kbd class="kbd">ABORT</kbd> takes effect when it is read, not when it is typed;
+it will not stop a running program.
+</p>
+</dd>
+<dt><kbd class="kbd">CTRL/ABORT</kbd></dt>
+<dd><p>Aborts the operation currently being performed by the process you are
+typing at, immediately (not when it is read).  For instance, this will
+force a Lisp listener to abandon the present computation and return to
+its read-eval-print loop.  On the old keyboards, <kbd class="kbd">ABORT</kbd> does not exist
+as a separate key, but it can be typed as <kbd class="kbd">TOP/CALL</kbd>, and so <kbd class="kbd">CTRL/ABORT</kbd> can
+be typed as <kbd class="kbd">CTRL/TOP/CALL</kbd>.
+</p>
+</dd>
+<dt><kbd class="kbd">META/ABORT</kbd></dt>
+<dd><p>By convention when this is read by a program it aborts what it is doing and
+returns through all levels of commands to its &quot;top level&quot;.  Lisp listeners,
+for example, throw completely out of their computation, including any <code class="code">break</code>
+levels, then start a new read-eval-print loop.
+</p>
+</dd>
+<dt><kbd class="kbd">CTRL/META/ABORT</kbd></dt>
+<dd><p>A combination of <kbd class="kbd">CTRL/ABORT</kbd> and <kbd class="kbd">META/ABORT</kbd>, this immediately throws out
+of all levels of computation and restarts the process you type at it.
+</p>
+</dd>
+<dt><kbd class="kbd">BREAK</kbd></dt>
+<dd><p>Usually forces the process you are typing at into a <code class="code">break</code>
+read-eval-print loop, so that you can see what it&rsquo;s doing, or stop it
+temporarily.  The effect occurs when the character is read, not immediately.
+Type <kbd class="kbd">RESUME</kbd> to continue the interrupted computation (this applies to the
+three modified forms of the <kbd class="kbd">BREAK</kbd> key as well).
+</p>
+</dd>
+<dt><kbd class="kbd">CTRL/BREAK</kbd></dt>
+<dd><p>This is like <kbd class="kbd">BREAK</kbd> but takes effect immediately rather than when it is read.
+</p>
+</dd>
+<dt><kbd class="kbd">META/BREAK</kbd></dt>
+<dd><p>By convention forces the process you type it at into the error handler,
+when it is read.  It should type out &quot;<b class="b">&gt;&gt;BREAK</b>&quot; and the error-handler
+prompt &quot;<b class="b"></b>&quot;.  You can poke around in the process, then type <kbd class="kbd">RESUME</kbd>
+or <kbd class="kbd">CTRL/C</kbd> to continue.
+</p>
+</dd>
+<dt><kbd class="kbd">CTRL/META/BREAK</kbd></dt>
+<dd><p>Forces the process you type it at into the error handler, whether or not it
+is running.
+</p>
+</dd>
+<dt><kbd class="kbd">CALL</kbd></dt>
+<dd><p>Immediately stops the process you are typing at, and selects an idle
+lisp-listener (creating one if there aren&rsquo;t any).  This is the key to
+use to get to &quot;command level&quot; without destroying the computation in
+progress.  When the window called out-of is selected again, its process
+will be allowed to run once more.
+</p>
+</dd>
+<dt><kbd class="kbd">CLEAR-INPUT</kbd></dt>
+<dd><p>Usually flushes the input expression you are typing.  This command can
+be given on the old keyboards by typing <kbd class="kbd">CLEAR</kbd>.
+</p>
+</dd>
+<dt><kbd class="kbd">CLEAR-SCREEN</kbd></dt>
+<dd><p>Usually erases and refreshes the selected window.  On the old keyboards,
+which have no <kbd class="kbd">CLEAR-SCREEN</kbd> key, the <kbd class="kbd">FORM</kbd> key can be used for this.  In
+the editor (in searches and after <kbd class="kbd">CTRL/Q</kbd>) this key inserts a page
+separator character, which displays as &quot;page&quot; in a box. 
+</p>
+</dd>
+<dt><kbd class="kbd">DELETE</kbd></dt>
+<dd><p>This key is for some as yet unspecified form of deletion.  In Supdup
+it substitutes for the <kbd class="kbd">VT</kbd> key of the old keyboards.
+</p>
+</dd>
+<dt><kbd class="kbd">END</kbd></dt>
+<dd><p>Marks the end of input to many programs.  Input of a single-line
+nature may be ended with <kbd class="kbd">RETURN</kbd>, but <kbd class="kbd">END</kbd> will terminate multiple-line
+input where <kbd class="kbd">RETURN</kbd> is useful for separating lines.  The <kbd class="kbd">END</kbd> key does
+not apply when typing in Lisp expressions, which are
+self-delimiting.  The old keyboards have no <kbd class="kbd">END</kbd> key; <kbd class="kbd">TOP/RETURN</kbd> may be
+used as a substitute.
+</p>
+</dd>
+<dt><kbd class="kbd">HELP</kbd></dt>
+<dd><p>Usually gets you some on-line documentation or programmed assistance.
+On the old keyboards, <kbd class="kbd">HELP</kbd> does not exist as a separate key, but it
+can be typed as <kbd class="kbd">TOP/H</kbd>.  See <kbd class="kbd">SYSTEM HELP</kbd>, <kbd class="kbd">TERMINAL HELP</kbd>.
+</p>
+</dd>
+<dt><kbd class="kbd">HOLD-OUTPUT</kbd></dt>
+<dd><p>Not used currently.
+</p>
+</dd>
+<dt><kbd class="kbd">LINE</kbd></dt>
+<dd><p>The function of this key varies considerably.  It is used as a command
+by the editor, and sends a &quot;line feed&quot; character in Supdup and Telnet.
+</p>
+</dd>
+<dt><kbd class="kbd">MACRO</kbd></dt>
+<dd><p>Introduces a keyboard-macro command in programs, such as the editor,
+that have keyboard macros.  The <kbd class="kbd">MACRO</kbd> key is only defined while
+running such programs.  The <kbd class="kbd">BACK NEXT</kbd> key may be used for this
+function on the old keyboards.
+</p>
+</dd>
+<dt><kbd class="kbd">NETWORK</kbd></dt>
+<dd><p>This key is used to get the attention of a running Supdup or Telnet.  As such it
+functions as a command prefix.  This replaces <kbd class="kbd">BREAK</kbd> on the old
+keyboards.  See (supdup).
+</p>
+</dd>
+<dt><kbd class="kbd">OVER-STRIKE</kbd></dt>
+<dd><p>Moves the cursor back so that you can superpose two characters, should
+you really want to.  The key called <kbd class="kbd">BS</kbd> will do the same thing on the
+old keyboards.
+</p>
+</dd>
+<dt><kbd class="kbd">QUOTE</kbd></dt>
+<dd><p>Not currently used.
+</p>
+</dd>
+<dt><kbd class="kbd">RESUME</kbd></dt>
+<dd><p>Continues from the <code class="code">break</code> function and the error handler.  In Supdup
+this sends a backspace character, which is used for a resume-like command
+by ITS DDT.
+</p>
+</dd>
+<dt><kbd class="kbd">RETURN</kbd></dt>
+<dd><p>&quot;Carriage return&quot; or end of line.  Exact significance may vary.
+</p>
+</dd>
+<dt><kbd class="kbd">RUBOUT</kbd></dt>
+<dd><p>Usually erases the last character typed.  It is not the same as <kbd class="kbd">DELETE</kbd>.
+</p>
+</dd>
+<dt><kbd class="kbd">STATUS</kbd></dt>
+<dd><p>Not currently used.
+</p>
+</dd>
+<dt><kbd class="kbd">STOP-OUTPUT</kbd></dt>
+<dd><p>Not currently used.
+</p>
+</dd>
+<dt><kbd class="kbd">SYSTEM</kbd></dt>
+<dd><p>This key is a prefix for a family of commands, generally used to select
+a window of a specified type, such as Lisp Listener or Editor.  These
+commands can be given from the old keyboards by typing <kbd class="kbd">TOP/ESC</kbd> instead
+of <kbd class="kbd">SYSTEM</kbd>.  For a detailed description see (system-key).
+</p>
+</dd>
+<dt><kbd class="kbd">TAB</kbd></dt>
+<dd><p>This key is only sometimes defined.  Its exact function depends on context,
+but in general it is used to move the cursor right to an appropriate point.
+</p>
+</dd>
+<dt><kbd class="kbd">TERMINAL</kbd></dt>
+<dd><p>This key is a prefix for a family of commands relating to the display,
+which you may type at any time, no matter what program you are
+running.  These are documented below.  Most of these commands can be
+given from the old keyboards by using the <kbd class="kbd">ESC</kbd> key.
+</p>
+</dd>
+<dt><kbd class="kbd">TERMINAL A</kbd></dt>
+<dd><a class="anchor" id="terminal_002dA-page"></a><p>Striking <kbd class="kbd">TERMINAL A</kbd> (or <kbd class="kbd">ESC A</kbd> on the old keyboards) arrests the process
+whose state is currently being displayed in the who-line.  <kbd class="kbd">TERMINAL - A</kbd>
+un-arrests that process, whether it was originally arrested by typing
+<kbd class="kbd">TERMINAL A</kbd>, or <kbd class="kbd">CALL</kbd>, or whether it was arrested for some other reason.
+</p>
+</dd>
+<dt><kbd class="kbd">TERMINAL ABORT</kbd></dt>
+<dt><kbd class="kbd">TERMINAL BREAK</kbd></dt>
+<dd><p>These are the same as <kbd class="kbd">ABORT</kbd> and <kbd class="kbd">BREAK</kbd> except that they always work.
+The plain <kbd class="kbd">ABORT</kbd> and <kbd class="kbd">BREAK</kbd> keys are turned off by certain programs
+such as Supdup.  The <kbd class="kbd">META</kbd> modifier may be used, and the <kbd class="kbd">CTRL</kbd> modifier
+is assumed whether or not you type it.
+</p>
+</dd>
+<dt><kbd class="kbd">TERMINAL C</kbd></dt>
+<dd><p>Complements the inverse-video mode of the screen.  With a numeric argument,
+complements the inverse-video mode of the mouse-documentation line just above
+the who-line.
+</p>
+</dd>
+<dt><kbd class="kbd">TERMINAL CALL</kbd></dt>
+<dd><a class="anchor" id="terminal_002dcall-page"></a><p>Puts you into a <code class="code">break</code> read-eval-print loop, using the
+&quot;cold-load-stream&quot;.  This is a way of getting to a Lisp read-eval-print
+loop that completely bypasses the window system, which can be very
+useful in debugging, since it does not interact with very much of the
+rest of the system.  On the old keyboards, this command may be given as
+<kbd class="kbd">ESC CALL</kbd>.
+</p>
+</dd>
+<dt><kbd class="kbd">TERMINAL CLEAR-INPUT</kbd></dt>
+<dd><p>Discards any typed-ahead keyboard input which has not yet been read by
+a program.  On the old keyboards, this command may be given as <kbd class="kbd">ESC
+CLEAR</kbd>. 
+</p>
+</dd>
+<dt><kbd class="kbd">TERMINAL CLEAR-SCREEN</kbd></dt>
+<dd><p>Clears the screen and refreshes all the windows, including the who-line.
+Use this when something has been clobbered, e.g. by use of the
+&quot;cold-load-stream&quot;.  On the old keyboards, this command may be given as
+<kbd class="kbd">ESC FORM</kbd>.
+</p>
+</dd>
+<dt><kbd class="kbd">TERMINAL (n) F</kbd></dt>
+<dd><p>Displays a list of the users logged in to a machine.  With no numeric
+argument, shows the users logged in to AI.  With a numeric argument of 1,
+shows the users on Lisp machines and which Lisp machines are free.  With an
+argument of 2, shows the users on MC.  With an argument of 3, shows the
+users on AI and MC both.  With an argument of 0, asks for a command line,
+similar to the jcl of the :FINGER command on ITS.  This command goes over
+the network to gets its information, and consequently may take a while if
+the target machine is slow.
+</p>
+</dd>
+<dt><kbd class="kbd">TERMINAL H</kbd></dt>
+<dd><p>Displays the status of all the hosts on the Chaosnet.
+</p>
+</dd>
+<dt><kbd class="kbd">TERMINAL HELP</kbd></dt>
+<dd><p>Displays documentation on all of the function keys, including the
+terminal escape commands.  Type a space to return to your previous
+window.  On the old keyboards, this command may be given as <kbd class="kbd">ESC ?</kbd>.
+</p>
+</dd>
+<dt><kbd class="kbd">TERMINAL O</kbd></dt>
+<dd><p>Selects the window which is exposed on some screen and was selected
+least recently.  Thus repeating this command cycles through all the
+&quot;selectable&quot; exposed windows.  This is a lot like &quot;<kbd class="kbd">CTRL/X O</kbd>&quot; in the editor.
+</p>
+</dd>
+<dt><kbd class="kbd">TERMINAL (n) S</kbd></dt>
+<dd><p>Switches you to another &quot;selectable&quot; window.  The &quot;(n)&quot; represents an
+optional numerical argument.  For full details, see (terminal-S).
+</p>
+</dd>
+<dt><kbd class="kbd">TERMINAL (n) T</kbd></dt>
+<dd><p>Controls the selected window&rsquo;s input and output notification characteristics.
+If an attempt is made to output to a window when it is not exposed,
+one of three things can happen; the program can simply wait until the window
+is exposed, it can send a notification that it wants to type out and then
+wait, or it can quietly type out &quot;in the background&quot;; when the window is next
+exposed the output will become visible.  Similarly, if an attempt is made
+to read input from a window which is not selected (and has no typed-ahead
+input in it), the program can either wait for the window to become selected,
+or send a notification that it wants input and then wait.
+</p>
+<p>The <kbd class="kbd">TERMINAL T</kbd> command controls these characteristics based on its numeric
+argument, as follows:
+</p><dl class="table">
+<dt><kbd class="kbd">TERMINAL T</kbd></dt>
+<dd><p>If output notification is off, turns input and output notification on.
+Otherwise turns input and output notification off.
+This essentially toggles the current state.
+</p></dd>
+<dt><kbd class="kbd">TERMINAL 0 T</kbd></dt>
+<dd><p>Turns input and output notification off.
+</p></dd>
+<dt><kbd class="kbd">TERMINAL 1 T</kbd></dt>
+<dd><p>Turns input and output notification on.
+</p></dd>
+<dt><kbd class="kbd">TERMINAL 2 T</kbd></dt>
+<dd><p>Turns output notification on, and input notification off.
+</p></dd>
+<dt><kbd class="kbd">TERMINAL 3 T</kbd></dt>
+<dd><p>Turns output notification off, and input notification on.
+</p></dd>
+<dt><kbd class="kbd">TERMINAL 4 T</kbd></dt>
+<dd><p>Allows output to proceed in the background, and turns input notification on.
+</p></dd>
+<dt><kbd class="kbd">TERMINAL 5 T</kbd></dt>
+<dd><p>Allows output to proceed in the background, and turns input notification off.
+</p></dd>
+</dl>
+
+<p>You aren&rsquo;t really expected to remember all of these magic numbers.  As always,
+typing <kbd class="kbd">TERMINAL HELP</kbd> will print a brief reminder of the commands.
+</p>
+</dd>
+<dt><kbd class="kbd">TERMINAL W</kbd></dt>
+<dd><p>Controls the who-line.  What happens depends on the number typed
+before the &quot;W&quot;.  With no numeric argument, the who-line is
+redisplayed.  The numeric arguments control what process the
+who-line watches.  The options are:
+</p><dl class="table">
+<dt><kbd class="kbd">0</kbd></dt>
+<dd><p>Gives a menu of all processes, and freezes the who-line on the process
+you select.  When the who-line is frozen on a process, the name of that
+process appears where your user ID normally would (next to the date and
+time), and the who-line does not change to another process when you
+select a new window.
+</p>
+</dd>
+<dt><kbd class="kbd">1</kbd></dt>
+<dd><p>The who-line watches whatever process is talking to the keyboard,
+and changes processes when you select a new window.  This is the
+default initial state.
+</p>
+</dd>
+<dt><kbd class="kbd">2</kbd></dt>
+<dd><p>Freezes the who-line on the process it is currently watching.  If
+you select a new window the process will not change.
+</p>
+</dd>
+<dt><kbd class="kbd">3</kbd></dt>
+<dd><p>Freezes the who-line on the next process in a certain order.
+</p>
+</dd>
+<dt><kbd class="kbd">4</kbd></dt>
+<dd><p>Freezes the who-line on the next process in the other direction.
+</p>
+</dd>
+</dl>
+<p>These numbers are the same as on AI TV terminals, except that there
+is no &quot;system who-line&quot; on the Lisp machine.
+</p>
+</dd>
+<dt><kbd class="kbd">TERMINAL HOLD-OUTPUT</kbd></dt>
+<dd><p>If it says &quot;Output Hold&quot; in the who-line, indicating that the &quot;current&quot;
+process is trying to display on a window which is not exposed, typing
+this command will expose that window.  Otherwise typing this will beep.
+Use <kbd class="kbd">TERMINAL S</kbd> to return to the previously-selected window.  This
+function is unfortunately not available on old keyboards.
+</p>
+</dd>
+<dt><kbd class="kbd">TERMINAL CTRL/T</kbd></dt>
+<dd><p>De-exposes all temporary windows.  This is useful if the system seems to
+be hung because there is a temporary window on top of the window which
+is trying to type out and tell you what&rsquo;s going on.
+</p>
+</dd>
+<dt><kbd class="kbd">TERMINAL CTRL/CLEAR-INPUT</kbd></dt>
+<dd><p>Clears the locks on all the windows in the system, thus giving the
+window system a swift kick in the pants.  This often works to unwedge a
+catatonic window system.  This is a last resort, but not as drastic as
+warm booting.  It should be used when none of the windows will talk to
+you, when you can&rsquo;t get a system menu, etc.
+</p>
+</dd>
+</dl>
+
+</div>
+<div class="chapter-level-extent" id="Quick-Summary-of-Mouse-Functions">
+<h2 class="chapter"><span>10 Quick Summary of Mouse Functions<a class="copiable-link" href="#Quick-Summary-of-Mouse-Functions"> &para;</a></span></h2>
+
+<a class="anchor" id="mouse_002dcursor_002dshape-section_002dpage"></a>
+<p>These are some of the more common mouse cursors:
+</p>
+<p>A thin arrow pointing North by Northwest (up and to the left).
+This is the default mouse cursor.  It indicates that there no special
+commands on the mouse buttons.  Clicking Left will select the window
+pointed-to.  Clicking Right will get you the system menu.
+</p>
+<p>A thin arrow pointing North by Northeast (up and to the right).  This
+means the mouse is in an editor window.  You have several editor
+commands on the mouse buttons.  See (editor-mouse-buttons).
+</p>
+<p>A thin arrow pointing North (straight up).  The editor uses this to show that
+it is asking you for the name of a function or for a symbol.  If you
+point the mouse at a function name, and stop moving it, the name will
+light up and you can click to select it.
+</p>
+<p>A small X.  This is used when the mouse cursor wants to be unobtrusive,
+for instance in menus.
+</p>
+<ul class="mini-toc">
+<li><a href="#Scrolling-1" accesskey="1">Scrolling</a></li>
+</ul>
+<div class="section-level-extent" id="Scrolling-1">
+<h3 class="section"><span>10.1 Scrolling<a class="copiable-link" href="#Scrolling-1"> &para;</a></span></h3>
+
+<a class="anchor" id="scrolling-section_002dpage"></a>
+<p>Some windows display a &quot;contents&quot; which may be too big to fit entirely in the
+window.  The editor and the inspector are examples.  When this is the case,
+you see only a portion of the contents, and you can scroll it up and down
+using the mouse.
+</p>
+<p>The following mouse cursors indicate that the mouse is being used to control scrolling:
+</p>
+<p>A fat arrow, pointing up or down.  This indicates you are in a
+scrolling zone.  Moving the mouse slowly in the direction of the
+arrow will scroll the window, revealing more of the text in the
+direction the arrow points, while moving the mouse quickly will let
+you out of the window.
+</p>
+<p>Scrolling zones often say <i class="i">more above</i> or <i class="i">more below</i> in small
+italic letters.  Clicking on one of these legends will scroll the window
+up and down by its height, thus you will see the next or previous windowfull.
+When the window is at the top or bottom of its contents, so that it
+is not possible to scroll any farther in one direction, the legend in
+the scrolling zone will change to indicate this fact.
+</p>
+<p>A fat double-headed arrow.  There will be a thin black bar nearby, the
+&quot;scroll bar&quot;.  The size of this bar relative to the edge of the window
+to which it is attached shows what portion of the window&rsquo;s contents is
+visible.  The vertical position of the bar within the edge shows the
+position of the visible portion of the window&rsquo;s contents relative to the whole.
+The mouse commands in this case are
+</p><dl class="table">
+<dt><kbd class="kbd">Left</kbd></dt>
+<dd><p>Move the line next to the mouse to the top of the window.
+</p></dd>
+<dt><kbd class="kbd">Left Double</kbd></dt>
+<dd><p>Move the line next to the mouse to the bottom of the window.
+</p></dd>
+<dt><kbd class="kbd">Right</kbd></dt>
+<dd><p>Move the top line to where the mouse is.
+</p></dd>
+<dt><kbd class="kbd">Right Double</kbd></dt>
+<dd><p>Move the bottom line to where the mouse is.  Because of this command
+definition, you cannot get to the system menu while the mouse is
+displaying a double-headed fat arrow.
+</p></dd>
+<dt><kbd class="kbd">Middle</kbd></dt>
+<dd><p>Jump to a place in the window contents as far, proportionally, from
+its beginning as the mouse is from the top of the window.
+</p></dd>
+</dl>
+
+</div>
+</div>
+</div>
+
+
+
+</body>
+</html>
