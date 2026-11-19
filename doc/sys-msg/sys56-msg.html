@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <link rel="stylesheet" type="text/css"
+	  href="../lm3.css">
+    <title>LM-3 --- Lisp Machine System Release 56 Notes</title>
+  </head>
+  <body>
+    <center><h1>Lisp Machine System Release 56 Notes</h1></center>
+
+    <pre>
+Date: 22 JAN 1981 0354-EST
+From: Moon at MIT-AI (David A. Moon)
+Subject: System 56 released to users
+To: INFO-LISPM at MIT-AI
+
+System 56 is now ready for general release.  Currently it is the installed
+system on a couple of machines; it should get distributed more widely
+in the next couple of days.
+
+Most of the changes in this system are internal incompatible changes which
+should not affect users.  These changes are in the way regions work, in the
+editor, and in the window system.  A few notes:
+
+This system will not run with microcode younger than 720, and that microcode
+will not run with older systems.  When using the CC debugger on this system,
+load the latest LISPM;QCOM and LCADR;QF into the debugger machine if it is
+running an older system.
+
+Any file that contains a COMPILE-FLAVOR-METHODS that creates a combined method
+for the :EXPOSE or :DEEXPOSE messages, that defines a blinker, or that uses
+the TV:PREPARE-SHEET macro will need to be recompiled for the new system, and
+thereafter will not run in the old system.  Note that the TV:SHEET-FORCE-ACCESS
+macro generates a TV:PREPARE-SHEET.
+
+SETUP-KEYBOARD-DISPATCH-TABLE has been flushed.  This is mentioned because it is
+in the manual.  It has been a year or more since it was useful for anything.
+
+Documentation on the new "system" facility (which replaces pkg-load)
+may be found in the file AI:LMMAN;MAKSYS.  This facility was introduced in system 55.
+
+A new function VALUES-LIST, which is to VALUES as RETURN-LIST is to RETURN.
+
+The ABORT key has been changed somewhat, as announced in a previous message.
+Control-Z is still synonymous with ABORT in some programs.  If you have
+opinions about whether or not this use of control-Z should be flushed, please
+mail them in to BUG-LISPM.
+    </pre>
+
+    <hr/>
+    <p>Last modified: 2025/06/05 08:38:11 (UTC) by ams</p>
+  </body>
+</html>
+
+<!-- Local Variables: -->
+<!-- time-stamp-pattern: "-8/<p>Last modified:[ \t]%:y/%02m/%02d %02H:%02M:%02S (%Z) by %u</p>" -->
+<!-- time-stamp-time-zone: "UTC" -->
+<!-- End: -->

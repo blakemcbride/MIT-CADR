@@ -111,12 +111,37 @@ backends, headless operation (`./run -H`) and saved machine state.
 
 ## Documentation
 
-In `doc/`:
+In `doc/` (HTML; open in a browser):
 
+Using the machine
 - `operat.html` — *Operating the Lisp Machine*: start here
-- `chinual.html` — the *Lisp Machine Manual*
+- `chinual.html` — the *Lisp Machine Manual*, current edition
+- `chinual2nd.html`, `chinual4th.html`, `chinual5th.html`,
+  `chinual6th.html` — earlier editions of the manual
+- `lmman-editions.html` — guide to the manual's editions
 - `wind.html` — *Introduction to Using the Window System*
-- `cadr.html` — *The CADR Microprocessor* (AI Memo 528), the hardware
+  (`wind1.1.html` is the 1.1 edition)
+- `newtape.html` — documentation for the tape software
+- `history.html` — system release history, with the release notes for
+  each system version in `sys-msg/`
+
+Background and hardware
+- `lmnotes.html` — *Notes on the Lisp Machine*
+- `paper.html` — *LISP Machine Progress Report* (1977)
+- `cadr.html` — *The CADR Microprocessor* (AI Memo 528)
+- `knight-thesis.html` — *Implementation of a List Processing Machine*
+  (Tom Knight's thesis; the figures are missing upstream)
+- `schematics.html` — the CADR schematics and keyboard layouts, with
+  the drawings in `schematics/`
+- `pictures.html` — photographs of the machine, in `pictures/`
+
+Chaosnet
+- `amber.html` — *Chaosnet* (AI Memo 628)
+- `supdup.html` — *The SUPDUP Protocol*
+- `NFILE.html` — *NFILE, a File Access Protocol* (RFC 1073)
+
+The original MIT documentation sources, including the manual's source
+text, are in `sys/doc/` and `sys/man/`.
 
 Component documentation: `usim/README.md`, `usim/DEVELOPMENT.md`,
 `chaos/README.md`, and `usite/-read-.-this-` (making your own site,
@@ -141,7 +166,9 @@ Changes made here, relative to upstream:
   uses paths relative to the top of this tree.
 - `usim/Makefile.usim` and `usim/Makefile.talu`: `$(PWD)` changed to
   `$(CURDIR)` so the build works when invoked as `make -C usim`.
-- `doc/*.html`: the stylesheet link points at the local `texinfo.css`.
+- `doc/`: stylesheet links and links between the documents point at
+  the local copies. A few schematic drawings and the thesis figures
+  are missing upstream and so are absent here.
 - Fossil metadata directories (`.fossil-settings`) were dropped.
 
 ## Credits and licences

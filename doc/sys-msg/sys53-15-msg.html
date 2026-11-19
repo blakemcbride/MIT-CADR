@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <link rel="stylesheet" type="text/css"
+	  href="../lm3.css">
+    <title>LM-3 --- Lisp Machine System Release 53 Notes</title>
+  </head>
+  <body>
+    <center><h1>Lisp Machine System Release 53 Notes</h1></center>
+
+    <pre>
+Date: 18 DEC 1980 2019-EST
+From: MOON at MIT-AI (David A. Moon)
+Subject: New system released
+To: INFO-LISPM at MIT-AI
+
+System 53.15, with microcode 707 and Zmail 8.5, is now released to users.
+It should get distributed to all the Tech Square Lisp machines within a day
+or two.
+
+The principal change from system 51 is pathnames.  The file name processing
+stuff has been completely done over and is now cleaner and easier to use.
+If you use anything in the FS: package, you may notice the difference.  The
+old FS:FILE-xxx functions continue to work in system 53, but give an obsolete
+function warning in the compiler and will be removed in system 54.
+
+Documentation on pathnames is available.  The manual chapter on pathnames
+is in the file AI:LMMAN;PATHNM &gt;.  If you want to waste paper, you may
+:DOVER LMMAN;PATHNM XGP.
+
+There is a new terminal command, TERMINAL T.  Type TERMINAL HELP for
+documentation.
+    </pre>
+
+    <hr/>
+    <p>Last modified: 2025/06/05 08:38:11 (UTC) by ams</p>
+  </body>
+</html>
+
+<!-- Local Variables: -->
+<!-- time-stamp-pattern: "-8/<p>Last modified:[ \t]%:y/%02m/%02d %02H:%02M:%02S (%Z) by %u</p>" -->
+<!-- time-stamp-time-zone: "UTC" -->
+<!-- End: -->

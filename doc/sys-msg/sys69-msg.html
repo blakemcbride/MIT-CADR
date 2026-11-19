@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <link rel="stylesheet" type="text/css"
+	  href="../lm3.css">
+    <title>LM-3 --- Lisp Machine System Release 69 Notes</title>
+  </head>
+  <body>
+    <center><h1>Lisp Machine System Release 69 Notes</h1></center>
+
+    <pre>
+Date: 5 June 1981 01:58-EDT
+From: Mike McMahon &lt;MMcM at MIT-AI&gt;
+Subject:  system 69 released.
+To: INFO-LISPM at MIT-AI
+
+Since everyone seems to be using system 69 already anyway without
+significant problems, it is now officially released.  Here are the
+relevant change notes.
+
+The system comes with microcode 757.  The %DRAW-xxx microcode functions
+may now be used on arrays as well as sheets.  It also fixes some bugs in
+the metering facilities.
+
+SXHASH now ignores alphabetic case in strings, since EQUAL does.
+
+There are new array types: ART-HALF-FIX, containing signed 16-bit
+integers, ART-FPS-FLOAT, containing pdp-11/VAX/FPS floating-point
+numbers, and ART-FAT-STRING, containing 16-bit characters.  STRINGP is
+true for ART-FAT-STRING arrays as well as ART-STRING arrays.  An
+ART-FAT-STRING is printed just like a string, the extra 8 bits being
+ignored for that purpose.
+
+MAKE-PLANE has been changed incompatibly to make its arguments
+compatible with MAKE-ARRAY.  It now takes RANK as its first argument,
+required, and after that it takes keyword arguments.  The keywords are
+named :TYPE, :DEFAULT-VALUE, and :EXTENSION.
+
+There's a new global function IGNORE, defined as
+(DEFUN IGNORE (&REST IGNORE) NIL).
+
+All of the time printing functions will accept NIL as a value for the
+stream argument, meaning that the printed representation of the time
+should be returned as a string rather than printed to any stream.
+Actually, this has been true all along; but now it is official and we
+promise it will continue to work.
+
+TELNET now tries to negotiate for remote echoing.  This should improve
+behavior when Telnetting from a Lisp Machine to a TOPS-10.  Please
+report any new problems.
+
+There is a new microcode function %AOS-TRIANGLE.  Consult someone if you
+somehow imagine you want to use it.
+
+Files compiled in system 69 may not load into older worlds because of
+FS:MAKE-FASLOAD-PATHNAME not being defined.  If this screws you, it is
+safe to M-C 'FS:MAKE-PATHNAME-INTERNAL for this function.
+    </pre>
+
+    <hr/>
+    <p>Last modified: 2025/06/05 08:38:12 (UTC) by ams</p>
+  </body>
+</html>
+
+<!-- Local Variables: -->
+<!-- time-stamp-pattern: "-8/<p>Last modified:[ \t]%:y/%02m/%02d %02H:%02M:%02S (%Z) by %u</p>" -->
+<!-- time-stamp-time-zone: "UTC" -->
+<!-- End: -->

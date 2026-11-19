@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <link rel="stylesheet" type="text/css"
+	  href="../lm3.css">
+    <title>LM-3 --- Lisp Machine System Release 50 Notes</title>
+  </head>
+  <body>
+    <center><h1>Lisp Machine System Release 50 Notes</h1></center>
+
+    <pre>
+Date: 27 NOV 1980 0122-EST
+From: Moon at MIT-AI (David A. Moon)
+Subject: New system released
+To: INFO-LISPM at MIT-AI
+
+System 50.9 and microcode 701 work well enough to be released to users.  These
+are installed on one or two machines and will migrate to more soon.  There are
+some minor incompatible changes; the remainder of this message describes the
+changes.  Note that using system 50 with a microcode older than 701 will not
+work optimally.  Using an older system with microcode 701 will work very poorly.
+
+System 50 requires UCADR 701 or later.  When using the CC debugging program to look
+at a machine running system 50, CC should be running in system 50 (or else
+load the latest LCADR;QF) or the virtual memory will not work properly and
+the machine being debugged will be trashed.
+
+The control-top-letter and meta-top-letter editor commands now work reasonably
+on "Space Cadet" keyboards.  For instance, the command to show you the arguments
+to the function, a call to which is around point, is control-top-A on the old
+keyboards and control-shift-A (the same finger motion) on the new keyboards.
+
+Certain tables are now dynamically allocated, allowing the system to work
+with more than 256K of memory.  Also machines with small amounts of memory
+will have a few additional available memory pages.
+
+There is a new DEFMACRO keyword, &BODY.  This is like &REST but causes
+the editor and grinder to indent the following forms as a "body", i.e. 2
+spaces in from the open parenthesis that starts the "call" to the macro.
+
+The "C" command in DIRED is implemented and does the same thing as in
+Emacs (source comparison); Meta-X Source Compare and Meta-X Source Compare
+Merge are available in Zmacs.
+
+A new function, VALUES, has been installed in the global package; if you
+are using this name, you may have a name conflict.  VALUES is a function
+of any number of arguments, which returns many values: one for each argument.
+You can use this to return multiple values from a function, without using
+a PROG anywhere.
+
+The functions in the TIME package have all been renamed, and all their
+arguments and returned values have been changed.  In particular, the
+WHAT-DATE function has been removed from the TIME package; some people
+may use this in init files; you can now use TIME:PRINT-CURRENT-TIME,
+which is the same but doesn't print a newline.  Since the time functions
+had not been documented anyway, probably nobody is otherwise affected by
+this.   The time parser has been greatly spiffed up; if Zmail asks you
+for a time, you can now answer in nearly any format that makes sense to
+anybody.
+
+The :BLINKER-FUNCTION window initialization keyword has been renamed to
+:BLINKER-FLAVOR (for a long time it has been a flavor name rather than a
+function name).
+
+The previously announced changes to PUTPROP have been installed; PUTPROP
+no longer changes the order of properties in the property list.
+
+All (well, almost all) mouse-sensitive screen areas are now indicated by
+outlining rather than inverse video.  This is intended to move toward a
+more consistent convention for use of the mouse.
+
+The system now automatically deletes all files on your directory when you
+log in.  This is here to encourage users to read these messages, rather than
+come and complain to us that they weren't informed of changes.
+
+The special form ZWEI:OPEN-FILE is gone, having been replaced by WITH-OPEN-FILE.
+The syntax is essentially the same.  Some users are probably using ZWEI:OPEN-FILE
+and will need to switch.
+
+Redefining a traced function no longer automatically untraces it.
+
+BEGF and ENDF are gone; they haven't done anything for two years but may
+still exist in some source files.
+
+%HALT is no longer global since it is an internal sub-primitive.
+The following symbols are global for the stepper program (they should
+have been all along; this was an oversight):  STEP-FORM STEP-VALUE STEP-VALUES
+
+Y-OR-N-P and YES-OR-NO-P no longer accept their arguments in either order.
+    </pre>
+
+    <hr/>
+    <p>Last modified: 2025/06/05 08:38:11 (UTC) by ams</p>
+  </body>
+</html>
+
+<!-- Local Variables: -->
+<!-- time-stamp-pattern: "-8/<p>Last modified:[ \t]%:y/%02m/%02d %02H:%02M:%02S (%Z) by %u</p>" -->
+<!-- time-stamp-time-zone: "UTC" -->
+<!-- End: -->

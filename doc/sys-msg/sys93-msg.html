@@ -1,0 +1,1364 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <link rel="stylesheet" type="text/css"
+	  href="../lm3.css">
+    <title>LM-3 --- Lisp Machine System Release 93 Notes</title>
+  </head>
+  <body>
+    <center><h1>Lisp Machine System Release 93 Notes</h1></center>
+
+    <pre>
+15-Mar-83 20:28:27-EST,748;000000000000
+Return-path: &lt;rms@MIT-OZ&gt;
+Date: Tuesday, 15 March 1983, 20:21-EST
+From: Richard M. Stallman &lt;rms@MIT-OZ&gt;
+Subject: System 93
+To: info-lispm-mit@MIT-OZ
+
+System 93 is now released, and documented in SRC:&lt;L.DOC&gt;SYS93.MSG.
+I don't know of any serious bugs.
+
+System 93 is now up on the file computer, so the FC file system is now
+accessible from 93, using the FILE protocol.  This means you can get at
+it from other machines with CFTP.  Connect to CADR27 and use a filename
+that begins with "FC:", assuming that CFTP does not screw you by
+thinking it knows the pathname syntax for CADR27.  See SRC:&lt;L.FILE2&gt;DOC.TEXT
+for documentation on FC.
+
+FC still responds to its old protocol for the sake of systems before 93
+and job devices on ITS.
+
+System 93 is released with microcode 226.  It should not be used
+with earlier microcode versions.
+
+Compiled Code Will Become Incompatible.
+
+As of March 22, code compiled in system 93 will no longer run in system 91.
+
+At this time, the compiler will be changed to take advantage of new
+macroinstructions for accessing arrays and instances with small constant indices.
+This should make access to slots of DEFSTRUCT arrays and outside accessible
+instance variables faster.
+
+The new compiled code will work in system 91 if microcode 226 is used.
+I believe system 91 will work with microcode 226 as long as unibus interrupts
+are not used, but due to that exception microcode 226 should not be generally
+installed with system 91.
+
+Other Incompatibilities (further discussed below).
+
+Compiled ZMAIL init files containing filter definitions must be recompiled.
+
+Frames no longer have the instance variable TV:SELECTED-PANE.
+It is replaced by TV:SELECTION-SUBSTITUTE.
+
+The :TYI operation on windows now discards blips ("characters" which are lists).
+This is to say, the effect of TV:ANY-TYI-MIXIN is now the default.
+
+The :REDEFINE-MARGINS window operation no longer takes an argument.
+
+Hash tables are now flavor instances.
+
+Editor buffers and windows have been reorganized internally,
+and several editor commands have been renamed.
+
+Abort in incremental search moves back to the starting point of the search.
+
+Window System Changes
+
+	[A] Selection Substitutes.
+	[B] :TYI Returns Only Fixnums.
+	[C] Any Window May Be a Pane.
+	[D] More Windows Have Borders.
+	[E] :DESELECT Operation on Windows Generalized.
+	[F] Global Asynchronous Characters.
+	[G] Shifted Control and Meta Characters.
+	[H] :REDEFINE-MARGINS Operation Changed.
+	[I] Defining Terminal and System Keys.
+	[J] Momentary Menus and Mouse Warping.
+	[K] NIL in Menu Item Lists.
+
+[A] Selection Substitutes.
+
+Every window now has the ability to designate a "selection substitute".
+If a window has a substitute, the :SELECT operation will actually select the
+substitute (or its substitute, etc.)  Switching between panes within a frame
+is now done by altering the selection substitute of the frame.  As a result,
+the frame knows at all times which window to select if the user asks to
+select the frame.
+
+These operations on windows are provided for working with selection
+substitutes:
+
+:SELECTION-SUBSTITUTE -- returns the window's selection substitute,
+	   which is NIL if the window does not currently have one.
+
+:SET-SELECTION-SUBSTITUTE substitute -- sets the window's selection
+	   substitute to substitute (another window).  If this window or its
+	   old substitute was selected, substitute will be selected instead.
+	   substitute should be NIL to get rid of any substitute; then if
+	   the window's old substitute was selected, the window itself
+	   will be selected instead.
+
+:ULTIMATE-SELECTION-SUBSTITUTE -- returns the window's substitute's
+	   substitute...  If the window has no substitute, the value is the window
+	   itself.
+
+:SELF-OR-SUBSTITUTE-SELECTED-P -- T if this window, or its substitute,
+	   or its substitute's substitute, etc., is selected.
+
+When a program which uses a frame wishes to change the selected pane,
+it should send :SET-SELECTION-SUBSTITUTE to the frame, with the desired
+pane as argument.  Note that the pane to select need not be an immediate
+inferior of the frame.  This operation produces the correct results regardless
+of whether the frame is currently selected at all.
+
+The old operation :SELECT-PANE, which used to exist on frames,
+is now the same as :SET-SELECTION-SUBSTITUTE.
+The instance variable TV:SELECTED-PANE that frames used to have
+is gone, subsumed by TV:SELECTION-SUBSTITUTE which all windows have.
+
+To switch the selected pane temporarily, use the macro
+
+(TV:WITH-SELECTION-SUBSTITUTE (window for-window) body...)
+	   executes body with window as the substitute for for-window.
+	   On exit, it sets for-window back to whatever it used to be,
+	   and deexposes or deactivates window if appropriate.
+
+This macro should replace most uses of TV:WINDOW-CALL.
+
+Non-Inferior Substitutes.
+
+Some programs wish to "replace" one window with another temporarily.  For
+example, the functions SUPDUP and TELNET can behave this way, giving the
+appearance of temporarily changing the Lisp listener or other window they are
+called in into a SUPDUP or TELNET window.  They do this by creating a suitable
+SUPDUP or TELNET window and making it the substitute for the original window.
+In this case, the substitute window will have the same edges and the same
+superior as the original window.  It is not an inferior of the original window.
+It is not required that the "replacement" window be the same size as the
+original, either.
+
+It is important that the :ALIAS-FOR-SELECTED-WINDOWS operation be the
+inverse of :ULTIMATE-SELECTION-SUBSTITUTE: if w1 is the substitute for w2,
+then w1's :ALIAS-FOR-SELECTED-WINDOWS must be the same as w2's.  With
+frames, you can ensure this by mixing TV:ALIAS-FOR-INFERIORS-MIXIN or
+TV:FRAME-INFERIORS-NOT-EXTERNALLY-SELECTABLE-MIXIN into the frame flavor.
+This makes the frame be the :ALIAS-FOR-SELECTED-WINDOWS of all of its
+inferiors to all levels.  In the case of "replacing" a window with another that
+is not its inferior, you must still make the :ALIAS-FOR-SELECTED-WINDOWS of
+the replacement window be that of the original window, by defining a
+new method for that operation and keeping a pointer to the original window.
+
+Typeout Windows and Selection Substitutes.
+
+Typeout windows now use the selection substitute mechanism to select
+themselves when output on.  The typeout window makes itself the substitute of a
+suitable window above it in the hierarchy, not necessarily the immediate
+superior of the typeout window.  This is so that it will work to type on the
+typeout window when its immediate superior is not selected (this happens in the
+editor if you type Meta-X Help).  It also records what that window used to have as
+a substitute.
+
+When the typeout window is deactivated, if it is still the substitute for that
+window, it attempts sets that window's substitute back to what it used to be.  It
+does this by sending that window a :REMOVE-SELECTION-SUBSTITUTE message.
+
+:REMOVE-SELECTION-SUBSTITUTE window-to-remove suggested-substitute
+	   makes sure that window-to-remove is not this window's substitute,
+	   suggesting suggested-substitute as a substitute instead.
+	   The standard implementation of this operation simply sets the
+	   substitute to suggested-substitute if the substitute was
+	   window-to-remove.  This operation is used and documented so
+	   that particular windows can define their own ways of calculating
+	   the new value for the substitute, perhaps ignoring suggested-substitute.
+
+The flavor TV:KLUDGE-INFERIOR-MIXIN is gone; the functionality it used to
+provide is now intergal to TV:BASIC-TYPEOUT-WINDOW.
+
+FQUERY and Substitutes.
+
+The :SELECT option in FQUERY was created to make sure that the editor's
+type-in window (the "echo area") would have a blinking cursor when a
+query happens in the editor.  The type-in window now arranges this automatically
+by making itself the substitute of the editor frame whenever input is done on it.
+Simply selecting it and deselecting it, as FQUERY would have done, would not
+be correct any more.  So FQUERY's :SELECT option no longer does anything;
+it is accepted but ignored.
+
+It is possible that some users are relying on FQUERY's :SELECT option in other
+circumstances.  If necessary, I can develop a way to make it work properly.
+However, it is likely that a better solution to the problem is to make the
+windows concerned know how to select themselves, as the editor's type-in
+window does.  To see how, refer to the definition of
+(:METHOD ZWEI:ECHO-AREA-QUERY-WINDOW :WRAPPER :ANY-TYI).
+
+[B] :TYI Returns Only Fixnums.
+
+The :TYI operation on windows now returns only fixnums.  Lists ("blips") in the
+input stream are just discarded, and :TYI does not return until it finds a fixnum.
+
+To do input and see blips, use the :ANY-TYI operation, which all windows support.
+
+This behavior used to be the result of TV:ANY-TYI-MIXIN.  As the behavior is
+now the default, the mixin is a no-op, but it remains in existence for
+compatibility.
+
+A note on the use of blips.
+
+Blips are lists put into an input stream with the :FORCE-KBD-INPUT operation.
+
+It is always possible for a blip to be lost.  For example, the process reading
+the input stream could be in the error handler, which ignores all blips.
+So if you use blips, you must make sure that losing a blip is not a problem.
+
+There are two known correct uses of blips, mouse commands and "wakeup"
+signals.
+
+Blips for mouse commands comes from things like command menus and typeout
+windows, and direct a process to handle the command.  It is no problem that
+these blips will be lost if the process is in the error handler; the user will
+understand that it cannot obey its usual mouse commands at that time.
+
+Blips have sometimes been used to convey asynchronous requests to a process;
+such as, the completion of background loading or saving a file in ZMAIL.
+This is an error, because the loss of the blip causes serious problems.
+A correct technique is to put the information itself on a separate queue
+and then supply a "wakeup" blip which says only "wake up and check the queue".
+The process should check its queue each time around its main command loop.
+The wakeup blip is treated as a no-op, but it makes the process go around its
+loop and incidentally poll the queue.  If the wakeup blip is lost, eventually
+the program will return from wherever it was, and check the queue anyway.
+
+[C] Any Window May Be a Pane.
+
+TV:PANE-MIXIN now has no effect.  Any window can serve as a pane in a frame.
+
+[D] More Windows Have Borders.
+
+Typeout windows--such as those used for output printed by editor commands--
+now have borders.  The border is a line drawn across the bottom of the screen area
+actually occupied by output.  This feature can be disabled by setting
+TV:*ENABLE-TYPEOUT-WINDOW-BORDERS* to NIL.
+
+Editor frames now have borders that go around the whole frame, including the
+mode line and mini buffer area.
+
+Lisp Listeners and SUPDUP windows used to have no borders or labels if they
+occupied the whole screen.  This is no longer true; now they always display
+borders and labels.  TV:FULL-SCREEN-HACK-MIXIN, which used to implement the
+special case check, no longer exists.
+
+[E] :DESELECT Operation on Windows Generalized.
+
+The argument to the :DESELECT operation on a window now has these possible values:
+
+    :FIRST -- put this window at the front of the ring of selected windows, after
+	     selecting the window that was there.  This is like Terminal S.
+    :LAST -- put this window at the end of the ring, and select the window
+	     at the front of the ring.
+    :DONT-SAVE -- do not put this window into the ring,
+	     and do not automatically select another.
+    :BEGINNING --  put this window at the beginning,
+	     but do not automatically select another.
+    :END --  put this window at the end, but do not automatically select another.
+
+NIL is equivalent to :BEGINNING.
+
+[F] Global Asynchronous Characters.
+
+The Terminal and System keys are standardly global asynchronous characters; that is,
+they are asynchronous characters that are handled regardless of the selected window.
+The set of active global asynchronous characters is now controlled by the value of
+the variable TV:KBD-GLOBAL-ASYNCHRONOUS-CHARACTERS.  It is an alist whose elements
+look like (char function).  function is a function of no arguments that will be
+called in the keyboard process.  It must not do i/o or wait for any reason; if that
+is part of the desired functionality, use PROCESS-RUN-FUNCTION to have it done in
+another process.
+
+[G] Shifted Control and Meta Characters.
+
+The Shift key on letters with Control, Meta or Super used to be a synonym
+for Hyper, making C-Shift-A another way of typing Hyper-Control-A.
+
+Now the Shift key with Control (etc.) letters is a way of forcing lower case.
+So Control-Shift-A is really "Control-Lowercase-A", which there used to
+be no way to type (recall that letters with meta bits are normally uppercase).
+In programs, this character can be input as #\CONTROL-SHIFT-A, or as
+#\CONTROL-/a (again, #\CONTROL-A is a controlified uppercase A).
+
+Another way of thinking of this is that the Shift key has the opposite of its
+normal meaning when Control, Meta, Super or Hyper is present; the character
+is uppercase unless Shift is pressed.  (Also, Shift-lock has no effect).
+
+In the editor, the new shifted control letters are normally defined as synonyms
+for the Hyper characters they used to be identical to.
+
+A program can turn off the interaction between the Control, Meta, Super and
+Hyper keys and the Shift key by putting a non-NIL value for the property
+:DONT-UPCASE-CONTROL-CHARACTERS on the property list of a window's input
+buffer.  Then the characters are lowercase unless Shift is pressed.  This is used
+by SUPDUP so that it can transmit the case as specified.
+
+[H] :REDEFINE-MARGINS Operation Changed.
+
+The :REDEFINE-MARGINS operation on windows, which tells a window
+to recompute the size of its margins, now no longer takes an argument.
+
+This operation now directs a window to recompute how much margin space is
+required for its box, label, scroll bar or whatever it has, based on whatever
+is currently specified for how to display the box, label, etc.  For example,
+the :SET-LABEL operation does a :REDEFINE-MARGINS after it changes the
+label-describing data structure.
+
+[I] Defining Terminal and System Keys.
+
+Some new functions have been added to make it user to customize what
+typing the teminal or system keys will do.  The function TV:ADD-ESCAPE-KEY
+defines a new Terminal key, and TV:ADD-SYSTEM-KEY defines a new System key.
+Here is how to call them:
+
+TV:ADD-ESCAPE-KEY character function documentation &rest options
+
+    Defines Terminal followed by character to call function.
+    documentation is printed to describe the meaning of character
+    if the user does Terminal Help.  This string is no longer
+    restricted to a single line.
+
+    options are keywords (not accompanied by values).
+    The meaningful keywords are :KEYBOARD-PROCESS, which means
+    that function should be called in the keyboard process rather than
+    in a separate process, and :TYPEAHEAD, which says to copy all type-ahead
+    into the input buffer of the selected windows.  :TYPEAHEAD should be
+    used with commands that can switch windows.
+
+TV:ADD-SYSTEM-KEY character window-or-flavor documentation &optional (create T)
+
+    Defines System followed by character to select a window according
+    to window-or-flavor.  This argument may be
+      a window, which will be selected if System character is typed.
+      a window flavor name.  System character will select a window
+	which is TYPEP that flavor, or rotate through all such windows.
+	This flavor may be a mixin.
+      a list.  System character will evaluate it.  The value should be
+	a window or a window flavor name.
+    If there is no such window, or if Control is held down with character,
+    a window is created if create is non-NIL.  create may be
+      T, meaning that a window of flavor window-or-flavor should be
+	created.  In this case, that flavor must be instantiable.
+      a window flavor name.  A window of that flavor will be created.
+      a list.  It will be evaluated, and should create and select a window.
+
+There are also functions TV:REMOVE-ESCAPE-KEY and TV:REMOVE-SYSTEM-KEY
+which undefine characters.  They take one argument, the character to undefine.
+
+[J] Momentary Menus and Mouse Warping.
+
+When a momentary menu disappears after you have chosen an item, the mouse
+is warped on the screen back to where it was before the menu appeared.  This
+can be convenient if the mouse was pointing at some feature on the screen that
+you wish to click on frequently.
+
+[K] NIL in Menu Item Lists.
+
+NIL in a menu item list is now ignored.  It does not display at all.
+(The old behavior of NIL was fairly useless).
+Thus, (TV:MENU-CHOOSE (LIST (IF X 'Y) 'Z (IF A 'B)))
+will always offer the alternative Z, and may offer Y, B or neither or both of them.
+
+Programming Changes.
+
+	[A] Property List Functions Work on Instances.
+	[B] Hash Tables Are Now Flavor Instances.
+	[C] Compiler Optimizes (FUNCALL SELF) into (FUNCALL-SELF) When Appropriate.
+	[D] New Construct LET-GLOBALLY-IF.
+	[E] New Construct CATCH-ERROR-RESTART-EXPLICIT-IF.
+	[F] New Variable CURRENT-STACK-GROUP.
+	[G] SPACES Argument to STRING-CAPITALIZE-WORDS.
+	[H] New Function STRING-SUBST-CHAR.
+	[I] STRING-SEARCH Can Search for a Substring of a String.
+	[J] Rank-0 Arrays Are Allowed.
+	[K] Returning No Values is Allowed
+	[L] New Function ARRAY-DIMENSION.
+	[M] Reading Hex Numbers.
+	[N] Reading Complex Numbers.
+	[O] Output of Lozenged Strings.
+	[P] New Function CLOSURE-BINDINGS.
+	[Q] New Mode for TIME:MONTH-STRING and TIME:DAY-OF-THE-WEEK-STRING.
+	[R] PROCESS-LOCK Timeouts.
+	[S] INSTANCEP.
+	[T] :NULL as Argument to TYPEP.
+	[U] New Error Condition Name SYS:INVALID-FUNCTION-SPEC.
+
+[A] Property List Functions Work on Instances.
+
+The property list functions GET, GETL, PUTPROP, REMPROP, PLIST and SETPLIST
+now allow an instance as the first argument.  In this case, they work by sending a
+message to the instance.  If the instance's flavor incorporates
+SI:PROPERTY-LIST-MIXIN, you will access the instance's property list.
+Familiar objects this applies to include editor buffers, pathnames and conditions.
+
+[B] Hash Tables Are Now Flavor Instances.
+
+Hash tables are now instances of the two flavors SI:EQ-HASH-TABLE and
+SI:EQUAL-HASH-TABLE.  All the old hash table functions such as GETHASH
+and MAKE-HASH-TABLE still work; only the data type of the object is different.
+You can also create hash tables with MAKE-INSTANCE.  All the keyword arguments
+that MAKE-HASH-TABLE accepts are now init keywords for those flavors.
+
+There is one new keyword: :REHASH-BEFORE-COLD.  If supplied with a non-NIL
+value, the hash table will be rehashed automatically (if it needs it) when
+DISK-SAVE is done.  This will avoid a delay when the hash table is used
+for the first time when the saved band is booted.
+
+The operations supported by hash tables are:
+
+:SIZE -- returns the number of entries the table has.  Note that the table
+	   will be rehashed well before all the entries are full.
+:FILLED-ENTRIES -- returns the number of entries now in use.
+:GET-HASH key -- returns the value associated with key.
+	   The second value returned is T if key was found at all;
+	   this way you can distinguish an explicit NIL from a key not found.
+	   The third value is a list, shared with the hash table data structure,
+	   that holds the key and all the values associated with it.
+:PUT-HASH key &rest values -- sets the values associated with key to values.
+	   A hash table records a fixed number of values for each key;
+	   the number of values is specified when the hash table is created.
+	   Any values you do not specify with args to :PUT-HASH are set to
+	   NIL by the :PUT-HASH.
+:REM-HASH key -- deletes the entry for key
+:CLEAR-HASH -- deletes all entries, leaving the table empty.
+:SWAP-HASH key &rest values -- like :PUT-HASH but returns the old value.
+:MODIFY-HASH key function &rest additional-args
+	   passes the value for key to function and updates the value
+	   to be whatever function returns.  Thus, the hash association for
+	   key is both examined and updated according to function.
+	   The arguments passed to function are key, the value for it,
+	   a flag (T if key is actually found in the hash table), and the
+	   additional-args that you specify.
+	   Only the first value of those associated with  key is available to
+	   function and only that value is modified.
+:MAP-HASH function &rest extra-args -- calls function once for each entry in use
+	   in the hash table.
+	   The arguments passed to function are the key for that entry,
+	   the values associated with it (a fixed number for each hash table, remember)
+	   and the extra-args.  Thus, the number of arguments
+	   depends on how many values the hash table records.
+:MAP-HASH-RETURN function &optional return-function
+	   Calls function once for each in-use entry and accumulates the values
+	   returned by function.  return-function is used to combine the values.
+	   The default is LIST.  NCONC is also useful, and is optimized.
+
+LOOP Iteration Path for Hash Tables
+
+There is a new LOOP iteration path for doing effectively the same thing as MAPHASH.
+It is called HASH-ELEMENTS.  It is used as follows:
+
+    (LOOP FOR P BEING THE HASH-ELEMENTS
+		 OF FS:*PATHNAME-HASH-TABLE* WITH-KEY K
+	  DOING (FORMAT T "~&Key ~S, pathname ~A." K P))
+
+In this example, P gets successively each pathname object used so far,
+and K gets the list of components used to extract it from the hash table.
+
+The WITH-KEY keyvar can be omitted if you wish to examine only
+the values, not the keys.
+
+[C] Compiler Optimizes (FUNCALL SELF) into (FUNCALL-SELF) When Appropriate.
+
+The compiler optimizes (FUNCALL SELF ...) into (FUNCALL-SELF ...) whenever
+it is seen in a method or a function with a :SELF-FLAVOR declaration.  Since the
+SEND function actually macroexpands into FUNCALL in the MIT system, it will also
+be optimized.  You can now write (SEND SELF ...) for source compatibility with
+Brand S, and the MIT compiler will do the right thing.
+
+[D] New Construct LET-GLOBALLY-IF.
+
+(LET-GLOBALLY-IF cond-form ((variable value-form)...) body...)
+
+This conditional version of LET-GLOBALLY first evaluates cond-form.  If its value
+is non-NIL, each variable is set to the corresponding value-form's value on entry,
+and set back to its original value on exit from the body.  If the value of
+cond-form is NIL, the variables are not set at either time.
+
+[E] New Construct CATCH-ERROR-RESTART-EXPLICIT-IF.
+
+(CATCH-ERROR-RESTART-EXPLICIT-IF
+     cond-form (condition-names proceed-type format-string format-args...)
+  body...)
+
+This macro does about the same thing as CATCH-ERROR-RESTART-IF except that it
+uses the specified proceed type instead of an anonymous list to identify the
+resume handler that it creates.  In addition to making it possible for condition
+handlers to resume by specifying that proceed type, this also makes the resume
+handler a candidate for the Resume key in the debugger.
+
+[F] New Variable CURRENT-STACK-GROUP.
+
+The currently running stack group can now be found as the value of
+the variable CURRENT-STACK-GROUP.  SI:%CURRENT-STACK-GROUP still works.
+
+[G] SPACES Argument to STRING-CAPITALIZE-WORDS.
+
+STRING-CAPITALIZE-WORDS now takes a third, optional argument SPACES.
+If this argument is NIL, hyphens are not converted to spaces.
+
+[H] New Function STRING-SUBST-CHAR.
+
+STRING-SUBST-CHAR new-char old-char string
+
+  replaces every occurrence of old-char in string with new-char.
+  The value is a copy; string itself is not changed.
+
+[I] STRING-SEARCH Can Search for a Substring of a String.
+
+STRING-SEARCH and STRING-REVERSE-SEARCH can now be given extra arguments to
+specify a substring of the search key.  This is equivalent to making a substring
+of the key first and then passing it to STRING-SEARCH or STRING-REVERSE-SEARCH,
+but it is faster.  The complete arguments are now:
+
+STRING-SEARCH key string &optional (start 0) end (key-start 0) key-end
+
+key-start and key-end are the arguments that specify the portion of key to be
+used; they default to the whole thing.  start and end specify as before the portion
+of string to be searched.
+
+[J] Rank-0 Arrays Are Allowed.
+
+It is now valid to use NIL as the list of dimensions when creating an array.
+The array you get has rank zero; it has a single element, which is accessed
+using AREF with no subscripts.
+
+[K] Returning No Values is Allowed
+
+You can now write (VALUES) to return no values from a function.
+If the function was called within MULTIPLE-VALUE-LIST, the value returned
+from that will be NIL.
+
+[L] New Function ARRAY-DIMENSION.
+
+ARRAY-DIMENSION array dimension
+
+  returns the length of the dimension'th dimension of array.
+  The values of dimension range from zero through one less than
+  the rank of array.  This function makes ARRAY-DIMENSION-N obsolete.
+
+[M] Reading Hex Numbers.
+
+It is no longer necessary to put a sign in front of a number in bases greater than ten
+when it contains letters serving as digits beyond 9.  Those letters which are used
+in the given radix (A through F in hex) will automatically be recognized as digits.
+They also lose their normal syntactic meaning.  For example 10E3 in hex is a fixnum,
+not a flonum as usual.  Such conflicts are inherent in the use letters as digits,
+so nothing can be done about them.
+
+This change would be undesirable for anyone simply setting IBASE to 16. permanently,
+but for reading individual numbers it is an improvement.
+
+[N] Reading Complex Numbers.
+
+Complex numbers can now be typed in, using the syntax m+ni or m-ni, where
+m and n can be any numbers.  This is the same syntax used to print them.
+
+[O] Output of Lozenged Strings.
+
+A lozenged string is the term for the way special characters echo and print out:
+a string inside an outline.  This kind of output is now available under program control.
+
+The window operation :DISPLAY-LOZENGED-STRING displays an arbitrary string
+inside a lozenge.  Its only argument is a string.
+
+FORMAT:OCHAR can also display a lozenged string if given :LOZENGED as its second
+argument.  The output is the same as with a second argument of :EDITOR, inside
+a lozenge provided the stream supports the :DISPLAY-LOZENGED-STRING operation
+unless the character is a graphic character.  For example,
+
+	(FORMAT:OCHAR #\RETURN ':LOZENGED)
+
+will print "RETURN" inside a lozenge if STANDARD-OUTPUT is a window.
+
+[P] New Function CLOSURE-BINDINGS.
+
+CLOSURE-BINDINGS closure
+
+  This returns the list of binding-instances of closure, a data structure containing
+  the external value cells of the closure.  You can pass the data structure to
+  SYS:%USING-BINDING-INSTANCES to enter the environment of the inside of the
+  closure.
+
+[Q] New Mode for TIME:MONTH-STRING and TIME:DAY-OF-THE-WEEK-STRING.
+
+Both TIME:MONTH-STRING and TIME:DAY-OF-THE-WEEK-STRING now accept
+':ITALIAN as a mode argument.  The appropriate name, such as "Lunedi" for Monday
+(day 0) or "Febbraio" for February (month 2), is returned.
+
+[R] PROCESS-LOCK Timeouts.
+
+You can now specify a timeout to the function PROCESS-LOCK.  If the lock
+you are trying to lock does not become available before the timeout elapses,
+an error possessing condition name SYS:LOCK-TIMEOUT is signaled.
+
+The timeout is in units of 60'ths of a second, and is specified as the third
+argument to PROCESS-LOCK.
+
+[S] INSTANCEP.
+
+The function INSTANCEP returns T iff its argument is an instance.
+
+[T] :NULL as Argument to TYPEP.
+
+:NULL is now a "type" recognized by TYPEP.  The only object which fits this type
+is NIL.  (Note that (TYPEP NIL) =&gt; :SYMBOL, not :NULL; but (TYPEP NIL ':NULL) =&gt; T.)
+
+[U] New Error Condition Name SYS:INVALID-FUNCTION-SPEC.
+
+SYS:INVALID-FUNCTION-SPEC is signaled on any operation on an invalid function
+spec, including FDEFINE and FDEFINITION.
+
+Editor Changes.
+
+	[A] Multiple ZMACS Processes.
+	[B] Incompatible Internal Changes.
+	[C] Attribute Lists in the Editor.
+	[D] "Register" Commands Renamed.
+	[E] Other Editor Commands Renamed.
+	[F] M-X Macro Expand Expression All.
+	[G] M-X List/Edit Changed Sections.
+	[H] M-X Count Words.
+	[I] New Major Mode, {TeX} Mode.
+	[J] M-X List/Edit Flavor Direct Dependents.
+	[K] M-X Find System Files.
+	[L] Editing More Than One Patch at One Time.
+	[M] Editor Parenthesis Balancing.
+	[N] Source Compare Output is Saved in a Buffer.
+	[O] Editor Command Meta-$ for Spelling Correction.
+	[P] New Editor Options.
+	[Q] Meta-X Compile File and Meta-X Load File Improved.
+	[R] Changed Commands in M-X Buffer Edit.
+	[S] Aborting Incremental Search.
+	[T] Mode Line.
+	[U] Sectionization Done While Reading Once Again.
+	[V] DIRED No Longer Slow.
+	[W] New DIRED command Control-Shift-E.
+
+[A] Multiple ZMACS Processes.
+
+Each ZMACS frame now has its own process.  As a result, being in the
+debugger, a breakpoint, a minibuffer, or a command in one ZMACS frame
+does not prevent you from editing in another one.
+
+The function ED, the debugger command Control-E, and the Edit selection in
+the window error handler now look for a ZMACS frame whose process is
+listening at the editor top level, and use that to visit the specifed function or
+file.  As a result, you can use Control-E in an error in a ZMACS process without
+losing the state of that process.
+
+All ZMACS frames still share one collection of buffers.  It is conceivable for two
+ZMACS frames modifying the same buffer at once to garbage the buffer;
+however, this can only happen if they are both in the middle of a command
+simultaneously, which will not happen in normal use since normally you do not
+leave an editor window while a command is actually executing.  Leaving a
+ZMACS frame while it is reading input (whether top level, a command argument,
+or inside a breakpoint) or while it is compiling, cannot cause a problem.
+
+[B] Incompatible Internal Changes.
+
+Several rearrangements have been made in the way the editor works.
+Buffers and windows are now flavor instances.
+
+Luckily, simple extensions do not need to be changed, since the macros
+that they have used are still defined; but the macros are changed now,
+so such extensions must be recompiled and then will no longer run in system 91.
+More sophisticated extensions may have more difficulties.
+
+The changes include:
+
+  -- Buffers and intervals of all sorts are now flavor instances.
+  -- There is only one object representing each editor window;
+     it is a flavor instance which is a real window and also records
+     ZWEI's own information.  The value of *WINDOW* is such an object.
+  -- There is no longer an "editor" object.  Most of the operations
+     that used to be defined on "editor" objects are now defined on
+     editor windows instead.  However, the special instance variables
+     that the editor object used to have are not instance variables of
+     the editor window.  Instead, the window has an instance variable
+     named EDITOR-CLOSURE which is a closure of the function FUNCALL
+     over those variables.
+  -- Attributes of a buffer are now stored on the property list
+     of the buffer.  They can be examined with the :GET operation.
+     For setting them, it is best to use the :SET-ATTRIBUTE operation
+     rather than :PUTPROP.  The arguments to :SET-ATTRIBUTE are
+     the attribute keyword, the value, and a flag saying whether to
+     change the buffer's -*- line as well (values are T, NIL or
+     :ASK).
+  -- The I/O stream conventions have been changed.  Instead of
+     using ZWEI:*TYPEOUT-WINDOW* and ZWEI:*TYPEIN-WINDOW*,
+     you should use STANDARD-OUTPUT and QUERY-IO.  Also, it is no longer
+     necessary to use the functions ZWEI:TYPEIN-LINE or
+    ZWEI:TYPEIN-LINE-MORE.  You can simply call FORMAT instead.
+     However, the old variables and function still work.
+  -- It no longer works to modify elements of ZWEI:*LIST-SYNTAX-TABLE*
+     in your init file, since each editor window has its own copy of this.
+     Instead, you should define a minor mode along the lines of
+     ZWEI:COM-ANY-BRACKETS-MODE, and turn that mode on when desired.
+
+[C] Attribute Lists in the Editor.
+
+Recall that the attribute list of a file is a property list which is specified, in
+a text file, by the characters after -*- in the first nonblank line.
+
+When a file is visited in the editor, the editor decodes the attribute list specified
+by the text of the file and records the attributes in the property list of the
+editor buffer object.  Each buffer thus has its own recorded attributes.
+
+For each standardly known attribute there is an editor command to set it, and the
+command offers you the choice of setting the attribute temporarily, which means
+that just the property list of the buffer object is changed, or permanently, which
+is done by modifying the text of the -*- line.
+
+These commands set attributes of wide significance:
+
+    Set Package	sets the Package attribute, which specifies the package
+			in which to evaluate or compile from this buffer.
+			This package is also current in any breakpoint or error
+			within the editor.
+			After asking whether to modify the -*- line,
+			this command asks a second question, whether to
+			resectionize the file.  If your file contains a line
+			"(DEFUN FOO ", it was recorded as defining FOO in the old
+			package; if you resectionize, the editor will now record
+			the file as containing a definition of FOO in the new package.
+
+    Set Base	sets the Base attribute, which specifies the value of IBASE
+			with which to evaluate or compile from this buffer.
+			This value is also current in any breakpoint or error
+			within the editor.
+
+    Set Patch-File sets the Patch-File attribute.  If non-NIL, this attribute
+			identifies the file as a patch file, which affects the
+			actions of certain functions if they are called while loading
+			the file.  For example, a DEFVAR in a patch file will always
+			reinitialize the variable, whereas normally it sets the
+			variable only if it is unbound.
+
+These attributes affect only the editor:
+
+    Set Backspace	sets the Backspace attribute, which controls whether
+			Backspace characters in the text will overprint when
+			displayed by the editor.  The values are NIL or
+			non-NIL, with NIL (do not overprint) the default.
+
+    Set Fonts	sets the Fonts attribute, which controls which fonts
+			are used for display in the editor.
+
+    Set Lowercase sets the Lowercase attribute.  If non-NIL, this attribute
+			tells the editor not to use Electric Shift Lock Mode
+			on this file, even for users who have requested that that
+			mode be on by default.  This is done for files of code
+			which is mostly in lower case.
+
+    Set Nofill	sets the Nofill attribute.  If non-NIL, this attribute tells
+			the editor not to use Auto Fill Mode on this file, even
+			for users who have specified that mode as the default.
+			This should be done only for files in which the position
+			of line breaks is crucial to the proper functioning, and
+			not just as a matter of taste.
+
+    Set Tab-Width	sets the Tab-Width attribute, which controls how far
+			apart come the tab stops used for display of Tab characters
+			in the file.  The value of the attribute is a number, which
+			is taken as a multiple of the width of a Space in font zero.
+
+    Set Vsp		sets the VSP attribute, which is the number of extra scan
+			lines of vertical space between text lines in the editor display.
+			The default is 2, for 2 scan lines.
+
+Another way to change an attribute permanently is to edit the -*- line
+and then use the command Reparse Attribute List.  This resets all
+attributes to the values specified in the -*- line, or to their default values
+if not mentioned there.  The inverse of this command is Update Attribute
+List, which rewrites the -*- line according to the current "temporary"
+attribute values specified with the Set commands.
+
+[D] "Register" Commands Renamed.
+
+The editor commands that operate on registers (formerly called "Q-registers"
+following EMACS) have been renamed, and two have been newly installed on keys.
+These commands can be used to save and restore text or buffer positions.
+Most commands ask you to type a single letter which is the register name.
+Each register can remember one piece of saved text, one saved position, or both.
+
+C-X X  (Put Register)
+  saves the contents of the region in the specified register.
+C-X G  (Open Get Register)
+  inserts the contents of the specified register.
+C-X S  (Save Position)
+  records the current value of Point in the specified register.
+C-X J  (Jump to Saved Position)
+  jumps to the value of Point saved in the specified register.
+M-X View Register
+  shows the text and/or position saved in the specified register.
+M-X List Registers
+  shows all existing registers with the text and/or positions saved in them.
+
+[E] Other Editor Commands Renamed.
+
+Some editor commands for evaluating or compiling parts of the buffer have been
+renamed.  The renamed commands are those apply to the region, if any, or to
+the Defun containing Point.
+
+    Evaluate Defun -&gt; Evaluate Region.
+    Evaluate Defun Verbose -&gt; Evaluate Region Verbose.
+    Evaluate Defun Hack -&gt; Evaluate Region Hack.
+    Compile Defun -&gt; Compile Region.
+    Compile Defun Verbose -&gt; Compile Region Verbose.
+    Compile Defun Hack -&gt; Compile Region Hack.
+    Microcompile Defun -&gt; Microcompile Region.
+
+There already were commands named Compile Region and Evaluate Region,
+but the renamed commands are upward compatible with them anyway.
+
+Some other renamings:
+
+    Macro Expand Sexp -&gt; Macro Expand Expression
+    Variable Document -&gt; Describe Variable
+    List Matching Functions -&gt; List Matching Symbols
+
+[F] M-X Macro Expand Expression All.
+
+M-X Macro Expand Expression All expands the expression following Point at all
+levels, not just the top level.  This does not always work properly, as it may
+expand sublists which are not actually expressions, if they resemble macro calls.
+
+[G] M-X List/Edit Changed Sections.
+
+The editor commands List Changed Sections, Edit Changed Sections,
+List Buffer Changed Sections and Edit Buffer Changed Sections
+now take a numeric argument which specifies "changed since when".
+
+If the argument is one, or omitted, you get all sections changed since
+the file was read in.
+
+If it is two, you get all sections changed since the file was read in or saved.
+
+If it is three, you get all sections changed since they were last recompiled.
+
+The commands Evaluate Changed Sections and Compile Changed Sections
+always use the last of these criteria.
+
+[H] M-X Count Words.
+
+This command counts the number of words in the region, or, in the buffer.
+
+[I] New Major Mode, {TeX} Mode.
+
+The command M-X {TeX} Mode enters {TeX} mode, for editing TeX source files.
+
+[J] M-X List/Edit Flavor Direct Dependents.
+
+Two new editor commands are List Flavor Direct Dependents and
+Edit Flavor Direct Dependents.  They read the name of a flavor
+and then either list or visit sequentially all the flavors that directly depend
+on the specified one.
+
+[K] M-X Find System Files.
+
+M-X Find System Files reads into ZMACS all the component files of a specified
+system.  It sets the package for each editor buffer thus created to the package
+used for the file in that system, which may have been specified in the
+DEFSYSTEM to override the file's -*- line.
+
+[L] Editing More Than One Patch at One Time.
+
+The patch commands now allow you to switch between patches.
+If you give the command M-X Start Patch or M-X Resume Patch while
+editing a patch, you will be asked for confirmation; if you give it,
+you will start or resume another patch as you specify.  The previous
+patch will remain in its editor buffer, and you can go back to editing it
+with another M-X Resume Patch.
+
+[M] Editor Parenthesis Balancing.
+
+The S-expression motion commands of the editor, such as Control-Meta-F, now
+refuse to move from the inside of a string to the inside of another string.  If
+there is no appropriate textual unit contained entirely within the original string,
+the low level primitive ZWEI:FORWARD-SEXP returns NIL, and the editor commands
+beep.
+
+As a result, when the cursor is after a close parenthesis inside a string, the editor
+will not flash an irrelevant open parenthesis.
+
+In modes where more than one kind of bracket character is set up to be counted
+by the expression and list commands, an incorrect pairing such as [ ... ) causes
+a warning message if you put the cursor after it.
+
+[N] Source Compare Output is Saved in a Buffer.
+
+When you invoke Source Compare in any fashion from the editor, including DIRED,
+the output is saved in an editor buffer whose name starts with *Source Compare
+and finishes with the names of the files compared.
+
+[O] Editor Command Meta-$ for Spelling Correction.
+
+The editor command Meta-$ checks the spelling of the word at Point,
+using a chaosnet server on a Twenex system (at MIT, the server runs on OZ).
+It offers you a choice of similar words to replace the word with, if the word
+itself is not in the dictionary.  You can also choose to Query Replace the
+same replacement through the buffer.
+
+[P] New Editor Options.
+
+If ZWEI:*FIND-FILE-NOT-FOUND-IS-AN-ERROR* is non-NIL, visiting a nonexistent
+file is an error.  Normally it creates an empty buffer which, if saved, will create
+the file.
+
+ZWEI:*DISCARD-UNDO-INFO-ON-SAVING* controls whether you can undo all the
+way to when you visited the file, or only until the last save.  Normally it is T,
+meaning undo only to the last save.  The relocatable buffer pointers used
+to record undo information can slow down editing in some cases, which is
+why discarding them can be desirable.
+
+ZWEI:*CHECK-UNBALANCED-PARENTHESES-WHEN-SAVING*, if non-NIL, enables a
+feature which balances the parentheses in a file as it is being written out by the
+editor (only if the major mode indicates the contents have Lisp syntax).  If a
+mismatch is found, a message is printed, but saving continues.  You can use the
+command Meta-X Find Unbalanced Parentheses to find the possible point of
+mismatch.
+
+[Q] Meta-X Compile File and Meta-X Load File Improved.
+
+If the file being compiled or loaded is visited in some ZMACS buffer, the
+package set in that buffer with M-X Set Package will be used for loading
+or compilation.
+
+[R] Changed Commands in M-X Buffer Edit.
+
+The command to specify that a certain buffer should be selected on exit
+is now "." rather than "*", and the buffer to be selected is displayed with a ".".
+"*" is used to indicate modified buffers.
+
+[S] Aborting Incremental Search.
+
+Typing Abort in an incremental search now moves the cursor back to the
+starting point of the search.  Please let me know whether you like this.
+
+[T] Mode Line.
+
+The mode line in ZMACS now contains  if there is more text above the screen,
+ if there is more below, or  if there is more text both above and below.
+The arrows appear just before where the * appears when the buffer is modified.
+
+[U] Sectionization Done While Reading Once Again.
+
+In system 91, ZMACS was changed to sectionize files after reading them rather
+than while reading them.  Unfortunately, this was slower due to reduced overlap
+if the file server could not keep up during the read-in phase.
+
+In system 93, sectionization is once again done in parallel with read-in.  The
+ancient bugs that the previous change was made to fix (failing to find certain
+definitions) have been fixed in other ways.
+
+[V] DIRED No Longer Slow.
+
+Entry into DIRED was slowed down accidentally by the installation of flavorized
+editor buffer streams into system 91 in January.  It is fast again now.
+
+[W] New DIRED command Control-Shift-E.
+
+The DIRED command Control-Shift-E (Dired Edit File Two Windows) does a
+Find File of the current file in another window.  It enters two-window mode if
+you are presently in one-window mode.  The DIRED remains on the screen.
+
+System Operating Changes.
+
+	[A] Changes in Pathnames.
+	[B] Unknown Directories in Logical Pathnames.
+	[C] Garbage Collector.
+	[D] New Init-file Feature, LOGIN-FORMS.
+	[E] Trivial Errors Do Not Enter the Debugger.
+	[F] Debugger Command Control-R Will Return Any Number of Values.
+	[G] Debugger Command Meta-R to Reinvoke a Frame with Changed Arguments.
+	[H] Screen Restored after Using the Cold-Load Stream.
+	[I] Function EH Improved.
+	[J] :MAIL Command in CC.
+	[K] SYSTEM and GLOBAL Packages Protected.
+	[L] Better Handling of READ Errors.
+	[M] New Terminal Commands: G, V and Control-A.
+	[N] Site Option Changes.
+	[O] PEEK Improvements
+	[P] Layouts Option in System Menu Changed.
+	[Q] Serial Stream Buffer Capacity Can Be Specified.
+	[R] Chaosnet Change.
+	[S] QSEND Features.
+	[T] Operations on Processes.
+	[U] New Function Names and Packages.
+	[V] ZMAIL Changes.
+
+[A] Changes in Pathnames.
+
+There have been many important changes in pathnames, regarding case
+conversion and canonical types.  These are described in section 22.2 of the new
+manual.
+
+[B] Unknown Directories in Logical Pathnames.
+
+If a logical pathname is used with a directory that is not recognized on the
+particular logical host, an error happens when the pathname is translated.  At
+this time, you can specify a translation to use for the unknown logical directory,
+either just for this time or for the rest of the session.
+
+[C] Garbage Collector.
+
+Two new variables affect garbage collection.
+
+SI:GC-RECLAIM-IMMEDIATELY-IF-NECESSARY, if non-NIL, says that batch garbage
+collection should be done if, on flipping, there does not appear to be enough
+free space to finish an incremental garbage collection.  Note that if the
+variable SI:GC-RECLAIM-IMMEDIATELY is non-NIL, garbage collection is always done
+in batch.
+
+SI:GC-FLIP-MINIMUM-RATIO is used, when non-NIL, to control warnings about
+having too little space to garbage collect.  Its value is a number, calibrated as the
+fraction of data that is expected to be non-garbage, just like SI:GC-FLIP-RATIO.
+The difference between the two is that SI:GC-FLIP-RATIO controls when garbage
+collection is recommended, whereas SI:GC-FLIP-MINIMUM-RATIO controls when the
+system considers the last possible time to do so.  If SI:GC-FLIP-MINIMUM-RATIO is
+NIL, SI:GC-FLIP-RATIO serves both purposes.
+
+[D] New Init-file Feature, LOGIN-FORMS.
+
+LOGIN-FORMS replaces LOGIN-SETQ, LOGIN-FDEFINE, and others.  It is a general
+feature for saying, "Do this now, and undo it if I call LOGOUT."
+
+Simply use  LOGIN-FORMS surrounding the forms that you wish to have undone
+at logout time, as in
+
+    (LOGIN-FORMS
+      (SETQ FS:*DEFAULTS-ARE-PER-HOST* T))
+
+LOGIN-FORMS is not an AI program; it must be told how to undo each function
+(such as SETQ, DEFF, etc.) that will be used immediately inside it.
+This is done by giving the function name a :UNDO-FUNCTION property which
+is a function that takes a form as an argument and returns a form to undo
+the original form.  For SETQ, this is done as follows:
+
+    (DEFUN (SETQ :UNDO-FUNCTION) (FORM &AUX RESULTS)
+	(DO L (CDR FORM) (CDDR L) (NULL L)
+	    (COND ((BOUNDP (CAR L))
+		   (PUSH `(SETQ ,(CAR L) ',(SYMEVAL (CAR L))) RESULTS))
+		  (T (PUSH `(MAKUNBOUND ',(CAR L)) RESULTS))))
+	`(PROGN . ,RESULTS))
+
+Properties are standardly provided for SETQ, DEFF, DEFUN, DEFSUBST.
+
+[E] Trivial Errors Do Not Enter the Debugger.
+
+Trivial errors in expressions that you type in read-eval-print loops no longer
+enter the debugger automatically.  Instead, they print the error message and then
+ask whether to enter the debugger.  Answering "No" is equivalent to typing Abort.
+
+The advantage is that it is much faster now if you do not actually want the
+debugger.  For a trivial error (defined as an error involving a function or variable
+that actually appears in the expression you typed in),  one frequently wishes
+to edit and resubmit the input, making the debugger unnecessary.
+
+One reason you might wish to enter the debugger is if you may have typed a
+variable or function name in the wrong package.  The check for symbols with
+the same name in other packages is not made unless the debugger is entered.
+(Checking for this is slow).  Answer Yes if you would like the check to be made.
+
+To use this feature in your own read-eval-print loops, call
+SI:EVAL-ABORT-TRIVIAL-ERRORS instead of EVAL.
+
+[F] Debugger Command Control-R Will Return Any Number of Values.
+
+If you use the command Control-R to return from a function whose caller is
+asking for multiple values, you can now specify as many values as the caller is
+ready to accept.  Type the End key instead of a form, when you wish to stop
+supplying values.
+
+[G] Debugger Command Meta-R to Reinvoke a Frame with Changed Arguments.
+
+The debugger command Meta-R is like C-M-R but asks for each argument.
+You can type Space to use the same argument as before, or type an
+expression for a new value of the argument.  You can also terminate
+with fewer arguments, or specify additional arguments.
+
+[H] Screen Restored after Using the Cold-Load Stream.
+
+If the debugger needs to use the cold-load stream, it offers to restore the old
+screen contents after you exit.  The same thing happens most of the times
+when the system uses the cold-load stream automatically.  One exception
+is if you set DEBUG-IO to the cold load stream; this is because, when stepping
+through calls and returns in that mode, it is desirable to keep the entire
+debugger session on the screen.
+
+[I] Function EH Improved.
+
+The function EH, which invokes the debugger on a specified process or stack
+group, has new features.
+
+If the argument is a process which had an error but is trying to use a deexposed
+window, EH allows the debugger to run in that process using the window that was
+available to the function EH.  So you can proceed, abort, throw or return in the
+erring process.
+
+If the argument is a process that is not waiting to run the debugger, a keyboard
+break is caused in that process, much like what happens if you type C-M-Break,
+and then the debugger runs as in the previous case.
+
+If the argument is a stack group, the debugger is called in EH's stack group,
+in examine-only mode.
+
+If you do not give an argument, EH offers you a choice of processes waiting to
+have errors handled.
+
+[J] :MAIL Command in CC.
+
+CC, the program for debugging one machine from another machine, now has a
+command :MAIL for automatically stuffing a description of the reasons for a crash
+into a bug report.  The description is basically the same as the output from the
+:WHY command.  You can edit in your own comments before finally sending the
+report.
+
+[K] SYSTEM and GLOBAL Packages Protected.
+
+READ will no longer create new symbols in packages which have subpackages,
+such as SYSTEM and GLOBAL.  This is because creation there of a symbol which is
+not supposed to exist can impact proper functioning of the subpackages.
+INTERN will still create symbols there; READ makes a special check.
+
+[L] Better Handling of READ Errors.
+
+The rubout handler now handles only errors which possess the condition name
+SYS:READ-ERROR.  This includes all the errors you are likely to get from common
+mistakes in syntax, including nonexistent packages, commas not inside
+backquotes, etc.
+
+The compiler now proceeds past all READ errors, allowing the rest of the
+expression to be read in properly.  A comma not inside a backquote, for
+example, will not interfere with proper reading of the rest of the function.
+As before, the error results only in a compiler warning.
+
+[M] New Terminal Commands: G, V and Control-A.
+
+Terminal G prints the garbage collector status.
+
+Terminal V prints your new mail.  With an argument of 1, your old mail file is used instead;
+with an argument of 0 you are prompted for whose mail you want to read.
+
+Terminal Control-A arrests nearly all processes.  The only processes it does not
+arrest are the keyboard process, the mouse process, the screen manager process
+and whichever process is having its state described in the who line.  This goes
+with the existing Terminal A command, which arrests only the process described
+in the who line.
+
+In particular, the chaosnet processes are stopped, so after a minute or so goes by
+other hosts will break any connections with you, if you do not unarrest these
+processes within the time limit.
+
+The purpose of Terminal Control-A is to stop a background process that is
+running away and not letting you do anything else.  It leaves just the bare
+minimum of processes functioning for you to be able to examine things or
+resume execution.  Normally you would continue by unarresting processes
+selectively, possibly watching to see which process is the troublemaker.
+
+To unarrest processes selectively, use Terminal Minus A, which unarrests only
+the process described in the who line.  Use Terminal 3 W to rotate the who line
+through all processes, so you can find the ones you wish to unarrest.  If you find
+you have unarrested the misbehaving process, do Terminal A to arrest it again.
+
+After correcting the problem, do Terminal Minus Control-A to unarrest all
+processes.
+
+(More precisely, Terminal Minus Control-A removes only the arrest reasons put on
+by Terminal commands.  Processes arrested for other reasons remain so.
+Terminal Minus A removes any arrest reasons, and thus is guaranteed to make
+the single affected process no longer be arrested.)
+
+[N] Site Option Changes.
+
+The new, easy-to-remember way to load updated site files is
+
+	(MAKE-SYSTEM 'SITE)
+
+If the latest site files are already loaded, it does not do anything.
+
+To recompile and reload site files as necessary, do
+
+	(MAKE-SYSTEM 'SITE 'COMPILE)
+
+Don't load site files by hand!
+
+The new site option :DEFAULT-ASSOCIATED-MACHINE specifies a default for the
+associated machine of a Lisp machine which is not found in the LMLOCS file.
+The value is a host name string.  The new site option :USUAL-LM-NAME-PREFIX
+specifies a string which is the typical beginning of host names of Lisp machines
+at your site.  At MIT, it is "CADR-".
+
+The new site option :SPELL-SERVER-HOSTS specifies a list of host names of hosts
+that offer SPELL servers for the editor's Meta-$ command.
+
+The site option :MACHINES-WITH-LOCAL-FILE-SYSTEMS is no longer used.
+Whenever the LOCAL-FILE system is loaded, your machine's host will be usable
+in pathnames.  Lisp machines that run the file server should be mentioned in
+the :CHAOS-FILE-HOSTS site option to make their host names usable on other
+machines.
+
+Lisp machines that provide servers for the LMFILE file system should now be
+mentioned in the new site option :LMFILE-SERVER-HOSTS; the entry in this list is
+just the hostname to use to refer to LMFILE there.  This should be one of the
+nicknames in the host table of the machine itself The site option
+:CHAOS-LMFILE-SERVER-HOSTS is no longer used.
+
+The site option :INCLUDED-NON-CHAOS-HOSTS tells the host table generator about
+non-CHAOSnet hosts which should be included in SI:HOST-ALIST.  The name of
+each host should be its official name that appears first in its line in the host
+names source file (SYS:CHAOS;HOSTS TEXT).
+
+[O] PEEK Improvements
+
+PEEK now does a better job of listening to keyboard input in preference to
+doing output.
+
+The Window Hierarchy mode is now fast enough for practical use.
+
+When PEEK offers a menu to operate on a process, window, etc., the name of the
+process or window appears in the menu, so you do not have to worry that the
+mouse may have slipped and chosen the wrong one.
+
+[P] Layouts Option in System Menu Changed.
+
+The Layouts option in the system menu now records partially visible windows
+when you save a layout, and brings them back to partial visibility when you
+restore the layout.
+
+[Q] Serial Stream Buffer Capacity Can Be Specified.
+
+You can specify the size of the input and output buffers when you create
+a serial stream with the keyword arguments :INPUT-BUFFER-SIZE and :OUTPUT-BUFFER-SIZE
+to the function SI:MAKE-SERIAL-STREAM.  The argument values are numbers of
+characters, which will be rounded up to approximately a multiple of 128.
+
+[R] Chaosnet Change.
+
+The function CHAOS:GET-NEXT-PKT takes an additional argument, check-conn-state.
+If this is non-NIL, the state of the conn is checked and an error is signaled
+if the state is invalid.  The default value of the argument is T if the
+no-hang-p argument is NIL, producing the same behavior as before.
+All the arguments are:  conn &optional no-hang-p whostate check-conn-state
+
+[S] QSEND Features.
+
+The function QSEND (and therefore REPLY) allows you two special commands
+while you are typing in the message to be sent.  C-M-Y yanks in the
+text of the last QSEND-type message you received.  C-M-E switches to
+Converse, inserting the text you have typed so far into the Converse
+buffer so you can continue editing it there.
+
+[T] Operations on Processes.
+
+Some operations on processes were omitted from the manual:
+
+:IDLE-TIME -- returns the amount of time in seconds since this process
+		  last ran, or NIL if it has never run.
+
+:TOTAL-RUN-TIME -- returns the amount of time this process has run,
+		  in 60'ths of a second.  This includes cpu time and disk wait time.
+
+:DISK-WAIT-TIME -- returns the amount of time this process has spent
+		  waiting for disk I/O, in 60'ths of a second.
+
+:CPU-TIME -- returns the amount of time this process has spent actually
+		  executing instructions, in 60'ths of a second.
+
+:PERCENT-UTILIZATION -- returns the fraction of the machine's time this
+		  process has been using recently, as a percentage
+		  (a number between 0 and 100.0).  The value is a weighted
+		  average giving more weight to more recent instants.
+
+:RESET-METERS -- zero out all the meters above.
+
+[U] New Function Names and Packages.
+
+The symbols DESCRIBE-SYSTEM and RECORD-SOURCE-FILE-NAME have been
+moved into the GLOBAL package.
+
+QREPLY is an alternative name for the REPLY function, which sends a QSEND
+message back to the person who last sent such a message to you.
+
+[V] ZMAIL Changes.
+
+All compiled ZMAIL init files containing filter definitions must be recompiled.
+This is due to the incompatible changes in editor data structures.  The filter
+definitions themselves are still good, but macros they use now expand differently.
+The easiest way to do this is to call QC-FILE with your init file source file's
+name as first argument, and "ZMAIL.INIT" or whatever is the actual init file's
+name as the second argument.  Note: the recompiled files will not run in
+system 91.
+
+The default value of the option ZWEI:*MAIL-WINDOW-CONFIGURATION* is now
+:NORMAL.  This value, a newly introduced alternative, means to use the same
+window configuration as normally used for reading mail.  Sending mail this
+way is much faster than before.
+
+There are some new keyboard commands:
+  Control-F -- searches for the next message in this buffer
+		  that contains a specified string.
+  L -- changes keywords of this message according to the
+	keyword-filter associations of the filters the message fits.
+	Like mouse-middle on Keywords.
+  F -- forwards this message.
+
+There are new commands for editing "conversations", groups of messages
+that refer to each other.  M-X Select Conversation By References
+selects a temporary buffer holding all messages related by reference,
+directly or indirectly, to the current message.
+M-X Delete Conversation By References also exists; this deletes
+all such messages (including at least the current message).  If you want
+to see which messages those are, select the conversation first and then
+do Map Over of Delete to delete the messages in it.  These commands,
+and the existing reference commands, now use a hash table for speed.
+
+When you enter the window configuration which has separate header
+and text windows for composing mail, the header window becomes as
+big as necessary (within limits) to show all the header lines that exist.
+
+Case is preserved in names of filters and universes defined from now on.
+
+ZMAIL can now handle mail files on Unix stored in either BABYL format
+or the standard Unix mail file format.
+
+The background process will not do anything if it sees that the
+ZMAIL foreground process is not idle.
+
+You can put a copy of a message you send into one of your
+own mail files by putting an FCC: field in the message.  This should
+contain one or more pathnames separated by commas.  The pathnames
+should be names of mail files which ZMAIL has or can read in.
+Copies of the mail are stuck directly into those mail files within ZMAIL.
+
+You can direct a message solely to one of your own mail files by means
+of an FTo: header field.  Like the FCC: field, this field contains one
+or more filenames separated by commas.  Unlike FCC:, an FTo: field
+satisfies ZMAIL's demand for some sort of "To" recipient, so you do
+not need any To: field.  This replaces the "local mail" facility
+(which is still provided, however).
+
+BCC: and BFCC: fields are now supported in messages sent with ZMAIL.
+BCC: sends copies to mailboxes and BFCC: puts them into mail files
+within ZMAIL itself.  The BCC: and BFCC: recipients are not listed
+in the copies sent to the other recipients.
+    </pre>
+
+    <hr/>
+    <p>Last modified: 2025/06/05 08:57:08 (UTC) by ams</p>
+  </body>
+</html>
+
+<!-- Local Variables: -->
+<!-- time-stamp-pattern: "-8/<p>Last modified:[ \t]%:y/%02m/%02d %02H:%02M:%02S (%Z) by %u</p>" -->
+<!-- time-stamp-time-zone: "UTC" -->
+<!-- End: -->

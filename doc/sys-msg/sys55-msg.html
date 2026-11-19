@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <link rel="stylesheet" type="text/css"
+	  href="../lm3.css">
+    <title>LM-3 --- Lisp Machine System Release 55 Notes</title>
+  </head>
+  <body>
+    <center><h1>Lisp Machine System Release 55 Notes</h1></center>
+
+    <pre>
+Date:  5 JAN 1981 2123-EST
+From: MMcM at MIT-AI (Mike McMahon)
+Subject:  System 55 released
+To: INFO-LISPM at MIT-AI
+
+System 55 with microcode 715 is now released to users.  It is installed
+on several machines already and should be making its way to the rest
+soon.  Please note that this system will not run with microcode versions
+older than 715.
+
+Highlights in addition to the usual large number of bug fixes and
+additions are:
+
+There are some new more sophisticated metering facilities with microcode
+support.  More on this as it develops.  Talk to BEE if you are
+interested in their current rough state.
+
+Functions like PKG-LOAD and LOAD-FILE-LIST have been obsoleted by a new
+"System" facility, documentation on which will be forthcoming shortly.
+The functions RECOMPILE-WORLD-MAP, PKG-LOAD-MAP, LOAD-FILE-ALIST-MAP,
+and COMPILE-FILE-ALIST-ALIST-MAP no longer exist.  More or less
+compatible functions PKG-LOAD, LOAD-FILE-LIST, LOAD-FILE-ALIST, and
+COMPILE-FILE-ALIST will act as interim interfaces to the new system
+system.  Please report any problems with them.
+    </pre>
+
+    <hr/>
+    <p>Last modified: 2025/06/05 08:38:11 (UTC) by ams</p>
+  </body>
+</html>
+
+<!-- Local Variables: -->
+<!-- time-stamp-pattern: "-8/<p>Last modified:[ \t]%:y/%02m/%02d %02H:%02M:%02S (%Z) by %u</p>" -->
+<!-- time-stamp-time-zone: "UTC" -->
+<!-- End: -->

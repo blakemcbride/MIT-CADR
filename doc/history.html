@@ -1,0 +1,403 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <link rel="stylesheet" type="text/css"
+	  href="lm3.css">
+    <title>LM-3 --- Lisp Machine System Release History</title>
+  </head>
+  <body>
+    <center><h1>Lisp Machine System Release History</h1></center>
+
+    <p>This is the release history for the MIT Lisp Machine System
+      software, with annotations of interesting tid-bits.  Entries are
+      based on messages sent to BUG-LISPM.</p>
+
+    <p><b>N.B.</b> This is very much incomplete!</p>
+
+    <table style="width:100%">
+      <tr><th>Date</th><th>System Release</th><th>Microcode</th></tr>
+      <tr><td></td><td colspan=2><a href="#microcode-changes">Microcode internal convention changes</a></td></tr>
+      <tr><td>06 December 1978 17:29 (EDT)</td><td><a href="#system-unknown-0">System ??</a></td><td></td></tr>
+      <tr><td>08 December 1978 01:11 (EDT)</td><td><a href="#system-unknown-1">System ??</a></td><td></td></tr>
+      <tr><td></td><td colspan=2><a href="#eine-soon-flushed">EINE soon flushed</a></td></tr>
+      <tr><td></td><td colspan=2><a href="#eine-flushed">EINE flushed</a></td></tr>
+      <tr><td>21 April 1979 17:27 (EST)</td><td><a href="sys-msg/sys5-msg.html">System 5</a></td><td></td></tr>
+      <tr><td>25 April 1979 04:41 (EST)</td><td><a href="sys-msg/sys5-10-msg.html">System 5.10</a></td><td></td></tr>
+      <tr><td>29 May 1979 10:12 (EDT)</td><td><a href="sys-msg/sys-8-msg.html">System 8</a></td><td></td></tr>
+      <tr><td>03 June 1979 09:58 (EDT)</td><td><a href="sys-msg/sys9-1-msg.html">System 9.1</a></td><td>493</td></tr>
+      <tr><td>12 August 1979 10:48 (EDT)</td><td><a href="sys-msg/sys17-6-msg.html">System 17.6</a></td><td></td></tr>
+      <tr><td>24 August 1979 01:51 (EDT)</td><td><a href="sys-msg/sys18-msg.html">System 18</a></td><td>555</td></tr>
+      <tr><td>11 September 1979 06:08 (EDT)</td><td><a href="sys-msg/sys19-msg.html">System 19</a></td><td></td></tr>
+      <tr><td></td><td colspan=2><b>System 19.4 has sequence breaks!</b></td></tr>
+      <tr><td>15 September 1979 01:35 (EDT)</td><td><a href="sys-msg/sys19-4-msg.html">System 19.4</a></td><td></td></tr>
+      <tr><td>6 October 1979 10:06 (EDT)</td><td><a href="sys-msg/sys20-0-msg.html">System 20</a></td><td>579</td></tr>
+      <tr><td>07 March 1980 23:42 (EDT)</td><td><a href="sys-msg/sys26-3-msg.html">System 26.3</a></td><td>616</td></tr>
+      <tr><td></td><td colspan=2><a href="#thumbfrob">Joystick &quot;mouse&quot;</a></td></tr>
+      <tr><td>12 July 1980 02:20 (EDT)</td><td><a href="sys-msg/sys30-3-msg.html">System 30.3</a></td><td></td></tr>
+      <tr><td>19 July 1980 03:00 (EDT)</td><td><a href="sys-msg/sys32-1-msg.html">System 32.1</a></td><td>674</td></tr>
+      <tr><td>29 July 1980 02:23 (EDT)</td><td><a href="sys-msg/sys32-4-msg.html">System 32.4</a></td><td></td></tr>
+      <tr><td></td><td colspan=2><a href="#new-cold-load-generator">New Cold-Load Generator</a></td></tr>
+      <tr><td>10 August 1980 04:27 (EDT)</td><td><a href="sys-msg/sys36-2-msg.html">System 36.2</a></td><td></td></tr>
+      <tr><td>18 September 1980 23:30 (EDT)</td><td><a href="sys-msg/sys43-0-msg.html">System 43.0</a></td><td></td></tr>
+      <tr><td>22 September 1980 03:51 (EDT)</td><td><a href="sys-msg/sys44-2-msg.html">System 44.2</a></td><td>692</td></tr>
+      <tr><td></td><td colspan=2><a href="#use-old-keyboards">How to use old-style keyboards on Lisp Machines</a></td></tr>
+      <tr><td>06 October 1980 00:33 (EDT)</td><td><a href="sys-msg/sys45-2-msg.html">System 45.2</a></td><td>692</td></tr>
+      <tr><td>07 October 1980 23:58 (EDT)</td><td><a href="sys-msg/sys46-1-msg.html">System 46.1</a></td><td>692</td></tr>
+      <tr><td>27 November 1980 01:22 (EST)</td><td><a href="sys-msg/sys50-9-msg.html">System 50.9</a></td><td>701</td></tr>
+      <tr><td>06 December 1980 23:20 (EST)</td><td><a href="sys-msg/sys51-1-msg.html">System 51.1</a></td><td>705</td></tr>
+      <tr><td>18 December 1980 20:19 (EST)</td><td><a href="sys-msg/sys53-15-msg.html">System 53.15</a></td><td>707</td></tr>
+      <tr><td>05 January 1981 21:23 (EST)</td><td><a href="sys-msg/sys55-msg.html">System 55</a></td><td>715</td></tr>
+      <tr><td>22 January 1981 03:54 (EST)</td><td><a href="sys-msg/sys56-msg.html">System 56</a></td><td></td></tr>
+      <tr><td>03 February 1981 23:09 (EST)</td><td><a href="sys-msg/sys59-msg.html">System 59</a></td><td></td></tr>
+      <tr><td>03 March 1981 04:13 (EST)</td><td><a href="sys-msg/sys65-0-msg.html">System 65.0</a></td><td>739</td></tr>
+      <tr><td>04 April 1981 01:38 (EST)</td><td><a href="sys-msg/sys66-14-msg.html">System 66.14</a></td><td>747</td></tr>
+      <tr><td>15 April 1981 21:31 (EST)</td><td><a href="sys-msg/sys67-1-msg.html">System 67.1</a></td><td>752</td></tr>
+      <tr><td>05 May 1981 23:12 (EDT)</td><td><a href="sys-msg/sys68-msg.html">System 68.9</a></td><td></td></tr>
+      <tr><td>05 June 1981 01:58 (EDT)</td><td><a href="sys-msg/sys69-msg.html">System 69</a></td><td>757</td></tr>
+      <tr><td>22 June 1981 03:03 (EDT)</td><td><a href="sys-msg/sys70-4-msg.html">System 70.4</a></td><td>766</td></tr>
+      <tr><td>11 July 1981 18:06 (EDT)</td><td><a href="sys-msg/sys71-msg.html">System 71.??</a></td><td>767</td></tr>
+      <tr><td>31 July 1981 23:13 (EDT)</td><td><a href="sys-msg/sys72-msg.html">System 72.??</a></td><td>774</td></tr>
+      <tr><td></td><td>System 72.34</td><td>774</td><td></td></tr>
+      <tr><td>30 September 1981 01:05:42</td><td><a href="sys-msg/sys73-10-msg.html">System 73.10</a></td><td></td></tr>
+      <tr><td>14 October 1981 15:32 (EDT)</td><td><a href="sys-msg/sys74-msg.html">System 74</a></td><td>793</td></tr>
+      <tr><td>09 December 1981 13:58 (EST)</td><td><a href="sys-msg/sys78-msg.html">System 78</a></td><td>836</td></tr>
+      <tr><td>12 February 1982 14:30 (EST)</td><td><a href="sys-msg/sys79-8-msg.html">System 79.8</a></td><td>849</td></tr>
+      <tr><td></td><td colspan=2><a href="#qfasl-compatibility">System 79 and 83 QFASL compatible</a></td></tr>
+      <tr><td></td><td>System 79.48</td><td>841</td></tr>
+      <tr><td></td><td colspan=2><b>Microcode numbers have been wrapped around to avoid confusion</b></td></tr>
+      <tr><td>12 April 1982 07:08 (EST)</td><td><a href="sys-msg/sys83-msg.html">System 83.??</a></td><td>104</td></tr>
+      <tr><td>12 May 1982 04:52 (EDT)</td><td><a href="sys-msg/sys85-msg.html">System 85</td><td>122</td></tr>
+      <tr><td>16 June 1982 07:01 (EDT)</td><td><a href="sys-msg/sys86-msg.html">System 86<a/></td><td></td></tr>
+      <tr><td>09 July 1982 03:03 (EDT)</td><td><a href="sys-msg/sys86-56-msg.html">System 86.56</a></td><td></td></tr>
+      <tr><td></td><td><a href="sys-msg/sys87-msg.html">System 87</a></td><td>164</td></tr>
+      <tr><td></td><td>System 88.??</td><td></td></tr>
+      <tr><td></td><td>System 89.??</td><td>183</td></tr>
+      <tr><td></td><td><a href="sys-msg/sys89-msg.html">System 89</a></td><td>201</td></tr>
+      <tr><td></td><td><a href="sys-msg/sys91-msg.html">System 91</a></td><td>204</td></tr>
+      <tr><td>15 March 1983 20:21 (EST)</td><td><a href="sys-msg/sys93-msg.html">System 93</a></td><td></td></tr>
+      <tr><td>02 June 1983 06:31 (EDT)</td><td><a href="sys-msg/sys94-msg.html">System 94</a></td><td>239</td></tr>
+      <tr><td>19 September 1983 01:11 (EDT)</td><td><a href="sys-msg/sys97-6-msg.html">System 97</a></td><td>257</td></tr>
+      <tr><td></td><td><a href="sys-msg/sys98-msg.html">System 98</a></td><td>306</td></tr>
+      <tr><td></td><td colspan=2><a href="#cl-format-control-args">Common Lisp compatible control argument to FORMAT</a></td></tr>
+      <tr><td></td><td><a href="sys-msg/sys99-msg.html">System 99.??</a></td><td>320</td></tr>
+    </table>
+    <hr />
+
+    <a name="microcode-changes" /><h2>Microcode internal convention changes</h2>
+    <pre>
+MOON@MIT-AI 11/09/78 16:23:12 Re: Microcode internal convention changes
+To: (BUG LISPM) at MIT-AI
+A-TEM has been replaced with several new specialized A registers.
+M-3 has been replaced with M-TEM (which also implies a new A-TEM).
+A new M-3 has been introduced, which behaves the same as M-1, M-2, and
+M-4.  Nothing uses it yet.
+
+The page-fault/interrupt checking instructions have been changed.
+Here are the new ones:
+(ILLOP-IF-PAGE-FAULT) - put this where a page fault should not happen
+(CHECK-PAGE-READ), (CHECK-PAGE-WRITE) - these are the normal ones to use
+(CHECK-PAGE-{READ/WRITE}-NO-INTERRUPT) - used only inside the interrupt handler,
+  when PGF-{R/W} retry the cycle, and when you don&#39;t want to let the interrupt
+  handler bash the map.
+(CHECK-PAGE-{READ/WRITE}-SEQUENCE-BREAK) - when you want to allow sequence
+  breaks.  This one hasn&#39;t been finished yet.
+
+To review, interrupts are hardware signals that are handled entirely
+in microcode without swapping in any pages from the disk, without getting
+involved with the garbage collector, and without clobbering any registers
+except those that page faults clobber.  Sequence breaks are (will be)
+macro-code interrupts which result in stack-group switching.
+Many comments have been changed to reflect this terminology.
+
+This version of the microcode also has some new stuff for booting.  Type
+control-meta-control-meta-rubout to do a &quot;cold boot&quot;.
+Type control-meta-control-meta-return to do a &quot;warm boot&quot;, which is like
+a 1@G (doesn&#39;t do a disk-restore).
+
+Due to lack of pdp10 time, this microcode has not been debugged yet.  That
+hopefully will happen tonight.
+    </pre>
+    <hr />
+
+    <a name="system-unknown-0" /><h2>System ??</h2>
+    <pre>
+DLW@MIT-AI 12/06/78 17:29:01
+To: (BUG LISPM) at MIT-AI
+A new system has been installed on CADR1.  There are several
+important changes everyone should know about.
+
+First, the &quot;WHat package is it in?&quot; message is gone (yay!!).
+For normal user files, the system will assume that you want
+the USER pacakge.  For files declared in PKGDCL, the system
+will remember as before.  For those of you who have your own
+packages (if any), you can put the name of the package in which
+the file belongs into the file, by using the new &quot;file property
+list&quot; scheme, i.e.  -*- Mode: Lisp; Package: Frobboz -*-.
+Also, the functions LOAD, FASLOAD, and READFILE will all take
+a package or package name as an optional second argument, and
+will load the file into that package.  More detailed documentation
+is (should be, anyway) forthcoming.
+
+The default EINE environment now has Control-S set up to be
+String Search, and Control-R set up to be Reverse String Search.
+You use String Search by typing Control-S, the name of the string,
+and altmode; there are other winning hairy features which are
+in the self-documentation and are the same as those in ITS
+^R String Search.
+
+The Meta-. command in EINE will now do command completion on all
+names that have been seen in any tags tables read in, and on the
+names of any sections of files being edited in section mode.
+The &quot;-&quot; character no longer does completion; use Altmode.  Soon
+EINE will attempt to automatically find the source file of any
+function loaded into the machine; stand by.
+    </pre>
+    <hr />
+
+    <a name="system-unknown-1" /><h2>System ??</h2>
+    <pre>
+MOON@MIT-AI 12/08/78 01:11:37
+To: (BUG LISPM) at MIT-AI
+I have installed, on CADR1 only, a new microcode and world load with a couple
+of new features.  BITBLT exists.  It isn&#39;t documented yet, but you can look at the
+test routines in MOON;STIPPL >.  Some of these will soon be installed in the system
+and the whole thing will be documented.  Facility for the machine to do disk I/O exists;
+this is in SYSTEM-INTERNALS and I don&#39;t plan to document it.  The routines are LMIO;DISK >,
+probably DISK-READ1 and DISK-WRITE1 are all anyone wants to know about at this point.
+    </pre>
+    <hr />
+
+    <a name="eine-soon-flushed" /><h2>EINE soon flushed</h2>
+    <pre>
+Date: 30 MAR 1979 0418-EST
+From: MOON at MIT-AI (David A. Moon)
+Sent-by: MOON0 at MIT-AI
+To: INFO-LISPM at MIT-AI
+
+Eine will soon be flushed, being replaced by Zwei.  If you need any help in
+switching over, e.g. to convert your init file, contact me or MMcM
+    </pre>
+    <hr />
+
+    <a name="eine-flushed" /><h2>EINE flushed</h2>
+    <pre>
+Date: 9 APR 1979 1020-EST
+From: BEE at MIT-AI (Bruce E. Edwards)
+To: INFO-LISPM at MIT-AI
+
+EINE will probably be flushed in the next release of the LM software. Is there anyone
+out there using it?
+    </pre>
+    <hr />
+
+    <a name="thumbfrob" /><h2>Joystick &quot;mouse&quot;</h2>
+    <pre>
+Date: 21 MAY 1980 1607-EDT
+From: rg at MIT-AI (Richard Greenblatt)
+To: INFO-LISPM at MIT-AI
+
+ John Purbrick&#39;s force sensitive joystick &quot;mouse&quot; is available
+for trial use.   For the time being, it will live in his office,
+and anyone who want to try it out can drop by, pick it up, and plug
+it in directly in place of the regular mouse.
+  This mouse may be particularily suitable for controlling certain
+kinds of parameters as opposed to pointing on the screen, altho
+it seems to work out fairly well for pointing as well.
+  There is some hope that this kind of mouse could eventually
+be built directly into the keyboard (as suggested by Carl Hewitt),
+and thus be accessible without removing your hands from the keyboard.
+    </pre>
+    <hr />
+
+    <a name="new-cold-load-generator" /><h2>New Cold-Load Generator</h2>
+    <pre>
+Date:  4 AUG 1980 2104-EDT
+From: Moon at MIT-AI (David A. Moon)
+Subject: New cold-load generator installed
+To: (BUG LISPM) at MIT-AI
+
+I have installed a new cold-load generator which runs on the Lisp machine,
+and banished the old one to the LISPM1; directory.
+
+To run it, load the file LISPM;COLDPK, do (PKG-LOAD &#39;COLD), then do
+(COLD:MAKE-COLD &quot;band&quot;) where band is the name (e.g. &quot;LOD2&quot;) of the
+band on your local disk on which to build the cold-load.  You will
+be asked to confirm.  When MAKE-COLD comes back, you can DISK-RESTORE
+from that band, or make it and the appropriate microcode current and
+cold-boot.  Once the fresh cold-load starts up, the procedure with
+QLD is the same from then on.
+
+The same system format definitions files, QCOM, QDEFS, and DEFMIC are used
+as before.
+    </pre>
+    <hr />
+
+    <a name="use-old-keyboards" /><h2>How to use old-style keyboards on Lisp Machines</h2>
+    <pre>
+Date: 26 SEP 1980 1403-EDT
+From: DLW at MIT-AI (Daniel L. Weinreb)
+Subject: How to use old-style keyboards on Lisp Machines.
+To: INFO-LISPM at MIT-AI
+
+Since some of the Lisp Machines still have old-style keyboards, here is
+an explanation of how to type some of the new keys on the old keyboards.
+
+To get:		Type:		What it is:
+ABORT		TOP/CALL	Asynchronously THROWs out of all functions
+				  running in the current process, and restarts
+				  the process from its initial function.
+CLEAR-INPUT	CLEAR		Flush unread characters (in the rubout-handler
+				  buffer).
+CLEAR-SCREEN	FORM		Erase or refresh the selected window.
+END		TOP/RETURN	Marks the end of input to some programs.
+HELP		TOP/H		Gets help, sometimes...
+MACRO		BACKNEXT	Invokes keyboard macros in the Editor
+				  and Zmail.
+NETWORK		TOP/BREAK	SUPDUP and TELNET escape.
+OVER-STRIKE	BS		Overstrike characters.
+SYSTEM		TOP/ESC		Select a window of a specified type.
+				   Type SYSTEM HELP for help.
+TERMINAL	ESC		Various terminal functions.
+				   Type TERMINAL HELP for help.
+
+HOLD-OUTPUT (used with TERMINAL) and QUOTE (used by the Inspector)
+are not availible on the old keyboards.
+
+More details can be found in the window system documentation written
+by Allan Wechsler; this is not published yet but bootleg copies
+are floating around.
+    </pre>
+    <hr />
+
+    <a name="qfasl-compatibility" /><h2>System 79 and 83 QFASL compatible</h2>
+    <pre>
+Date: 15 April 1982 05:15-EST
+From: Richard M. Stallman &lt;RMS at MIT-AI&gt;
+Subject: System 79 and 83 QFASL files now compatible.
+To: INFO-LISPM at MIT-AI
+
+Both system 79 and system 83 have been patched so that files compiled
+in either one will load into the other and work; but you must use
+microcode 862 with system 79 to be sure of success.
+
+If a file compiled in system 79 is loaded into system 83,
+some of system 83&#39;s speed advantage in flavors with methods in that file
+will be forfeit.  Also, in the unlikely case that you load old
+compiled DECLARE-FLAVOR-INSTANCE-VARIABLES functions for a flavor
+but do not load any old compiled methods for that flavor, it will
+not work automatically.  Contact me if you think this is happening to you.
+
+If a file compiled in system 83 is loaded into system 79,
+combined methods produced by COMPILE-FLAVOR-METHODS will be ignored.
+This may make your program slower to start up than it used to be,
+but will have no other effects.
+
+It is therefore best to compile your files in system 83, so that
+they will get the full speed advantage when run in that system.
+
+It should be noted that system 83 has the same compatibility definitions
+that system 79 has, for the functions DEFUN-METHOD and INSTANCE-VARIABLE-BOUNDP
+needed in brand S systems.  So code that has been changed to work in those
+systems will also work in system 83.  QFASL files are not compatible
+between 79/83 and 204, however.
+
+I would like to apologize for not mentioning the now eliminated
+incompatibility of QFASL files in the system message for system 83.
+Sometimes when I know something by heart, I forget that other people
+don&#39;t know it.
+    </pre>
+    <hr />
+
+    <a name="cl-format-control-args" /><h2>Common Lisp compatible control argument to FORMAT</h2>
+    <pre>
+13-Feb-84 20:42:18-EST,4173;000000000001
+Received: from MIT-MC by MIT-OZ via Chaosnet; 13 Feb 84 20:38-EST
+Date: Monday, 13 February 1984, 20:32-EST
+From: Richard Mlynarik &lt;Mly at MIT-OZ&gt;
+Subject: Coming (System 99) changes to FORMAT in the MIT lisp machine system.
+To: info-lispm-mit at MIT-OZ
+
+
+[See <a href="sys-msg/sys98-msg.html">SYS:DOC;SYS98 MSG</a> (oz:ps:&lt;l.doc&gt;sys98.msg at MIT) to see this
+message in a technicolor multitude of fonts.]
+
+The control argument to FORMAT will change in System 99 to be compatible
+with Common Lisp. There will no longer be separate functions FORMAT and
+CLI:FORMAT, as there are in System 98.
+This change will affect the following FORMAT directives:
+
+~X      ~width,padchar,commacharX
+		Prints its argument in hexadecimal. (Analogous to ~O, ~B and ~D)
+	This command used to be used to insert spaces into the output.
+
+	Use ~numberofspaces@T to achieve the same result as the old
+		~numberofspacesX directive.
+
+~F      ~width,decimalplaces,scale,overflowchar,padcharF
+		Prints a floating-point number in nonexponential notation.
+		Multiplies by 10^scale before printing if scale is specified.
+		Prints in width positions, with decimalplaces digits after the
+		decimal point.  Pads on left with padchar if necessary.  If the
+		number doesn&#39;t fit in width positions, and overflowchar is
+		specified, this command just fills the width positions with
+		that character.
+	This directive used to just take one optional prefix control arg, which
+		specified how many mantissa digits to print. This is the same
+		as 2 + decimalplaces for the new FORMAT.
+
+	Use ~,n+2F to achieve the same result as the old ~nF directive.
+
+~E      ~width,decimalplaces,exponentplaces,scale,overflowchar,padchar,exptcharE
+		Prints a floating-point number in exponential notation.
+		Prints in width positions, with exponentplaces digits of
+		exponent.
+		If scale (default is 1) is positive, prints scale digits before
+		point, decimalplaces - scale + 1 after.
+		If scale is zero, prints decimalplaces digits after the point,
+		and a zero before if there&#39;s room.
+		If scale is negative, prints decimalplaces digits after the
+		point, of which the first -scale are zeros.
+		If exptchar is specified, it is used to delimit the exponent
+		(instead of &quot;e&quot; or whatever.)
+		If overflowchar is specified, then if the number doesn&#39;t fit in
+		the specified width, or if the exponent doesn&#39;t fit in
+		exponentplaces positions, the field is filled with overflowchar
+		instead.
+	This directive used to just take one optional prefix control arg, which
+		specified how many mantissa digits to print. This is the same
+		as 2+decimalplaces for the new FORMAT.
+
+	Use ~,n+2E to achieve the same result as the old ~nE directive.
+
+~G      ~width,decimalplaces,exponentplaces,scale,overflowchar,padchar,exptcharG
+	       Like ~E, but if the number fits without an exponent, it is
+	       printed without one.
+	This command used to be used to go to a particular argument.
+
+	Use ~argumentnumber@T to achieve the same result as the old
+	       ~argumentnumberG directive.
+
+Note: in System 98 you must use CLI:FORMAT to use the new Common Lisp style format
+directives. GLOBAL:FORMAT will continue to use the old directives.
+In System 99 these two functions will become identical, so the best thing is to
+update your code to use CLI:FORMAT now so that it will work in both System 98
+and in future systems.
+
+Since Brand S have also announced their intention to also change the meaning of
+FORMAT directives to agree with Common Lisp at some time in the future, this will
+also be compatible change in that respect.
+
+All MIT lispms have a new instruction, CLI:FORMAT
+(common-lisp-incompatible-format) Please update your code.
+</pre>
+
+    <hr/>
+    <p>Last modified: 2025/06/05 08:57:25 (UTC) by ams</p>
+  </body>
+</html>
+
+<!-- Local Variables: -->
+<!-- time-stamp-pattern: "-8/<p>Last modified:[ \t]%:y/%02m/%02d %02H:%02M:%02S (%Z) by %u</p>" -->
+<!-- time-stamp-time-zone: "UTC" -->
+<!-- End: -->

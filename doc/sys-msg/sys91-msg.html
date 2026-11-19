@@ -1,0 +1,1056 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <link rel="stylesheet" type="text/css"
+	  href="../lm3.css">
+    <title>LM-3 --- Lisp Machine System Release 91 Notes</title>
+  </head>
+  <body>
+    <center><h1>Lisp Machine System Release 91 Notes</h1></center>
+
+    <pre>
+System 91 comes with microcode 204.  It does not run with earlier microcode versions,
+and system 89 does not run with microcode 204.
+
+System 91 will not run code compiled by Systems 93 and later unless microcode
+226 or later is used with it.  System 91 will run properly with this microcode,
+but most existing copies of 91 are not set to want it by default.
+
+There are some major incompatibilities related to the presence of a new,
+flavor-based error system, documented in the file SYS: MAN; ERRORS TEXT.
+The major incompatibilities alone are documented here.
+
+       [A] ERROR-RESTART Works Differently.
+       [B] Condition Handler Functions Called Differently.
+       [C] Interfacing with the ABORT key.
+       [D] ERROR-HANDLER-IO renamed to DEBUG-IO.
+       [E] Time-Parsing Functions Now Signal Errors.
+       [F] OPEN and Other Functions Return Condition Instances.
+       [G] OPEN and Other Functions No Longer Ask for New Pathnames.
+       [H] WITH-OPEN-FILE-CASE and WITH-OPEN-STREAM-CASE Defined.
+       [I] PROBEF Changed.
+
+[A] ERROR-RESTART Works Differently.
+
+The meaning and usage of the ERROR-RESTART special form have changed;
+all uses will have to be modified.  The full details are in SYS: MAN; ERRORS TEXT.
+
+[B] Condition Handler Functions Called Differently.
+
+ The calling conventions of condition handler functions (used in
+CONDITION-BIND) have changed, so all uses of CONDITION-BIND will have to be
+modified.
+
+[C] Interfacing with the ABORT key.
+
+Places for the ABORT key to go back to are no longer created using the
+catch tag SYS:COMMAND-LEVEL.  In fact, a catch for this tag now has no effect.
+The new way to define a place to abort to is to make a resume handler
+for the SYS:ABORT condition using CATCH-ERROR-RESTART.  Example:
+
+    (CATCH-ERROR-RESTART ((SYS:ABORT ERROR) "Return to ~A loop." PROGNAME)
+	...body...)
+
+[D] ERROR-HANDLER-IO renamed to DEBUG-IO.
+
+The stream used for interactive I/O by the debugger is now called DEBUG-IO.
+Furthermore, its default value is a synonym stream for TERMINAL-IO,
+rather than NIL.
+
+[E] Time-Parsing Functions Now Signal Errors.
+
+The time-parsing functions TIME:PARSE-UNIVERSAL-TIME and TIME:PARSE,
+and the chaosnet connection functions CHAOS:CONNECT and CHAOS:SIMPLE,
+now signal errors when there is a problem with parsing the argument,
+rather than returning a string describing the problem.  CHAOS:FINGER and
+CHAOS:WHOIS also have this change.
+
+[F] OPEN and Other Functions Return Condition Instances.
+
+OPEN and the other functions for operating on files still return an object
+describing the error if the caller specifies :ERROR NIL, but this object is now a
+flavor instance rather than a string.  ERRORP returns T for both error instances
+and strings, in system 91.  In system 92, however, it will be changed to return
+NIL for strings.  The two-step change is to give users time to convert.
+
+[G] OPEN and Other Functions No Longer Ask for New Pathnames.
+
+OPEN and other file accessing functions now by default simply signal an error
+for problems such as "file not found", rather than asking for a new pathname.  If
+you would like to ask the user for a new pathname, you can specify the value
+:REPROMPT for the ERROR-P or :ERROR argument; or you can use the special forms
+FILE-RETRY-NEW-PATHNAME or WITH-OPEN-FILE-RETRY which give the caller more
+information about what is going on.
+
+FILE-RETRY-NEW-PATHNAME (pathname-variable condition-names...) body...
+  Executes body, returning its values if it returns normally.
+  If a condition with one of the condition names condition-names is signaled
+  during the execution of body, then a condition handler set up by this
+  macro reads a new pathname from QUERY-IO, setq's pathname-variable to it,
+  and starts body over again.  pathname-variable is not bound by the
+  FILE-RETRY-NEW-PATHNAME form; it is used free.  Normally, on entry, its
+  value will be the pathname you originally intend to use, and on exit you
+  can expect it to contain the pathname actually opened, deleted or whatever.
+
+FILE-RETRY-NEW-PATHNAME-IF cond-form (pathname-variable condition-names...) body...
+  Like FILE-RETRY-NEW-PATHNAME, but provides the condition handler only
+  if the value of cond-form is non-NIL.
+
+WITH-OPEN-FILE-RETRY (stream-var (pathname-var condition-names...) options...) body...
+  This is like WITH-OPEN-FILE except that the opening is done using the value of
+  pathname-var as the pathname, inside a FILE-RETRY-NEW-PATHNAME.
+
+[H] WITH-OPEN-FILE-CASE and WITH-OPEN-STREAM-CASE Defined.
+
+These two new special forms are combinations of WITH-OPEN-FILE or WITH-OPEN-STREAM
+with CONDITION-CASE (see SYS: MAN; ERRORS TEXT).  They allow you to open a stream,
+use it, and close it, while dispatching on whether there was an error in opening,
+and on what kind of error it was.
+
+WITH-OPEN-FILE-CASE (stream-var pathname options...) clauses...
+
+This opens the file and binds stream-var just like WITH-OPEN-FILE.  The
+difference is that instead of a simple body made of forms to be executed, there
+is a sequence of clauses like the clauses in a SELECTQ.  A clause starts with a
+condition name or a list of condition names, or else with the keyword :NO-ERROR.
+This is followed in the clause by forms to be executed.
+
+If opening the file succeeds (does not signal an error), the :NO-ERROR clause is
+executed.  Otherwise, the first clause whose condition names match the error is
+executed.  Then stream-var holds the condition instance that was signaled.  If no
+clause matches, the error is not handled here; it may be handled elsewhere or it
+may enter the debugger.
+
+Example:
+
+   (WITH-OPEN-FILE-CASE (STREAM FILENAME ':CHARACTERS ':DEFAULT)
+     (:NO-ERROR (SELECTQ (SEND STREAM ':CHARACTERS) ...))
+     (FS:FILE-NOT-FOUND (FORMAT T "~&(New File)"))
+     (ERROR (BARF "Error: ~A" STREAM)))  ;STREAM here is the condition instance.
+
+WITH-OPEN-STREAM-CASE is similar, but takes an explicit form which says
+how to create the stream.
+
+[I] PROBEF Changed.
+
+PROBEF now returns NIL only for "file not found".
+If any other error happens, PROBEF does not handle it.  You can handle it
+yourself with your own condition handler, established around the call to PROBEF.
+
+Programming Changes:
+
+    [A] CATCH-CONTINUATION.
+    [B] READLINE-TRIM stream eof-option
+    [C] (PROMPT-AND-READ keyword format-string format-arguments...)
+    [D] :FILL-POINTER Keyword Argument to MAKE-ARRAY.
+    [E] WITH-STACK-LIST and WITH-STACK-LIST*.
+    [F] The Applyhook.
+    [E] New Flavor Feature: :ABSTRACT-FLAVOR
+    [G]:CASE Method Combination
+    [H] (STRING-CAPITALIZE-WORDS string &optional (copy-flag t))
+    [I] Restrictions Lifted on UNWIND-PROTECT and Peculiar Multiple-Value Constructs
+    [J] :NEW-SUGGESTED-NAME and :NEW-SUGGESTED-DIRECTORY Pathname Operations.
+    [K] Readmacros #M, #Q, #+, #- Work Better.
+    [L] :ITEM Operation on TV:TEXT-SCROLL-WINDOW Changed.
+    [M] Reading and Printing of Hex Numbers Improved.
+    [N] CURRENT-STACK-GROUP and CURRENT-STACK-GROUP-RESUMER.
+    [O] New Stack Analysis Functions.
+    [P] Lambda List Keyword &KEY.
+    [Q] units Argument to Window Operations :INSERT-LINE, etc.
+    [R] New DEFSTRUCT Options.
+    [S] New FORMAT Directives ~$, ~\DATE\, ~\TIME\, ~\DATIME\, ~\TIME-INTERVAL\.
+    [T] Asynchronous Characters.
+    [U] New Window Graphics Operations in TV:GRAPHICS-MIXIN.
+    [V] DONT-OPTIMIZE Works Inside SETF.
+    [W] #?NIL Allowed in SELECT-MATCH.
+
+[A] CATCH-CONTINUATION.
+
+The new special form CATCH-CONTINUATION makes it easy to write a catch,
+pass back all multiple values from its body, and still find out whether the
+catch was exited normally or thrown to.  The syntax is
+
+CATCH-CONTINUATION tagexp throw-cont non-throw-cont body...
+
+body is executed with a catch for a tag which is the value of tagexp.
+
+If body returns normally, what happens is determined by the value of
+non-throw-cont, a function used as a continuation.  If it is NIL, the values of body
+are simply returned.  Otherwise, they are passed as arguments to non-throw-cont,
+and its values are returned.  Usually non-throw-cont is NIL.
+
+If body throws to this catch, the four standard values of *CATCH are collected,
+and what happens to them is determined by the value of throw-cont, another
+continuation.  If it is NIL, those values are returned from the CATCH-CONTINUATION.
+Otherwise, they are passed to the continuation function, and its values are returned.
+
+If the continuation function is written as #'(LAMBDA ...), then only as many
+values are collected as the continuation function wants, and no consing is needed.
+The continuation function is also open-coded.  This is the most usual form of use.
+
+CATCH-CONTINUATION-IF is also provided.  Its first argument is a conditional form.
+The catch is only in effect if the conditional's value is non-NIL.  The remaining
+arguments are the same as those of CATCH-CONTINUATION.
+
+[B] READLINE-TRIM stream eof-option
+
+READLINE-TRIM is line READLINE except that any leading or trailing spaces and
+tabs are discarded from the line before the value is returned.
+
+  (READLINE-TRIM args...)
+
+is almost the same as
+
+  (STRING-TRIM '(#\SP #\TAB) (READLINE args...))
+
+the difference being that READLINE-TRIM will return the eof-option on end of file
+without trying to trim it.
+
+[C] (PROMPT-AND-READ keyword format-string format-arguments...)
+
+The function PROMPT-AND-READ serves to read and return an object after
+prompting.  You specify the way to read the object with a keyword, and the way
+to prompt with a string and arguments that are passd to FORMAT.
+
+The keyword is one of these: :READ, :NUMBER, :EVAL-READ, :EVAL-READ-OR-END,
+:STRING, :STRING-OR-NIL, :PATHNAME.
+
+:READ - the object is read by calling READ.
+:NUMBER - the object is read by calling READ in base ten.  If it is not a number,
+  the user gets an error message and must rub it out and try over.
+:EVAL-READ - the object is read by (EVAL (READ)).
+:EVAL-READ-OR-END - the object is read by (EVAL (READ)).  However, the user
+ can type the End character instead of an object.  In this case, PROMPT-AND-READ
+ returns NIL as the first value, and #\End as the second.
+:STRING - the object is read by READLINE, so the value is a string.
+:STRING-OR-NIL - the object is read by READLINE-TRIM, except that if
+ the resulting string is empty, NIL is returned instead.
+:PATHNAME - the object is read by (FS:MERGE-PATHNAME-DEFAULTS (READLINE)).
+(:PATHNAME :DEFAULTS defaults-list) - like just :PATHNAME, except that
+ defaults-list will be passed to FS:MERGE-PATHNAME-DEFAULTS for use as the
+ defaults.  defaults-list must be literally present in the list passed to
+ PROMPT-AND-READ.
+
+PROMPT-AND-READ always uses QUERY-IO to do the i/o.  It uses the rubout handler
+if the stream supports one, and tells the rubout handler how to reprint the
+prompt when that is appropriate.
+
+[D] :FILL-POINTER Keyword Argument to MAKE-ARRAY.
+
+A new convenient way to make an array with a fill pointer is to use the
+:FILL-POINTER argument to MAKE-ARRAY.  The presence of this argument requests
+a leader of length one, and the value of the argument is used to initialize the
+leader slot.
+
+  (MAKE-ARRAY 5 ':TYPE ART-STRING ':INITIAL-VALUE #\A ':FILL-POINTER 2)
+    =&gt; "AA"
+
+[E] WITH-STACK-LIST and WITH-STACK-LIST*.
+
+These two new special forms allow you to create and use a list whose memory is
+allocated inside the stack.  The list will automatically be reclaimed when the
+WITH-STACK-LIST is exited, with no permanent consumption of space; but you
+had better have no pointers to the list at that time, for they will become garbled.
+
+A use of WITH-STACK-LIST looks like this:
+
+  (with-stack-list (variable list-elements...)
+    body...)
+
+During the execution of body, variable will be bound to the temporary list.
+list-elements are used as the elements when the list is constructed.
+The stack list can be RPLACA'd but it cannot be RPLACD'd.
+
+WITH-STACK-LIST* is called like WITH-STACK-LIST.  The only difference is that it
+constructs the list to have a specified final cdr rather than NIL--just as LIST*
+does.
+
+[F] The Applyhook.
+
+The applyhook is a new companion to the old EVALHOOK feature.  While the
+evalhook is called when the interpreter calls EVAL, the applyhook is called when
+EVAL would normally call APPLY.  (Never mind that EVAL does not actually call
+APPLY per se; it does something equivalent).
+
+To use the applyhook, call EVALHOOK with a third argument, which is the
+applyhook function.  As usual, EVALHOOK will evaluate its first argument; but if
+that evaluation would apply a function, the applyhook is called instead.
+The second argument to EVALHOOK, if non-NIL, is used as the evalhook function,
+which is called if the evaluation would call EVAL recursively.
+
+The applyhook function receives two arguments: the function that EVAL was
+about to apply, and the list of arguments the function was going to get.  These
+are the same sorts of arguments that APPLY expects.  An applyhook function
+which simply passes its arguments to APPLY is the same as no applyhook at all.
+
+When either the applyhook function or the evalhook function is called,
+both the applyhook and the evalhook are bound off.
+
+[E] New Flavor Feature: :ABSTRACT-FLAVOR
+
+:ABSTRACT-FLAVOR is a new DEFFLAVOR option.  Its purpose is to suppress the
+warning that you would normally get from COMPILE-FLAVOR-METHODS if there are
+any required flavors, methods or instance variables that are missing.  This allows
+you to do COMPILE-FLAVOR-METHODS on a flavor which is not actually suited for
+instantiation.  (This is useful if the combined methods of this flavor could be
+inherited without change by several other flavors which can be instantiated).
+
+Since :ABSTRACT-FLAVOR is intended for flavors that are not suitable for
+instantiation, it also marks the flavor so that you are not allowed to try to
+instantiate it.  This is not logically necessary, but otherwise, once the
+COMPILE-FLAVOR-METHODS had been done with its warning suppressed, you would
+be able to instantiate the flavor with never any warning about the missing
+required flavors, methods or instance variables.
+
+[G]:CASE Method Combination
+
+:CASE is a new type of method combination for flavor methods.
+
+Recall that each type of method combination is a way of taking the various
+methods for a given flavor and operation and deciding what order to call them
+in, and how.  :DAEMON method combination, which looks for :BEFORE and :AFTER
+methods, is just the default method combination type, not the only one.
+
+:CASE method combination provides an automatic subdispatch on the first
+argument to the operation.  Each method says which first argument it wants to
+handle.  When a message is sent, only one method is called, according to the
+first argument in the message.
+
+For example,
+
+  (defflavor foo (a b) ()
+    (:method-combination :case :base-flavor-last :do-something))
+
+  (defflavor bar (c) (foo))
+
+  (defmethod (foo :case :do-something :print-a) ()
+    (print a))
+
+  (defmethod (foo :case :do-something :clear-b) ()
+    (setq b nil))
+
+  (defmethod (bar :case :do-something :set-c) (new-c)
+    (setq c new-c))
+
+defines a :DO-SOMETHING operation which, for flavor FOO, understands only
+:PRINT-A as its first argument, but for flavor BAR understands either :PRINT-A or
+:SET-C.  :PRINT-A and :SET-C are called suboperations.  Each flavor can define
+any number of :CASE methods for the same operation if they are for different
+suboperations.
+
+You would use this operation in this manner:
+
+  (send my-bar ':do-something ':set-c 'new-value-for-c)
+
+The internals of :CASE method combination would automatically dispatch to the
+(BAR :CASE :DO-SOMETHING :SET-C) method to handle this.  Note that you do not
+specify any argument variable in the DEFMETHOD to correspond to the :SET-C.
+
+In addition to the :CASE methods, you can also have a primary method.  It gets
+called if none of the :CASE methods applies; that is, when the suboperation
+does not match any of the:CASE methods.  It is a sort of default handler.  It does
+receive the suboperation explicitly as an argument.
+
+You can also have one or more :OR methods.  These are called just before the
+primary method, after determining that no :CASE method applies.  If an :OR
+method returns non-NIL, that is the end: its first value is the value of the
+operation.  If all the :OR methods return NIL, the primary method is used.
+
+The suboperations :WHICH-OPERATIONS, :SEND-IF-HANDLES,
+:OPERATION-HANDLED-P, :GET-HANDLER-FOR and :CASE-DOCUMENTATION are
+handled specially and automatically.  The first four have meanings analogous to
+the operations of the same name.  Note that they consider a suboperation to be
+handled only if there is a :CASE method for it.  :CASE-DOCUMENTATION takes one
+argument, a suboperation, and returns the documentation string of the :CASE
+method for that suboperation, otherwise NIL.
+
+[H] (STRING-CAPITALIZE-WORDS string &optional (copy-flag t))
+
+This function performs two transformations on string: it changes all dashes into
+spaces, and capitalizes each word.  The initial becomes upper case, and the rest
+of each word lower case.
+
+The original string is unchanged, and the value is a new string, unless copy-flag
+is nil.
+
+[I] Restrictions Lifted on UNWIND-PROTECT and Peculiar Multiple-Value Constructs
+
+UNWIND-PROTECT now interacts correctly with GO and RETURN in all cases.  For
+example,
+
+  (prog ()
+    (unwind-protect
+      (print (if a b (go tag)) stream)
+      (close stream))
+   tag
+    ...)
+
+will now close the stream even if the GO takes place.
+
+RETURN of multiple values to internal destinations now works also.  For example,
+
+  (multiple-value (a b)
+    (prog ()
+      (print (if c d (return base t)))
+      (return ibase nil)))
+
+will set A and B properly, and no longer crash the machine.
+
+These two improvements are often useful together, as in
+
+  (multiple-value (a b)
+    (prog ()
+      (unwind-protect
+	(.... (return x y) ...)
+	(close stream))))
+
+[J] :NEW-SUGGESTED-NAME and :NEW-SUGGESTED-DIRECTORY Pathname Operations.
+
+The :NEW-SUGGESTED-DIRECTORY operation is nearly the same as the
+:NEW-DIRECTORY operation, but it has a slightly different purpose.  The new
+directory name is not precisely what is desired, but just a suggestion, based on
+some sort of default.  For example, it might be a user name.  Similarly,
+:NEW-SUGGESTED-NAME supplies a suggestion for the name, rather than a precise
+desired name.  It might be the name of an editor buffer.
+
+The difference between the actions of the new operations and the actions of
+:NEW-NAME and :NEW-DIRECTORY is that the new operations may make
+file-system-dependent changes in their arguments.  For example, on systems
+such as Twenex, where filenames can contain lowercase characters but normally
+do not, the -SUGGESTED- operations convert the name to upper case.
+
+[K] Readmacros #M, #Q, #+, #- Work Better.
+
+These read-time conditional constructs now do not intern the symbols in the
+following s-expression, if the conditional fails.  As a result, there will be no
+error if the s-expression contains symbols with package prefixes for packages
+that do not, and should not, exist.
+
+[L] :ITEM Operation on TV:TEXT-SCROLL-WINDOW Changed.
+
+The :ITEM operation on these windows is now compatible with the :ITEM
+operation provided by typeout windows.  As a result, objects which print
+themselves in a mouse-sensitive fashion using the :ITEM operation when it is
+available will now work properly in the inspector.
+
+The old calling conventions for the :ITEM operation are now available as
+the :ITEM1 operation.
+
+[M] Reading and Printing of Hex Numbers Improved.
+
+You can now read in Hexadecimal numbers successfully using either
+#X or #16R followd by the number.  However, in order to cause the
+characters A through F to be recognized as digits, you must begin
+the number with a sign (+ or -).
+
+To print hexadecimal numbers, it suffices to set BASE to 16 in any fashion.
+
+[N] CURRENT-STACK-GROUP and CURRENT-STACK-GROUP-RESUMER.
+
+These are new, global names for SI:%CURRENT-STACK-GROUP and
+SI:%CURRENT-STACK-GROUP-PREVIOUS-STACK-GROUP.
+
+[O] New Stack Analysis Functions.
+
+Several functions in the EH package used for finding stack frames and extacting
+arguments, locals, etc. from them are now documented in the file SYS: MAN; FD-SG TEXT.
+
+[P] Lambda List Keyword &KEY.
+
+This feature still exists as announced a year ago.  Refer to SYS: MAN; FD-EVA
+TEXT, until the new manual is out.
+
+[Q] units Argument to Window Operations :INSERT-LINE, etc.
+
+The operations :INSERT-LINE, :DELETE-LINE, :INSERT-CHAR and :DELETE-CHAR
+now take two arguments.  The second argument says what units are used
+to interpret the first argument.  If the second argument is :PIXEL, then
+the first argument is taken as the number of pixels of space to insert.
+If the second argument is :CHARACTER, which is the default, the first argument
+is the number of characters or lines.
+
+[R] New DEFSTRUCT Options.
+
+There are three new options for DEFSTRUCT: :PRINT, :PREDICATE and :COPIER.
+
+1) :PRINT
+
+This allows the user to control the printed representation of his structure in
+an implementation independent way:
+
+    (DEFSTRUCT (FOO :NAMED
+		(:PRINT "#&lt;Foo ~S ~S&gt;" (FOO-A FOO) (FOO-B FOO)))
+	FOO-A
+	FOO-B)
+
+The arguments to the :PRINT option are arguments to the FORMAT function (except
+for the stream of course!).  They are evaluated in an environment where the
+name symbol of the structure (FOO in this case) is bound to the instance of the
+structure to be printed.
+
+This works by creating a simple named structure handler.  You should not use
+the :PRINT option if you are defining a named structure handler explicitly.
+
+2) :PREDICATE
+
+The :PREDICATE option causes DEFSTRUCT to generate a predicate to recognize
+instances of the structure.  Naturally it only works for "named" defstruct types.
+The argument to the :PREDICATE option is the name to give the predicate.  If it
+is present without an argument, then the name is formed by concatenating "-P"
+to the end of the name symbol of the structure.  If the option is not present,
+then no predicate is generated.  Example:
+
+    (DEFSTRUCT (FOO :NAMED :PREDICATE)
+	FOO-A
+	FOO-B)
+
+defines a single argument function, FOO-P, that is true only of instances of
+this structure.
+
+3) :COPIER
+
+This option causes DEFSTRUCT to generate a single argument function that will
+copy instances of this structure.  Its argument is the name of the copying
+function.  If the option is present without an argument, then the name is
+formed by concatenating "COPY-" with the name of the structure.  Example:
+
+    (DEFSTRUCT (FOO (:TYPE :LIST) :COPIER)
+	FOO-A
+	FOO-B)
+
+Generates a function approximately like:
+
+    (DEFUN COPY-FOO (X)
+	(LIST (CAR X) (CADR X)))
+
+[S] New FORMAT Directives ~$, ~\DATE\, ~\TIME\, ~\DATIME\, ~\TIME-INTERVAL\.
+
+~$
+
+~rdig,ldig,field,padchar $ prints arg, a flonum, with exactly
+rdig digits after the decimal point.  The default for rdig is 2,
+which is convenient for printing amounts of money.
+
+At least ldig digits will be printed preceding the decimal point;
+leading zeros will be printed if there would be fewer than ldig.
+The default for ldig is 1.  The number is right justified in a field field
+columns long, padded out with padchar.  The colon modifier means
+that the sign character is to be at the beginning of the field, before
+the padding, rather than just to the left of the number.  The atsign modifier
+says that the sign character should always be output.
+
+If arg is not a number, or is unreasonably large, it will be printed
+in ~field,,,padchar@A format; i.e. it will be PRINC'ed
+right-justified in the specified field width.
+
+~\DATE\
+
+This expects an argument which is a universal time, and prints it as a date and
+time using TIME:PRINT-UNIVERSAL-DATE.  Example:
+    (FORMAT T "It is now ~\DATE\" (TIME:GET-UNIVERSAL-TIME))
+prints
+    It is now Saturday the fourth of December, 1982; 4:00:32 am
+
+~\TIME\
+
+This expects an argument which is a universal time and prints it in a brief
+format using TIME:PRINT-UNIVERSAL-TIME.  Example:
+    (FORMAT T "It is now ~\TIME\" (TIME:GET-UNIVERSAL-TIME))
+prints
+    It is now 12/04/82 04:01:38
+
+~\DATIME\
+
+This prints the current time and date.  It does not use an argument.
+It is equivalent to using the ~\TIME\ directive with
+(TIME:GET-UNIVERSAL-TIME) as argument.
+
+~\TIME-INTERVAL~\
+This prints a time interval measured in seconds using the function
+TIME:PRINT-INTERVAL-OR-NEVER.  Example:
+
+    (FORMAT T "It took ~\TIME-INTERVAL\." 3601.)
+prints
+    It took 1 hour 1 second.
+
+[T] Asynchronous Characters.
+
+The characters Control-ABORT and Control-Meta-BREAK are examples of
+"asynchronous characters", characters processed specially as soon as they are
+typed, even if the program is not reading input.  Programs can now define
+their own asynchronous characters on a per-window basis.  This facility is
+provided by the flavor TV:STREAM-MIXIN.
+
+The basic way to specify the asynchronous characters for a window is with the
+init option :ASYNCHRONOUS-CHARACTERS in TV:MAKE-WINDOW.  The value you
+specify should be an alist of characters and their handlers.  Each element of the
+alist contains a character, a function to call, and some additional arguments to
+pass to the function.  When the function is called, its arguments will be the
+character typed (the same function can handle more than one character),
+the selected window, and any specified additional args.
+
+If the init option :ASYNCHRONOUS-CHARACTERS is not specified, the default comes
+from the value of TV:KBD-STANDARD-ASYNCHRONOUS-CHARACTERS, the initial value
+of which is
+    '((#\C-ABORT TV:KBD-ASYNCHRONOUS-INTERCEPT-CHARACTER
+	(:NAME "Abort" :PRIORITY 50.)
+	TV:KBD-INTERCEPT-ABORT)
+      (#\C-M-ABORT TV:KBD-ASYNCHRONOUS-INTERCEPT-CHARACTER
+       (:NAME "Abort All" :PRIORITY 50.)
+       TV:KBD-INTERCEPT-ABORT-ALL)
+      (#\C-BREAK TV:KBD-ASYNCHRONOUS-INTERCEPT-CHARACTER
+       (:NAME "Break" :PRIORITY 40.)
+       TV:KBD-INTERCEPT-BREAK)
+      (#\C-M-BREAK TV:KBD-ASYNCHRONOUS-INTERCEPT-CHARACTER
+       (:NAME "Error Break" :PRIORITY 40.)
+       TV:KBD-INTERCEPT-ERROR-BREAK))
+
+An asynchronous character is handled by a process called the keyboard process.  It
+handles the character by calling a function associated with it.  The function runs
+in the keyboard process rather than your program's process, and must obey some
+strict conventions.  It must not do any I/O, or wait for anything; it should not
+run for very long; it should not get an error.  It is usually easiest to create
+another process and do the real work there, using PROCESS-RUN-FUNCTION.  This
+is usually done with the function TV:KBD-ASYNCHRONOUS-INTERCEPT-CHARACTER.
+It is used with two additional arguments: the process name and options for
+PROCESS-RUN-FUNCTION, and the function to call in the new process.
+
+You can examine and change a window's asynchronous characters with these
+window operations:
+
+:ASYNCHRONOUS-CHARACTER-P character
+
+  Returns non-NIL if the window defines character to be an asynchronous
+  character.
+
+:HANDLE-ASYNCHRONOUS-CHARACTER character
+
+  Run the handler associated with the asynchronous character character.
+  This runs the handler function in your current process.  But since most
+  handler functions just do PROCESS-RUN-FUNCTION, it probably doesn't matter.
+
+:ADD-ASYNCHRONOUS-CHARACTER character handler-function &REST additional-args
+
+  Add character to this window's list of asynchronous characters, defined to
+  call handler-function.  additional-args are passed to the handler function
+  when it is called.  The arguments to this operation, all of them, simply become
+  the alist element.
+
+:REMOVE-ASYNCHRONOUS-CHARACTER character
+
+  Removes character from this window's list of asynchronous characters.
+
+[U] New Window Graphics Operations in TV:GRAPHICS-MIXIN.
+
+:DRAW-CIRCULAR-ARC center-x center-y radius start-theta end-theta &OPTIONAL alu
+
+  This operation draws a specified part of a circle centered at the point
+  center-x, center-y and of radius radius.  The part of the circle to be drawn
+  is specified by start-theta and end-theta.  Both angles should be in the
+  interval [0,2); an angle of zero goes to the right, and small positive
+  angles point slightly upward.  The arc starts at start-theta and goes through
+  increasing angles, passing through zero if necessary, to stop at end-theta.
+
+  alu controls how the points are drawn (or erased).
+
+:DRAW-CLOSED-CURVE px py &OPTIONAL end alu
+
+  This is the same as the :DRAW-CURVE operation except that the last point is
+  connected back to the first.  px and py are vectors of coordinates, and end
+  is an optional index in those arrays to stop drawing at.
+
+:DRAW-DASHED-LINE x0 y0 x1 y1 &OPTIONAL alu
+    (dash-spacing 20.) space-literally-p (offset 0)
+    (dash-length (FLOOR dash-spacing 2)))
+
+  This operation draws a line divided into dashes.  The first five arguments are
+  the same as those of the :DRAW-LINE operation.
+
+  The argument dash-spacing specifies the period of repetition of the dashes;
+  it is the length of a dash plus the length of a space between dashes.
+  dash-length is the length of the actual dash; it defaults to half the spacing.
+
+  If space-literally-p is NIL, the spacing between dashes is adjusted so that
+  the dashes fit evenly into the length of line to be drawn.  If it is non-NIL,
+  the spacing is used exactly as specified, even though that might put the
+  end point in the middle of a space between dashes.
+
+  A nonzero offset is used if you want a space between the starting point and the
+  beginning of the first dash.  The value is the amount of space desired, in
+  pixels.  The same space will be provided at the end point, if space-literally-p
+  is NIL.
+
+[V] DONT-OPTIMIZE Works Inside SETF.
+
+DONT-OPTIMIZE, which is used around calls to DEFSUBSTs to avoid expanding them
+at compile time, can now be used inside a SETF.  For example,
+
+    (SETF (ZWEI:BUFFER-PACKAGE BUFFER) (PKG-FIND-PACKAGE "USER"))
+
+sets the package of BUFFER, but needs to be recompiled if the definition of
+BUFFER-PACKAGE is changed.
+
+    (SETF (DONT-OPTIMIZE (ZWEI:BUFFER-PACKAGE BUFFER))
+	   (PKG-FIND-PACKAGE "USER"))
+
+does the same job but never needs to be recompiled.
+
+[W] #?NIL Allowed in SELECT-MATCH.
+
+#?NIL may now be used in a SELECT-MATCH pattern to match anything and bind
+no variable.
+
+User Interface Changes:
+
+    [A] LOGIN Calling Conventions Change.
+    [B] Debugger Command Control-M for Sending Bug Reports.
+    [C] New Calling Conventions for APROPOS.
+    [D] ZWEI:*DEFAULT-MAJOR-MODE* Values Change.
+    [E] ZWEI:EDITING-TYPE Property.
+    [F] Reading Files into ZWEI May Look Slower, But It Is Not.
+    [G] M-X Find File No Sectionize.
+    [H] New Editor Variable ZWEI:*ONE-WINDOW-DEFAULT* Controls C-X 1.
+    [I] C-M-. is Edit Zmacs Command.
+    [J] Balance Directories Editor.
+    [K] COMPILER:COMPILER-VERBOSE.
+    [L] Compiler Peephole Optimizer.
+    [M] DUMP-FORMS-TO-FILE Writes A QFASL File.
+    [N] Completion in M-X Bug.  How to Add New Bug Report Lists.
+    [O] Negative Arguments Allowed in the Rubout Handler.
+    [P] Wait States for Chaosnet Connecting Show the Host Name.
+    [Q] New Function LISTF Lists a Directory.
+    [R] DISASSEMBLE Now Describes Any Complex Function Entry Initializations
+    [S] Better Truncation of Pathnames in the Who Line
+    [T] (DECLARE (VALUES ...))
+    [U] GC-IMMEDIATELY.
+    [V] PEEK Improvements.
+    [W] New function (teach-zmacs).
+    [X] M-X Teach Zmacs
+
+[A] LOGIN Calling Conventions Change.
+
+The sense of the third argument to LOGIN is now reversed.
+T now means do not load the init file, and NIL (the default) means do load it.
+This is so that the T in (LOGIN "FOO" "OZ" T) means the same thing as the T
+in (LOGIN "FOO" T).
+
+[B] Debugger Command Control-M for Sending Bug Reports.
+
+In the debugger, you can conveniently send a bug report containing the error
+message and a backtrace by typing Control-M.  This puts you into an editor
+window by calling the function BUG, and preinitializes it with the error message
+and stack information.  You edit in your description of the circumstances
+and type End.
+
+The new :MAIL command in CC performs a similar function for reporting
+bugs that crash the machine.  It sends a report starting with the same text that
+:WHY prints.
+
+[C] New Calling Conventions for APROPOS.
+
+APROPOS used to take arguments substring package superiors inferiors dont-print.
+
+Now all but the first argument are keyword arguments.  The keywords are
+  :PACKAGE -- specify the package to look through.  Default is GLOBAL.
+  :SUPERIORS -- if NIL, the superiors of that package are not searched.
+     The default is T.
+  :INFERIORS -- if NIL, the subpackages of that package are not searched.
+     The default is T.
+  :DONT-PRINT -- if non-NIL, the symbols are not printed when they are found.
+     Then the only thing APROPOS does is return a list of them.
+  :PREDICATE -- if non-NIL, a predicate to filter symbols with.
+     A symbol is ignored unless the predicate returns non-NIL.
+     For example, use FBOUNDP to find only defined functions.
+
+SUB-APROPOS has been changed in the same fashion.
+It takes two positional arguments, the substring and a list of symbols,
+and then allows :PREDICATE and :DONT-PRINT as keyword arguments.
+
+[D] ZWEI:*DEFAULT-MAJOR-MODE* Values Change.
+
+The meaningful values of this variable used to be symbols such as
+ZWEI:LISP-MODE.  They are now keywords such as :LISP.  The values you can
+use here are keywords which are the name of a mode, without the "-MODE", just
+like what you would use in ZWEI:*MAJOR-MODE-TRANSLATIONS* or
+FS:*FILE-TYPE-MODE-ALIST*.
+
+[E] ZWEI:EDITING-TYPE Property.
+
+A ZWEI mode symbol such as ZWEI:LISP-MODE may have a ZWEI:EDITING-TYPE
+property which says how to analyze the syntax of the contents of the file.  The
+two defined values for this property are :LISP and :TEXT.  :LISP means to
+assume Lisp syntax, and :TEXT means to recognize some kinds of text-justifier
+input syntax.
+
+For example, when files are scanned for definitions for the sake of the Meta-.
+command, :LISP means look for lines starting with "(DEF", etc., whereas :TEXT
+means to look for lines starting with ".def", which might identify the
+documentation of some object, in a text justifier input file.
+
+[F] Reading Files into ZWEI May Look Slower, But It Is Not.
+
+Files used to be divided up into sections as they were read into the editor.
+Now the whole file is read in, and then divided up into sections.
+This is done to fix a class of bugs in sectionization.
+
+The result is that the file is read in quickly, and then there is a long pause at
+end of file.  Tests show that the total amount of time taken is about the same as
+it used to be.
+
+[G] M-X Find File No Sectionize.
+
+This editor command is like C-X C-F except that it does not search the file
+for definitions and record them for Meta-Period.  It is useful if you do not
+want Meta-Period to see the definitions in that file (for example, if it is
+an old version, and you want Meta-Period to show you the latest version always).
+
+If you do M-X List Sections, M-X List Buffer Changed Sections, or any other
+command which specifically operates on the sectionization of the buffer, it will
+be sectionized then.  In system 92 this will be changed not to sectionize the
+buffer ever unless you give an explicit M-X Sectionize Buffer command.
+
+[H] New Editor Variable ZWEI:*ONE-WINDOW-DEFAULT* Controls C-X 1.
+
+Which window is selected after a C-X 1 command is determined by the value of
+ZWEI:*ONE-WINDOW-DEFAULT*.  The possibilities are:
+
+  :TOP -- leave the uppermost window selected.
+  :BOTTOM -- leave the lowest window selected.
+  :CURRENT -- leave the selected window selected.
+  :OTHER -- select the uppermost window other than the window selected now.
+
+:CURRENT is the default.
+
+In any case, a numeric argument tells C-X 1 to leave the selected window selected.
+If there is no numeric argument, C-X 1 will never pick a window whose buffer
+is in Warnings mode; it will used the other window.
+
+[I] C-M-. is Edit Zmacs Command.
+
+This command asks you to type another editor command, and visits the source
+for that command.  The command you visit can include prefix characters such as
+Control-X, and it can also be an extended command starting with Meta-X or
+Control-Meta-X.
+
+[J] Balance Directories Editor.
+
+In addition to the function FS:BALANCE-DIRECTORIES, which was
+implemented in System 89, there is now a ZWEI interface M-X BDIRED.
+This command will prompt for two pathnames.  The pathnames default
+to name and type wild, version newest.  Given the pathnames, two
+directory lists are made, and these lists are then compared.  The
+resulting directory lists are displayed in normal DIRED format,
+one above the other, with "T" next to each file that needs to be
+transferred to the other directory.  The algorithm used to determine
+which files are to be transferred is identical to that used by
+FS:BALANCE-DIRECTORIES.
+
+Once the buffer is displayed, you can move around in it in much the
+same way as in DIRED.  By means of the T and U commands it is
+possible to edit which files will actually get transferred.  The
+End key terminates the editing process and causes the transfers
+to take place.
+
+[K] COMPILER:COMPILER-VERBOSE.
+
+If this variable is non-NIL the compiler prints a message at the beginning of
+each function it compiles, stating the function's name.
+
+[L] Compiler Peephole Optimizer.
+
+There is now an optimizer that works on the code generated by the compiler.
+This should be of no concern to you unless you suspect you are running into a
+bug in it.  If so, you can set the variable COMPILER:PEEP-ENABLE to NIL and recompile.
+
+The peephole optimizer is extremely fast, examining few instructions more than once,
+so there is no other reason to turn it off.  The code is available to everyone.
+
+[M] DUMP-FORMS-TO-FILE Writes A QFASL File.
+
+The function DUMP-FORMS-TO-FILE can be used to construct a QFASL file
+that when loaded performs arbitrary actions you specify.  The calling sequence is
+
+DUMP-FORMS-TO-FILE filename forms-list &optional attribute-list
+
+This writes a QFASL file named filename which contains, in effect, the
+forms in forms-list.  That is to say, when the file is loaded, its
+effect will the same as evaluating those forms.  Example:
+
+    (dump-forms-to-file "foo" '((setq x 1) (setq y 2)))
+    (load "foo")
+    x =&gt; 1
+    y =&gt; 2
+
+attribute-list specifies the file attribute list to store in the QFASL file.  It is a
+list of alternating keywords and values, and corresponds to the -*- line of a
+source file.  The most useful keyword in this context is :PACKAGE, whose
+value in the attribute list specifies the package to be used both in dumping the
+forms and in loading the file.  If no :PACKAGE keyword is present, the file will
+be loaded in whatever package is current at the time.
+
+[N] Completion in M-X Bug.  How to Add New Bug Report Lists.
+
+The editor command M-X Bug now offers completion.  The primary benefit is
+that you can type Control-? and get a list of the standard bug reporting lists.
+
+There are two ways you can add another entry to the list of standard bug report
+addresses.  The function ZWEI:ADD-BUG-REPORT takes two arguments, the
+name to send mail to and a line of documentation (both strings).
+Alternatively, you can define a bug report list when you define a system.
+Use the DEFSYSTEM keyword :BUG-REPORTS in a list like this
+    (:BUG-REPORTS "MYSYSTEM" "Report a bug in MYSYSTEM.")
+in your DEFSYSTEM.
+
+[O] Negative Arguments Allowed in the Rubout Handler.
+
+Yes, you can now do Meta-Minus Meta-C.
+
+[P] Wait States for Chaosnet Connecting Show the Host Name.
+
+[Q] New Function LISTF Lists a Directory.
+
+[R] DISASSEMBLE Now Describes Any Complex Function Entry Initializations
+
+When you DISASSEMBLE a function which provides complicated default values for
+optional arguments or &AUX variables as part of function entry, it used to be hard
+to tell what was going on, since the compiled code per se does not explain it.
+
+Now DISASSEMBLE prints a description of such variable binding activities at the
+beginning of the output.
+
+[S] Better Truncation of Pathnames in the Who Line
+
+You may notice that, when you are doing file i/o, the who line tries to be intelligent
+about what part of the filename to truncate from, if it will not all fit.
+
+[T] (DECLARE (VALUES ...))
+
+(DECLARE (VALUES variables...)) is now equivalent to (DECLARE (RETURN-LIST variables...))
+
+[U] GC-IMMEDIATELY.
+
+This function performs a complete garbage collection, in the current process.
+It is the same as the guts of SI:FULL-GC; but it does not reset temporary areas
+or run the FULL-GC initializations.  Use SI:FULL-GC before saving a band, and
+GC-IMMEDIATELY if you are going to continue running the machine.
+
+[V] PEEK Improvements.
+
+PEEK no longer does weird things when the ABORT key is typed.
+
+The Space key is now a command that tells PEEK to update its display immediately.
+
+While looking at the display of chaosnet connections, you can mouse on the
+words "Connection to contactname" to get a menu of operations on the
+connection, including closing the connection.  You can also mouse on the host name
+to get some operations that pertain to the host.
+
+[W] (teach-zmacs)
+
+This new function makes a private copy, if needed, of the ZMacs tutorial file
+SYS: ZWEI: TEACH-ZMACS TEXT, then enters ZMacs with that file specified.
+The tutorial file is based on the one used by Teach-EMACS, with appropriate
+changes for the Lisp Machine.
+
+[X] M-X Teach Zmacs
+
+This does much the same thing as the function, but from within an editor.
+`
+A Comparison of the MIT and Symbolics Error Systems
+
+[A] Major Differences
+
+The primary difference between the MIT new error system and the Symbolics
+one is that theirs requires defining a new flavor whenever a condition is to
+be signaled in a slightly different way.  This required the creation of a very
+large number of new flavors, greatly increasing the size of the saved world.
+It is also a hassle for the user who wishes to define ways of signaling errors.
+
+In the MIT system it is not necessary to define a new flavor just to represent a
+hierarchy of classifications of conditions.  Additional condition names can be
+specified in a signal name, instead.
+
+In the Symbolics system, to remember an additional piece of information in a
+condition instance, one must define a new flavor and give it an instance variable.
+This works in the MIT system as well, but it is easier to use DEFSIGNAL and
+the "implicit instance variable" feature.
+
+The cost of this is that in addition to the concept of condition flavor names, one
+must know the concepts of condition names and signal names.
+
+Another significant difference is that in the MIT system it is possible to signal
+the same condition instance more than once.  The Symbolics documentation says
+this is forbidden; I do not know what would happen if you tried.  This is useful
+in several ways.  For one thing, it makes the ABORT key much faster.  For
+another, the caller of OPEN could call with :ERROR NIL and then possibly resignal
+the condition instance that OPEN returns.  A CONDITION-CASE handler can do this
+too.  (I don't know yet whether this is useful).  Finally, a condition handler can
+recursively signal the condition it is handling; this provides for a clean solution
+to the problem of generalizing default handlers, which the Symbolics
+documentation throws up its hands at.  (I did not have this in mind when I
+decided to make conditions resignalable; my intuition told me it would be good
+for something).
+
+Another difference is that the Symbolics system makes restart handlers and
+proceeding two ideosyncratically different things.  In the MIT system, restart
+handlers are just proceed types that are provided nonlocally rather than by the
+immediate signaler.  The :USER-PROCEED-TYPES operation does the same job as
+the Symbolics "special commands" feature, but in a simpler and more general
+way.
+
+Also, in the MIT system I have tried to preserve the usefulness of the old
+error-signaling functions FERROR and CERROR.  Rather than being semi-obsolete,
+they are perfectly good ways of signaling errors, using their traditional calling
+conventions.  The amount of change required to old programs is thus much less.
+
+[B] Compatibility
+
+Nearly all the condition-handling facilities of the MIT system are upward
+compatibile with those of the Symbolics system.  The standard system condition
+names are also for the most part the same, and the same extra operations and
+proceed types are provided.  So no special care is needed to move between
+systems for simple programs that only handle conditions.
+
+The main exception is that you must use CONDITION-TYPEP in place of TYPEP,
+if you want to look at a condition instance and ask whether it has a certain
+condition name.  Also, a few operations work only inside condition handlers,
+including :PROCEED-TYPES, because they refer to global variables bound by
+SIGNAL-CONDITION rather than to instance variables (the condition
+instance does not contain information about the particular signaler, since
+that would not be reentrant).
+
+For signaling conditions, the MIT system is upward compatible in its general
+facilities, with a few exceptions.  Flavors which would work in the Symbolics
+system will also work, the same way, in the MIT system.  However, the standard
+system conditions, which in the Symbolics system are all flavor names, are
+mostly just condition names in the MIT system.  As a result, your flavor
+definition may refer to flavors which do not exist.  If this happens, your best bet
+is just to define the flavor yourself.  Write a definition which "could have been
+used to define it" in the Symbolics system, and use it in the MIT system.
+The system will not be confused by the existence of a flavor it does not know
+about, with the same name as a condition it is using, and handlers will not care
+whether the condition name came from a flavor component or from a DEFSIGNAL.
+
+The MIT system expects signalers to specify exactly which proceed types they
+will handle.  The function SIGNAL will still default this as in the Symbolics
+system, but the flavor definitions of the MIT system may define more proceed
+types than you expect.  Mentioning them explicitly will not hurt.  (I think the
+feature of defaulting them is a bad idea).
+
+Many Symbolics ways of doing things exist, undocumented, in the MIT system,
+for compatibility only (because more general or better ways of doing those
+things are recommended).  These include special commands, the handling of the
+:PROCEED operation, and EH:INVOKE-RESTART-HANDLERS.  DBG: is accepted as a
+synonym of EH:.
+    </pre>
+
+    <hr/>
+    <p>Last modified: 2025/06/05 09:07:48 (UTC) by ams</p>
+  </body>
+</html>
+
+<!-- Local Variables: -->
+<!-- time-stamp-pattern: "-8/<p>Last modified:[ \t]%:y/%02m/%02d %02H:%02M:%02S (%Z) by %u</p>" -->
+<!-- time-stamp-time-zone: "UTC" -->
+<!-- End: -->

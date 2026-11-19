@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <link rel="stylesheet" type="text/css"
+	  href="../lm3.css">
+    <title>LM-3 --- Lisp Machine System Release 5 Notes</title>
+  </head>
+  <body>
+    <center><h1>Lisp Machine System Release 5 Notes</h1></center>
+
+    <pre>
+Date: 21 APR 1979 1727-EST
+From: RG at MIT-AI (Richard Greenblatt)
+To: INFO-LISPM at MIT-AI
+
+  A new cold load (system 5 series) is installed on CADR1 and 2.
+It is experimental!  Since a extra Q has been added to the
+stack-group representation, please do not recompile any system files
+with the earlier systems.
+  (some of the) notable changes are:
+BASE and IBASE exist file properties.  You can actually assure your
+file will be read in with the right radix!!!!  If the properties appear,
+a BINDing sort of operation with the scope of the file occurs during
+readin, compilation, and operations from ZWEI buffers.
+  also an EVALUATOR file property is defined.  If set, it causes
+the ZWEI command cntrl-top-e (and similar) to use it instead of EVAL-PRINT.
+  If a DEFCLASS is done when the class is already defined, it is a
+no-op if the instance variables of the new class would be the same
+as the existing class.  This avoids &quot;losing&quot; all the methods on
+existing class.  If instance variables have been added or deleted,
+the old class becomes &quot;detached&quot; (altho still operational) as before.
+    </pre>
+
+    <hr/>
+    <p>Last modified: 2025/06/05 08:38:52 (UTC) by ams</p>
+  </body>
+</html>
+
+<!-- Local Variables: -->
+<!-- time-stamp-pattern: "-8/<p>Last modified:[ \t]%:y/%02m/%02d %02H:%02M:%02S (%Z) by %u</p>" -->
+<!-- time-stamp-time-zone: "UTC" -->
+<!-- End: -->

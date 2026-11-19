@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <link rel="stylesheet" type="text/css"
+	  href="../lm3.css">
+    <title>LM-3 --- Lisp Machine System Release 86.56 Notes</title>
+  </head>
+  <body>
+    <center><h1>Lisp Machine System Release 86.56 Notes</h1></center>
+
+    <pre>
+Date: 9 July 1982 03:03-EDT
+From: Richard M. Stallman &lt;RMS at MIT-AI&gt;
+Subject: Several new features in 86.56
+To: INFO-LISPM at MIT-AI
+
+*) Default filetype is LISP.
+
+If you specify a name but no type in a pathname, the default (when not
+specified explicitly by the program) is now LISP rather than
+:UNSPECIFIC.  This change is in the functions FS:MERGE-PATHNAME-DEFAULTS
+and FS:MERGE-AND-SET-PATHNAME-DEFAULTS.
+
+Actually, the default is the value of the variable
+FS:*NAME-SPECIFIED-TYPE-DEFAULT*, whose value is initially &quot;LISP&quot;.
+The old behavior is obtained by setting this variable to :UNSPECIFIC.
+
+This change is usually not visible if FS:*ALWAYS-MERGE-TYPE-AND-VERSION*
+is non-nil, since then the type defaults from the previously used
+pathname even if the name is specified.  However, this new default
+may eliminate your motivation for setting that variable.
+
+*) Twenex pathname handling is improved.
+
+The device name DSK is now canonicalized to PS in all Twenex pathnames.
+This avoids problems of duplicate pathnames that are different but completely
+synonymous.
+
+You can now specify a filetype of :UNSPECIFIC (that is, a null type)
+by ending the filename with a period.  This is different from omitting the
+type entirely: a specified null type overrides all defaults; an omitted
+type is defaulted (to &quot;LISP&quot; or something else).
+
+In other words, &quot;FOO&quot; means &quot;FOO.LISP.0&quot; or some other default, but &quot;FOO.&quot;
+means &quot;FOO..0&quot;.
+
+*) Unix pathname handling is improved.
+
+Case is now completely significant in Unix pathnames, as it ought to be.
+You can now rename FOO to Foo and it should work.
+
+*) Compiled functions record macros.
+
+The macros found in a function being compiled are recorded in the debugging
+info alist of the compiled function, under the key :MACROS-EXPANDED.
+Thus, WHO-CALLS will work on macros if the places they were used were
+compiled in 86.56 or later.
+
+*) If you get an error in a background process, and a notification cannot be printed,
+you can now type Terminal Call to cause the error handler to be run using the
+cold load stream (which is what it would have done in any case before system 86).
+
+Terminal Call&#39;s normal meaning is to enter a break loop using the cold load stream.
+If there are pending background errors, it asks you about each one, one by one,
+whether you want to handle that error.  If you say &quot;N&quot; to all of them,
+you get the break loop.
+
+Another useful strategy for handling this circumstance is to type
+Terminal Control-Clear-Input, which unlocks the window system locks.
+After that, the notification may print; or you may be able to select a window
+or do Terminal 0 S.
+
+You can tell there is an error in a background process which cannot
+print its notification because stars at the ends of the mouse
+documentation line flash.  The text of the line will tell you to try
+Terminal Call.
+
+*) SXHASH now accepts a second argument which, if T, says that SXHASH should use
+the address of an object as its hash code if there is no other way to handle it.
+This applies to everything but numbers, symbols, strings and lists.
+
+In addition, flavor instances and named structures can now define the :SXHASH
+operation.  This operation takes one argument, the new flag, and should return
+the SXHASH value for the object.  This overrides use of the object&#39;s address.
+
+If the second argument is NIL, the SXHASH of an array will now be the array&#39;s
+active length, rather than zero.
+
+Use a second argument of T if you are not going to save the SXHASH
+values in files, and you are prepared to deal with the possibility that
+GC will move an object (or you don&#39;t intend to use GC).  If you want to
+be completely safe, omit the second argument.
+    </pre>
+
+    <hr/>
+    <p>Last modified: 2025/06/05 08:39:29 (UTC) by ams</p>
+  </body>
+</html>
+
+<!-- Local Variables: -->
+<!-- time-stamp-pattern: "-8/<p>Last modified:[ \t]%:y/%02m/%02d %02H:%02M:%02S (%Z) by %u</p>" -->
+<!-- time-stamp-time-zone: "UTC" -->
+<!-- End: -->

@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <link rel="stylesheet" type="text/css"
+	  href="../lm3.css">
+    <title>LM-3 --- Lisp Machine System Release 51 Notes</title>
+  </head>
+  <body>
+    <center><h1>Lisp Machine System Release 51 Notes</h1></center>
+
+    <pre>
+Date:  6 DEC 1980 2320-EST
+From: Moon at MIT-AI (David A. Moon)
+Subject: System 51 released
+To: INFO-LISPM at MIT-AI
+
+System 51.1 with microcode 705 is now tentatively installed.
+
+The performance disoptimization in the paging code introduced in system 50
+has been fixed.  This necessitates that you use the latest version of LCADR;QF
+(which of course is included in system 51) when debugging a system 51 machine
+with CC.  Also system 51 will NOT come up in microcode older than 705.
+
+Most "ARGTYP" microcode errors (e.g. doing arithmetic on non-numbers) are now
+recoverable by typing the control-C or Resume key and giving a replacement argument.
+
+The "MAR" feature now works reliably.  It never did in the past.
+
+The "alu" functions have been changed incompatibly; all functions and messages
+that take an "alu" argument now use the same code numbers as the BOOLE function.
+If you use the variables TV:ALU-XOR, etc., the change will be transparent.
+
+BITBLT is faster in the easy case where it is just copying words from one
+place to another.  This should make window-scrolling and most cases of window
+switching faster.
+
+The keyboard buffer is now 64 characters instead of 24.  This should make it
+impossible to fill up the buffer by typing ahead, even when the machine is
+paging hard.
+
+As previously announced, STRING-REVERSE-SEARCH-SET and
+STRING-REVERSE-SEARCH-NOT-SET now do what the manual has always
+documented them as doing.  In previous systems they return 1+ what they
+are documented to (except when they return NIL).
+
+TRACE has been changed around somewhat.  It now works to redefine or recompile
+a function that is traced (it remains traced).
+    </pre>
+
+    <hr/>
+    <p>Last modified: 2025/06/05 08:38:11 (UTC) by ams</p>
+  </body>
+</html>
+
+<!-- Local Variables: -->
+<!-- time-stamp-pattern: "-8/<p>Last modified:[ \t]%:y/%02m/%02d %02H:%02M:%02S (%Z) by %u</p>" -->
+<!-- time-stamp-time-zone: "UTC" -->
+<!-- End: -->

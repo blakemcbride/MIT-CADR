@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <link rel="stylesheet" type="text/css"
+	  href="../lm3.css">
+    <title>LM-3 --- Lisp Machine System Release 67 Notes</title>
+  </head>
+  <body>
+    <center><h1>Lisp Machine System Release 67 Notes</h1></center>
+
+    <pre>
+Date: 15 April 1981 21:31-EST
+From: David A. Moon &lt;Moon at MIT-AI&gt;
+Subject:  System 67 released
+To: INFO-LISPM at MIT-AI
+
+System 67.1 with Zmail 21.0 and Microcode 752 is released to users.  It is installed
+on CADR's 4 and 6 and will migrate to others soon.  If you find it necessary to
+deinstall it, be sure to deinstall both the LOD and the MCR, and to send a message
+to BUG-LISPM explaining what was wrong with it that required it to be deinstalled.
+
+The following changes may be of interest:
+
+This system requires microcode 752.
+
+The body of an UNWIND-PROTECT may now return multiple values.  Code
+compiled in system 67 will not run in microcode older than 751 because of
+this.  This change should allow quite a few crocks to be flushed.
+NOTE: Currently this only works for external multiple values, e.g.
+(defun foo () (unwind-protect (values ...) ...)).  Internal multiple
+values, as in (defun foo () (multiple-value (a b c) (unwind-protect ...)))
+do not work and code of this form will get a compiler error message.  You
+can move the MULTIPLE-VALUE inside the body of the UNWIND-PROTECT.
+
+By the way if you were using the undocumented variables UNWIND-PROTECT-xxx
+they no longer exist anymore; you shouldn't have been using them anyway.
+
+A number of other multiple-value anomalies with COND, LET, etc. have been flushed.
+
+Resources have been changed in an upward-compatible fashion.  WITH-RESOURCE
+has been replaced by USING-RESOURCE with slightly different arguments.  It
+will give an obsolete function warning but will continue to work for a while.
+The syntax of DEFRESOURCE has been changed but the old syntax will continue
+to work for a while.  Refer to the file AI:LMMAN;RESOUR for details.
+TV:SYSTEM-WINDOW-ADD-TYPE and friends have been replaced by DEFWINDOW-RESOURCE.
+
+*CATCH now allows any number of body forms, not just one.  (Actually, there
+is a maximum of 63 forms in the body when running interpreted code.  If anyone
+notices, which seems unlikely, it will be fixed.)
+
+The compiler no longer generates special code for LIST and LIST-IN-AREA.
+Instead, LIST, LIST-IN-AREA, LIST*, and LIST*-IN-AREA are now regular functions,
+but written in microcode rather than macrocode.  This should provide a small
+increase in speed for LIST and a large speedup for LIST*.  This change
+introduces a restriction making LIST* allow a maximum of 63 arguments.
+LIST already had this restriction (in compiled code) and no one complained
+so I guess it must be alright.
+
+SXHASH has been revised to get rid of the bug that (SXHASH '(A B)) and
+(SXHASH '(B A)) return the same number, and for increased speed.  It will
+therefore return different answers than in previous systems.  By the way,
+the result of SXHASH is guaranteed always to be a non-negative fixnum.
+
+The naming convention for system patch files has been changed from
+LMPAT;69.1 to LMPAT;69-1 for compatibility with files systems that
+can't deal with dots.
+
+These are mostly incompatibilities with the newly-released manual.  Progress
+marches on.
+
+DIRED now works on any file computer.  The $ command in it works now
+too.  Deleted files start out with a D on Tops-20 and are really
+undeleted if you turn off the D with the U command, when done.
+
+When typing a file name at the editor, the ALTMODE and END keys will cause
+completion in the same way as when typing a command.  Currently completion
+only works usefully with Tops-20.
+
+A number of file-manipulation functions which have been obsolete for many systems
+have been flushed.  Refer to chapters 21 and 22 of the red manual for information
+on the replacements for these functions.  The following symbols were removed
+from the global package:
+ DESCRIBE-FILE FILE-ERROR-STATUS FILE-EXISTS-P FILE-EXPAND-PATHNAME FILE-QFASL-P
+
+The metering system, which is by no means finished nor bug-free yet, is
+documented in the file LMDOC;METER &gt;.  Those who want to improve the performance
+of their programs can probably get a lot of good out of it even in its present
+state.
+    </pre>
+
+    <hr/>
+    <p>Last modified: 2025/06/05 08:38:12 (UTC) by ams</p>
+  </body>
+</html>
+
+<!-- Local Variables: -->
+<!-- time-stamp-pattern: "-8/<p>Last modified:[ \t]%:y/%02m/%02d %02H:%02M:%02S (%Z) by %u</p>" -->
+<!-- time-stamp-time-zone: "UTC" -->
+<!-- End: -->

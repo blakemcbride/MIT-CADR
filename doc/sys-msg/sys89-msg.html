@@ -1,0 +1,1109 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <link rel="stylesheet" type="text/css"
+	  href="../lm3.css">
+    <title>LM-3 --- Lisp Machine System Release 89 Notes</title>
+  </head>
+  <body>
+    <center><h1>Lisp Machine System Release 89 Notes</h1></center>
+
+    <pre>
+System 89 comes with microcode 201.  It was first released with microcode 183,
+but certain new features work only with 201.
+
+Microcode 183 will work with system 87, and system 87 bands should be updated
+to use 183, as it fixes some bugs.
+
+There are no major incompatibilities between systems 87 and 89.
+
+Programming Changes:
+
+[0] The System Functions Are Documented!
+
+Hundreds of documentation strings have been added to the functions in
+the system.  Just about every function you might ever think of calling
+now has a documentation string, which you can view using the editor
+commands C-Shift-D and M-Shift-D.
+
+C-Shift-D prints just the first line of documentation for the function
+you are inside a call to; this is like C-Shift-A.
+
+M-Shift-D prints the full documentation for a function, reading its name
+(defaulting to the same one C-Shift-D would give you).
+
+C-Shift-D is available in the rubout handler as well as the editor; there it prints
+the complete documentation.
+
+ZWEI, ZMAIL, the demos, and the CADR package have yet to be gone over.
+
+Major Incompatibilities in the Not Quite Immediate Future
+
+		[1] Division of Fixnums Will Change Its Meaning:
+		[2] New Common Lisp Division Functions:
+		[3] (LISTP NIL) will return T, some day.
+		[4] Arrays Will Be Stored in Row-Major Order.
+
+Common Lisp will require some incompatible changes to the Lisp machine
+system.  None of these changes is happening yet.  But some new functions are
+being added now to smooth the way.
+
+[1] Division of Fixnums Will Change Its Meaning:
+
+At some time in the future, ordinary division, the function //, will
+behave differently on integer arguments: it will return a rational number
+which is the mathematically correct ratio between the arguments.
+This is part of the adoption of Common Lisp (and therefore, the same
+change will happen at some time in Symbolics systems as well).
+
+If you have code which depends on dividing integers and getting an
+integer as the value, you should convert your code now to use TRUNCATE
+or one of the other integer division functions.
+
+Meanwhile, the eventual meaning of // is available now under the name %DIV.
+
+The change in // is probably several months in the future, but it is not too
+soon to prepare for the change.  When // changes, %DIV and TRUNCATE will not change.
+
+[2] New Common Lisp Division Functions:
+
+(FLOOR x) returns the largest integer not greater than x.
+(CEILING x) returns the smallest integer not less than x.
+(TRUNCATE x) is (FLOOR x) if x is positive, (CEILING x) if x is negative.
+(ROUND x) returns the closest integer to x.
+ If x is midway between two integers, the even one is returned.
+
+All four functions return a second value which is the remainder:
+ the argument minus the value.
+
+When given two arguments, these functions divide the first by the second
+and convert the quotient to an integer.  The second value is
+the original dividend, minus the quotient times the divisor.
+
+TRUNCATE is the same as the current meaning of //, when operating on fixnums.
+
+[3] (LISTP NIL) will return T, some day.
+
+This change is another part of adopting Common Lisp.
+
+The new function CONSP is currently the same as LISTP, but when
+LISTP is changed, CONSP will not be changed.  You should begin converting
+programs now to use CONSP instead of LISTP when appropriate.
+
+[4] Arrays Will Be Stored in Row-Major Order.
+
+At some time in the future, the order in which array elements are stored
+internally will change.  This is also part of adopting Common Lisp.
+
+Most programs that use arrays will not be affected by the change.  However, if
+you use indirect arrays which are multidimensional, or which indirect to
+multidimensional arrays, you will notice the effects.  Programs which move
+sequentially through large arrays will continue to work, but the best subscript
+order for optimal paging behavior will be the opposite of what it is now.
+
+In addition, the order of pixels in the hardware screen buffer will not
+be changed.  So all array references to such arrays -- and to arrays
+that are BITBLT'ed into them -- must have their indices in the other order.
+
+To smooth the conversion, two new functions AR-2-REVERSE and AS-2-REVERSE
+have been created.  These are accessing functions for two-dimensional arrays,
+and are currently the same as AREF and ASET on them.  But when the order of
+array elements is changed, these two new functions will begin to interchange the
+two subscripts.
+
+The significant fact is that if you replace AREF and ASET with AR-2-REVERSE and
+AS-2-REVERSE where you access screen arrays, your code will continue to work
+properly now, and will also keep working properly when the system is changed.
+You will not even have to recompile then.
+
+To create a bit map array, use MAKE-PIXEL-ARRAY.
+
+(MAKE-PIXEL-ARRAY width height &REST options)
+
+This is currently the same as (MAKE-ARRAY (LIST width height) ...)
+but when the order of array dimensions changes, it will do
+(MAKE-ARRAY (LIST height width) ...) instead.  In other words,
+MAKE-PIXEL-ARRAY will use the width as either the first dimension or the second,
+whichever is correct.
+
+PIXEL-ARRAY-WIDTH returns the width of a bit array, and PIXEL-ARRAY-HEIGHT
+returns its height.  Again, the width is whichever dimension varies faster
+through memory.
+
+Programming Changes:
+
+		   [5] Complex Numbers Are Supported.
+		   [6] Rational numbers improved:
+		   [7] Wildcard File Operations.
+		   [8] New Operations on Pathname Objects
+		   [9] New Erasing Operation on Windows.
+		   [10] DEFSYSTEM Change.
+		   [11] :UNBOUND in DEFVAR.
+		   [12] CONTENTS Gets the Contents of a Locative.
+		   [13] EQL is = on numbers, EQ on other objects.
+		   [14] Using DECLAREs Locally.
+		   [15] New Function COMPILE-LAMBDA.
+		   [16] New Initialization Lists.
+		   [17] You Can Tell If a Macro Definition Has Changed.
+		   [18] Making Flavor Instances Print Readably.
+
+[5] Complex Numbers Are Supported.
+
+A complex number can have any kind of number as its real part,
+and any kind as its imaginary part.
+
+(REALP x) is T if x is real.
+(COMPLEXP x) is T if x is not real.
+
+(COMPLEX r i) creates a complex number with real part r and imaginary part i.
+
+(IMAGPART c) returns the imaginary part of the number c,
+ which is zero if c is real.
+
+(REALPART c) returns the real part of the number c,
+ which is c if c is real.
+
+(CONJUGATE c) returns the conjugate of the number c,
+ which is c if c is real.
+
+(SIGNUM c) returns a number with magnitude 1 and the same phase as c.
+ This is 1 for positive reals, -1 for negative reals.
+ 0 is an exception; (SIGNUM 0) is 0.
+
+(PHASE c) returns the phase of the complex number c.
+ It is 0 for positive reals.
+
+(CIS x) returns exp(i*x) where x is real.
+
+Three new array types are defined: ART-COMPLEX, ART-COMPLEX-FLOAT and
+ART-COMPLEX-FPS-FLOAT.  Using them reduces garbage collection if you
+have an array containing only numbers, some of which are complex.
+ART-COMPLEX allows the real and imaginary parts to be anything, while
+ART-COMPLEX-FLOAT converts them to flonums when you store into the
+array.
+
+ART-COMPLEX-FPS-FLOAT is like ART-COMPLEX-FLOAT, but uses the FPS format
+for storing each flonum.  Real and imaginary parts alternate in memory.
+
+[6] Rational numbers improved:
+
+The support for rational numbers is now in closer to its final
+Common Lisp form.
+
+You can type in a rational number as numerator \ denominator.
+Don't actually put in spaces around the \; they appear in the previous line for
+visual clarity.  Rational numbers print out that way, too.
+
+(RATIONALP x) is T if the number x is rational.
+Note that integers are considered rationals.
+
+(INTEGERP x) is T if x is an integer.  This is the same as FIXP.
+
+(NUMERATOR x) returns the numerator of the rational number x,
+ which is x if x is an integer.
+
+(DENOMINATOR x) returns the denominator of the rational number x,
+ which is 1 if x is an integer.
+
+You get a rational number by calling RATIONAL or RATIONALIZE.
+These convert floating point numbers to rationals.
+(An integer is already a rational).
+
+RATIONAL treats the flonum as an exact mathematical value,
+whereas RATIONALIZE returns the simplest fraction which would
+convert to the specified flonum.
+
+RATIONALIZE takes a second argument which is the number of bits of
+precision desired, or the ratio of the allowed error to the number itself.
+It will produce a fraction that accounts for the specified precision
+of the argument.  This is useful for arguments that are rational!
+It will return another fraction with smaller numerator and denominator
+that is close to the argument.
+
+The new function %DIV, with integer arguments, will produce a rational value.
+Eventually // will behave like %DIV.
+
+[7] Wildcard File Operations.
+
+The functions DELETEF, UNDELETEF and RENAMEF now accept filenames with
+wildcards in them, and operate on multiple files.  They also optionally
+query about the files.  They return a list of the files operated on.
+One unfortunate byproduct of this change is that they are slower in the
+ordinary case of a single file with no querying.  If this is important,
+you can instead send a :DELETE, :UNDELETE or :RENAME message to a
+pathname object.  This lower-level interface does not provide the new
+features but is still fast.
+
+The new function FS:COPY-FILE copies a file.  It takes two filenames
+(strings or pathnames).  The first argument may be a string instead.
+There are two additional arguments: ERROR-P (default T), and COPY-MODE
+which says whether to copy as a text file or a binary file.
+Possible values are :CHARACTERS, :BINARY, :ASK (always query the user),
+:NEVER-ASK (just guess), or NIL (try to guess, but query the user
+if the guess is not reasonably certain).  FS:COPY-FILE also works on pathnames
+with wildcards. - Hanson.
+
+[8] New Operations on Pathname Objects
+
+The new pathname operation :WILD-P returns T if the pathname it is sent
+to contains any sort of wildcards.
+
+The new pathname operation :WILDCARD-MAP is a mapping operation that loops
+over all the files that a pathname with wildcards refers to.  It does so
+by doing a :DIRECTORY-LIST first.  It also works on pathnames that don't
+have wildcards.  Supply this operation with these arguments:
+  operation plistp dir-list-options &REST args...
+operation is a function to be called on each file.
+ It will receive a pathname or a property list as its first argument,
+ and args as remaining arguments.
+plistp says whether operation should be given a file property list.
+ (This takes extra time when a pathname with no wildcards is used).
+ If it is NIL, operation's first arg is just a pathname.
+ If it is T, operation's first arg is a property list whose car
+ is a pathname and whose cdr is alternating properties and values.
+ This is just an element of the directory-list which is obtained.
+dir-list-options is passed to FS:DIRECTORY-LIST.  You can use this
+ to get deleted files mentioned in the list, for example.
+
+The new pathname operation :UNDELETABLE-P returns T if sent to a pathname
+for a file system which supports undeletion.
+
+The new pathname operation :SOURCE-PATHNAME returns the pathname of the
+source file corresponding to the pathname you sent the message to.  If you
+evaluate, or compile and load, a file whose type is not LISP, then this
+will get the correct type for the file you loaded or compiled.
+
+Unix files whose names happen to contain ".LISP" or anything else which
+is the same as a standard Lisp machine file type no longer cause problems.
+In fact, all the long-standing problems with Unix pathnames should now be gone.
+
+FS:MERGE-PATHNAME-DEFAULTS, with a pathname given as the defaults, now uses
+that pathname's components as the defaults.  (This may be what you thought
+it already did -- it is what I thought it did).
+
+[9] New Erasing Operation on Windows.
+
+(TV:SHEET-CLEAR-STRING sheet string &OPTIONAL start end)
+
+clears enough space after sheet's cursor to hold string (or the specified portion).
+
+[10] DEFSYSTEM Change.
+
+Two new transformations are defined for DEFSYSTEM, for use with programs
+that run in Maclisp as well as on the Lisp machine.
+
+They are :COMPAT-COMPILE, :COMPAT-COMPILE-LOAD, and :COMPAT-COMPILE-LOAD-INIT.
+
+They are the same as the transformations :COMPILE, :COMPILE-LOAD and
+:COMPILE-LOAD-INIT except that source files are called LSP instead
+of LISP.
+
+[11] :UNBOUND in DEFVAR.
+
+You can now define a variable with DEFVAR and give it a documentation
+string without specifying an initial value.  Just use :UNBOUND as the
+initial value.  DEFVAR will make no attempt to evaluate :UNBOUND; it
+will simply not try to set the variable.
+
+Now there is no excuse whatever for writing a DEFVAR without a
+documentation string.
+
+[12] CONTENTS Gets the Contents of a Locative.
+
+Given a locative, you can now use the function CONTENTS to get the contents of
+the cell to which the locative points.
+
+CONTENTS is actually the same as CDR, but use of CDR has been called a violation
+of abstraction.
+
+(SETF (CONTENTS locative) value) works also.
+
+[13] New Function EQL
+
+EQL is = on numbers, EQ on other objects.
+
+(EQL 1 T) =&gt; NIL
+(EQL 1 1.0) =&gt; T
+(EQL 'FOO 'FOO) =&gt; T
+
+[14] Using DECLAREs Locally.
+
+DECLAREs can now appear at the front of the body of a PROGN, LET, LET*, PROG,
+PROG* or internal LAMBDA, and apply to the entire construct, including the local
+variables (if any) bound by that construct.  Example:
+
+  (let (x y)
+    (declare (special x))
+    ...  ;X is special herein
+    )
+
+It now works to define a macro that expands, sometimes or always, into a
+DECLARE, and use that macro at the front of a function body to provide a local
+declaration.
+
+For example,
+
+(DEFMACRO DS (&REST VARS) `(DECLARE (SPECIAL . ,VARS)))
+
+(DEFUN FOO (A B)
+  (DS A B)
+  (BAR))
+
+will make A and B special in FOO.
+
+[15] New Function COMPILE-LAMBDA.
+
+(COMPILE-LAMBDA lambda-expression &OPTIONAL name processing-mode)
+
+compiles lambda-expression into a compiled function object which remembers
+name as its name, and returns it.  No function spec is defined; it is up to the
+caller to store the compiled function object somewhere.
+
+If processing-mode is COMPILER:MICRO-COMPILE, the function is microcompiled
+instead.
+
+[16] New Initialization Lists.
+
+SI:FULL-GC-INITIALIZATION-LIST is run at the end of the function SI:FULL-GC.
+It is specified by the ADD-INITIALIZATION keyword FULL-GC (in any package).
+
+SI:SITE-OPTION-INITIALIZATION-LIST is run whenever new site tables are
+loaded, and also on cold booting.  It is specified by the ADD-INITIALIZATION
+keyword SITE-OPTION (in any package).  Initializations put on this list are by
+default also executed immediately.
+
+[17] You Can Tell If a Macro Definition Has Changed.
+
+The compiler now records the SXHASH of every macro expanded in each function
+you compile.  Compiled macros know the SXHASHes of their original expr
+definitions so this can be done for them as well.
+
+The records go under :MACROS-EXPANDED in the function's debugging info alist.
+The value associated with this keyword is now a list of either macro names or
+lists of the form (macroname macro-sxhash).  (Just a macro name is recorded for a
+macro which was compiled in earlier systems and does not know the original
+SXHASH).
+
+You can get the appropriate SXHASH for the current definition of a macro with
+(COMPILER:EXPR-SXHASH macroname).  By comparing the two, you can tell
+whether you must recompile the other function because of a change in the
+macro.
+
+If a compiled function is fasloaded and can be seen to have been compiled with
+a version of a macro which does not match the current definition, a warning is
+printed, giving the name of the losing function and the name of the macro.
+
+[18] Making Flavor Instances Print Readably.
+
+SI:PRINT-READABLY-MIXIN is a convenient way of making a flavor's instances
+print in a way that can be read back.
+
+In order for it to work, you must define the :RECONSTRUCTION-INIT-PLIST
+operation.  It should return a list of init-options which could be passed to
+MAKE-INSTANCE to create the desired new instance at read-in time.
+SI:PRINT-READABLY-MIXIN cannot define this for you, because only you know
+which instance variables ought to be part of the printed representation.
+
+Example:
+
+(defflavor foo (a car-of-a) (si:print-readably-mixin)
+  (:inittable-instance-variables a))
+
+(defmethod (foo :init) (ignore)
+  (setq car-of-a (car a)))
+
+(defmethod (foo :reconstruction-init-plist) ()
+  `(:a ,a))				;Note that car-of-a is not included.
+
+(make-instance 'foo ':a '(69.)) =&gt; #mypackage:foo a (71)
+
+As an additional feature, it becomes possible to fasdump objects containing
+such instances.
+
+[] READLINE-TRIM stream eof-option
+
+READLINE-TRIM is line READLINE except that any leading or trailing spaces and
+tabs are discarded from the line before the value is returned.
+
+  (READLINE-TRIM args...)
+
+is almost the same as
+
+  (STRING-TRIM '(#\SP #\TAB) (READLINE args...))
+
+the difference being that READLINE-TRIM will return the eof-option on end of file
+without trying to trim it.
+
+[] (PROMPT-AND-READ keyword format-string format-arguments...)
+
+The function PROMPT-AND-READ serves to read and return an object after
+prompting.  You specify the way to read the object with a keyword, and the way
+to prompt with a string and arguments that are passd to FORMAT.
+
+The keyword is one of these: :READ, :NUMBER, :EVAL-READ, :EVAL-READ-OR-END,
+:STRING, :STRING-OR-NIL, :PATHNAME.
+
+:READ - the object is read by calling READ.
+:NUMBER - the object is read by calling READ in base ten.  If it is not a number,
+  the user gets an error message and must rub it out and try over.
+:EVAL-READ - the object is read by (EVAL (READ)).
+:EVAL-READ-OR-END - the object is read by (EVAL (READ)).  However, the user
+ can type the End character instead of an object.  In this case, PROMPT-AND-READ
+ returns NIL as the first value, and #\End as the second.
+:STRING - the object is read by READLINE, so the value is a string.
+:STRING-OR-NIL - the object is read by READLINE-TRIM, except that if
+ the resulting string is empty, NIL is returned instead.
+:PATHNAME - the object is read by (FS:MERGE-PATHNAME-DEFAULTS (READLINE)).
+(:PATHNAME :DEFAULTS defaults-list) - like just :PATHNAME, except that
+ defaults-list will be passed to FS:MERGE-PATHNAME-DEFAULTS for use as the
+ defaults.  defaults-list must be literally present in the list passed to
+ PROMPT-AND-READ.
+
+PROMPT-AND-READ always uses QUERY-IO to do the i/o.  It uses the rubout handler
+if the stream supports one, and tells the rubout handler how to reprint the
+prompt when that is appropriate.
+
+[] :FILL-POINTER Keyword Argument to MAKE-ARRAY.
+
+A new convenient way to make an array with a fill pointer is to use the
+:FILL-POINTER argument to MAKE-ARRAY.  The presence of this argument requests
+a leader of length one, and the value of the argument is used to initialize the
+leader slot.
+
+  (MAKE-ARRAY 5 ':TYPE ART-STRING ':INITIAL-VALUE #\A ':FILL-POINTER 2)
+    =&gt; "AA"
+
+[] WITH-STACK-LIST and WITH-STACK-LIST*.
+
+These two new special forms allow you to create and use a list whose memory is
+allocated inside the stack.  The list will automatically be reclaimed when the
+WITH-STACK-LIST is exited, with no permanent consumption of space; but you
+had better have no pointers to the list at that time, for they will become garbled.
+
+A use of WITH-STACK-LIST looks like this:
+
+  (with-stack-list (variable list-elements...)
+    body...)
+
+During the execution of body, variable will be bound to the temporary list.
+list-elements are used as the elements when the list is constructed.
+The stack list can be RPLACA'd but it cannot be RPLACD'd.
+
+WITH-STACK-LIST* is called like WITH-STACK-LIST.  The only difference is that it
+constructs the list to have a specified final cdr rather than NIL--just as LIST*
+does.
+
+[] The Applyhook.
+
+The applyhook is a new companion to the old EVALHOOK feature.  While the
+evalhook is called when the interpreter calls EVAL, the applyhook is called when
+EVAL would normally call APPLY.  (Never mind that EVAL does not actually call
+APPLY per se; it does something equivalent).
+
+To use the applyhook, call EVALHOOK with a third argument, which is the
+applyhook function.  As usual, EVALHOOK will evaluate its first argument; but if
+that evaluation would apply a function, the applyhook is called instead.
+The second argument to EVALHOOK, if non-NIL, is used as the evalhook function,
+which is called if the evaluation would call EVAL recursively.
+
+The applyhook function receives two arguments: the function that EVAL was
+about to apply, and the list of arguments the function was going to get.  These
+are the same sorts of arguments that APPLY expects.  An applyhook function
+which simply passes its arguments to APPLY is the same as no applyhook at all.
+
+When either the applyhook function or the evalhook function is called,
+both the applyhook and the evalhook are bound off.
+
+[] New Flavor Feature: :ABSTRACT-FLAVOR
+
+:ABSTRACT-FLAVOR is a new DEFFLAVOR option.  Its purpose is to suppress the
+warning that you would normally get from COMPILE-FLAVOR-METHODS if there are
+any required flavors, methods or instance variables that are missing.  This allows
+you to do COMPILE-FLAVOR-METHODS on a flavor which is not actually suited for
+instantiation.  (This is useful if the combined methods of this flavor could be
+inherited without change by several other flavors which can be instantiated).
+
+Since :ABSTRACT-FLAVOR is intended for flavors that are not suitable for
+instantiation, it also marks the flavor so that you are not allowed to try to
+instantiate it.  This is not logically necessary, but otherwise, once the
+COMPILE-FLAVOR-METHODS had been done with its warning suppressed, you would
+be able to instantiate the flavor with never any warning about the missing
+required flavors, methods or instance variables.
+
+[]:CASE Method Combination
+
+:CASE is a new type of method combination for flavor methods.
+
+Recall that each type of method combination is a way of taking the various
+methods for a given flavor and operation and deciding what order to call them
+in, and how.  :DAEMON method combination, which looks for :BEFORE and :AFTER
+methods, is just the default method combination type, not the only one.
+
+:CASE method combination provides an automatic subdispatch on the first
+argument to the operation.  Each method says which first argument it wants to
+handle.  When a message is sent, only one method is called, according to the
+first argument in the message.
+
+For example,
+
+  (defflavor foo (a b) ()
+    (:method-combination :case :base-flavor-last :do-something))
+
+  (defflavor bar (c) (foo))
+
+  (defmethod (foo :case :do-something :print-a) ()
+    (print a))
+
+  (defmethod (foo :case :do-something :clear-b) ()
+    (setq b nil))
+
+  (defmethod (bar :case :do-something :set-c) (new-c)
+    (setq c new-c))
+
+defines a :DO-SOMETHING operation which, for flavor FOO, understands only
+:PRINT-A as its first argument, but for flavor BAR understands either :PRINT-A or
+:SET-C.  :PRINT-A and :SET-C are called suboperations.  Each flavor can define
+any number of :CASE methods for the same operation if they are for different
+suboperations.
+
+You would use this operation in this manner:
+
+  (send my-bar ':do-something ':set-c 'new-value-for-c)
+
+The internals of :CASE method combination would automatically dispatch to the
+(BAR :CASE :DO-SOMETHING :SET-C) method to handle this.  Note that you do not
+specify any argument variable in the DEFMETHOD to correspond to the :SET-C.
+
+In addition to the :CASE methods, you can also have a primary method.  It gets
+called if none of the :CASE methods applies; that is, when the suboperation
+does not match any of the:CASE methods.  It is a sort of default handler.  It does
+receive the suboperation explicitly as an argument.
+
+You can also have one or more :OR methods.  These are called just before the
+primary method, after determining that no :CASE method applies.  If an :OR
+method returns non-NIL, that is the end: its first value is the value of the
+operation.  If all the :OR methods return NIL, the primary method is used.
+
+The suboperations :WHICH-OPERATIONS, :SEND-IF-HANDLES,
+:OPERATION-HANDLED-P, :GET-HANDLER-FOR and :CASE-DOCUMENTATION are
+handled specially and automatically.  The first four have meanings analogous to
+the operations of the same name.  Note that they consider a suboperation to be
+handled only if there is a :CASE method for it.  :CASE-DOCUMENTATION takes one
+argument, a suboperation, and returns the documentation string of the :CASE
+method for that suboperation, otherwise NIL.
+
+[] (STRING-CAPITALIZE-WORDS string &optional (copy-flag t))
+
+This function performs two transformations on string: it changes all dashes into
+spaces, and capitalizes each word.  The initial becomes upper case, and the rest
+of each word lower case.
+
+The original string is unchanged, and the value is a new string, unless copy-flag
+is nil.
+
+[] Restrictions Lifted on UNWIND-PROTECT and Peculiar Multiple-Value Constructs
+
+UNWIND-PROTECT now interacts correctly with GO and RETURN in all cases.  For
+example,
+
+  (prog ()
+    (unwind-protect
+      (print (if a b (go tag)) stream)
+      (close stream))
+   tag
+    ...)
+
+will now close the stream even if the GO takes place.
+
+RETURN of multiple values to internal destinations now works also.  For example,
+
+  (multiple-value (a b)
+    (prog ()
+      (print (if c d (return base t)))
+      (return ibase nil)))
+
+will set A and B properly, and no longer crash the machine.
+
+These two improvements are often useful together, as in
+
+  (multiple-value (a b)
+    (prog ()
+      (unwind-protect
+	(.... (return x y) ...)
+	(close stream))))
+
+[] :NEW-SUGGESTED-NAME and :NEW-SUGGESTED-DIRECTORY Pathname Operations.
+
+The :NEW-SUGGESTED-DIRECTORY operation is nearly the same as the
+:NEW-DIRECTORY operation, but it has a slightly different purpose.  The new
+directory name is not precisely what is desired, but just a suggestion, based on
+some sort of default.  For example, it might be a user name.  Similarly,
+:NEW-SUGGESTED-NAME supplies a suggestion for the name, rather than a precise
+desired name.  It might be the name of an editor buffer.
+
+The difference between the actions of the new operations and the actions of
+:NEW-NAME and :NEW-DIRECTORY is that the new operations may make
+file-system-dependent changes in their arguments.  For example, on systems
+such as Twenex, where filenames can contain lowercase characters but normally
+do not, the -SUGGESTED- operations convert the name to upper case.
+
+[] (DUMP-FORMS-TO-FILE filename forms-list &optional attribute-list)
+
+DUMP-FORMS-TO-FILE writes a QFASL file whose effect, when loaded, is to
+execute the forms in forms-list.  For example,
+
+  (dump-forms-to-file "foo" '((setq x 1) (setq y 2)))
+  (load "foo")
+  x =&gt; 1
+  y =&gt; 2
+
+attribute-list is a file attribute list to give to the QFASL file.  It is a list of
+alternating keywords and values, and corresponds to the -*- line of a source file.
+The most useful keyword in this context is :PACKAGE, whose value in the
+attribute list specifies the package to be used both in dumping the forms and in
+loading the file.  If no :PACKAGE keyword is present, the file will be loaded in
+whatever package is current at the time.
+
+
+User Interface Changes:
+
+	    [A] New Convenient Repetition Construct, #`.
+	    [B] DIRED Is Now a File System Editor.
+	    [C] Unlimited Undo Capability in the Editor.
+	    [D] Editor Buffer Sectionization.
+	    [E] Kill or Save Buffers.
+	    [F] Accessing Editor Buffers as Files.
+	    [G] Editing Multi-Font Files.
+	    [H] QSEND, REPLY, and MAIL.
+	    [I] Network O in SUPDUP and TELNET toggles overprinting.
+	    [J] If You Can't See the Bottom of the Screen...
+	    [K] Patches Record Original Source File.
+	    [L] Terminal Resume command.
+	    [M] Directory Maintenance.
+	    [N] Local File System Improvements.
+	    [O] File Already Exists error handled better.
+	    [P] ZMAIL Terminology Changes.
+	    [Q] New Hardcopy Functions.
+	    [R] Overriding Site Options on a Per-Machine Basis.
+	    [S] Recompiling Site Files.
+	    [T] Turning Off Read-Onliness of Editor Buffers.
+	    [U] Advice and Other Encapsulations May Be Compiled.
+	    [V] M-X Rename File Offers to Rename Editor Buffers
+	    [W] Period Is Now a Word Delimiter.
+	    [Z] ZWEI:*MAJOR-MODE-TRANSLATIONS*
+
+[A] New Convenient Repetition Construct, #`.
+
+#` is a construct for repeating an expression with some
+subexpressions varying.  It is an abbreviation for writing several
+similar expressions, or for the use of MAPC.  Each subexpression
+that is to be varied is written as a comma followed by a list of the
+things to substitute.  The expression is expanded at read time into
+a PROGN containing the individual versions.
+
+   #`(send stream ',(:clear-input :clear-output))
+
+expands into
+
+   (progn (send stream ':clear-input) (send stream ':clear-output))
+
+Multiple repetitions can be done in parallel by using commas
+in several subexpressions:
+
+   #`(renamef ,("foo" "bar") ,("ofoo" "obar"))
+
+expands into
+
+   (progn (renamef "foo" "ofoo")
+	  (renamef "bar" "obar"))
+
+If you want to do multiple independent repetitions, you must use nested
+#` constructs.  Individual commas inside the inner #` apply to
+that #`; they vary at maximum speed.  To specify a subexpression
+that varies in the outer #`, use two commas.
+
+   #`#`(print (* ,(5 7) ,,(11. 13.)))
+
+expands into
+
+   (progn (progn (print (* 5 11.)) (print (* 7 11.)))
+	  (progn (print (* 5 13.)) (print (* 7 13.)))
+
+[B] DIRED Is Now a File System Editor.
+
+DIRED now has several new and changed commands, giving it the full power
+of the Symbolics File System Editor.
+
+First of all, the C command now copies the file on the line you are pointing at.
+The name to copy to is read with a minibuffer.  The command for comparing
+the file against its most recent version is now called =.
+
+Click right on the mouse now gets a menu of operations on the file
+the mouse was pointing to.  All the usual operations are available this way.
+
+One new command is S, for Subdirectory.  If you are pointing to a line
+which describes a subdirectory, this command inserts a listing of that
+subdirectory into the DIRED buffer underneath the subdirectory itself.
+Thus, you can operate on multiple levels of directory at once.
+Using S again removes the subdirectory's files from the display.
+Indentation is used to show you which files are in subdirectories.
+
+The X command in DIRED is no longer the same as Meta-X.  Instead, it is like Q
+but does not exit.  That is, it processes all the deletions, printing and
+function applications you have specified, but leaves you in DIRED.
+
+Meanwhile, processing the files with X or Q now eliminates all F, P and A
+(Find File, Print or Apply Function) markings found on files, so you get a
+clean slate to request a new set of operations.  D markings are left on
+the deleted files, since they are now deleted; but if you expunge, or
+if the file system does not support undeletion, the deleted files are
+removed from the Dired buffer entirely.
+
+Sorting is now done using M-X commands.
+The sorting commands are M-X Sort Increasing Creation Date,
+M-X Sort Increasing Reference Date, M-X Sort Increasing Size,
+and M-X Sort Increasing File Name.
+
+There are also four other commands with Decreasing instead of Increasing.
+
+If you would like any file operation that you do not see in the Help printout of
+DIRED, please request it.
+
+Meanwhile, the commands M-X Delete File, M-X Undelete File,
+M-X Rename File and M-X Copy File now accept filenames with wildcards
+and operate on multiple files.
+
+[C] Unlimited Undo Capability in the Editor.
+
+The editor now saves all the changes you make to each buffer,
+and you can undo them as far back as you like by doing M-X Undo
+multiple times.  To undo the undoing, use M-X Redo.  These commands
+also show you a summary of the part of the buffer they are going to change
+and what it will be changed to, and then they ask for confirmation.
+
+Since these commands may be useful more often, they are now on
+the keys C-Shift-U and C-Shift-R.   When you use those keys, there is no
+querying for confirmation.  You simply see the result.
+
+If the variable ZWEI:*UNDO-SAVE-SMALL-CHANGES* is non-NIL,
+absolutely all editing operations are saved.  Even individual insertions
+and deletions are saved, but batched together.
+This mode is now the default as of 89.26.
+
+The undo memory for a buffer is cleared out when you read or write a file
+with that buffer.
+
+[D] Editor Buffer Sectionization.
+
+M-X Compile Buffer Changed Sections, etc., now can always tell when new
+functions have been inserted in the buffer.  When it says that it is
+compiling function FOO, you can trust that this means precisely function
+FOO and no other.
+
+It is still the case that inserting a function causes the following
+function to be marked as changed.  So Compile Buffer Changed Sections
+will tell you it is recompiling the following function as well as
+compiling the inserted function.  This is not easy to fix.
+
+[E] Kill or Save Buffers.
+
+M-X Kill or Save Buffers allows you to kill and save the same file.
+
+[F] Accessing Editor Buffers as Files.
+
+Three new host names, ED:, ED-BUFFER:, and ED-FILE: are available for opening
+editor buffers as if they were files.  ED: uses the completing reader to recognise
+abbreviated buffer names.  ED-BUFFER: requires the exact name.  ED-FILE: takes a
+file name and looks for a buffer by that name, if necessary creating a new buffer
+visiting the file.  --Devon
+
+[G] Editing Multi-Font Files.
+
+* is now understood in multi-font files being read into ZWEI.
+
+When multi-font files are saved,  is used when appropriate to say that
+the font has changed back to one that was in use before.
+
+As a result, if you use a text justifier such as R or BOLIO in which
+pecifies a font change, you can now have your files displayed in your
+favorite "equivalent" Lisp machine fonts when you edit it.
+
+[H] QSEND, REPLY, and MAIL.
+
+The function QSEND now accepts multiple recipient names.
+The names go in one string, separated by commas, as in
+(QSEND "RMS@OZ, FOO@OZ" "Message").
+The value is a list of the recipients to which the message was successfully sent.
+
+You can also send a message to multiple people in Converse, just by putting
+multiple names in the To: line of the message.
+
+The function REPLY sends a message to the person who last sent you one.
+It normally takes one argument, the message.
+
+In either QSEND or REPLY, if you do not specify the message as an argument, it is
+read from STANDARD-INPUT.  While you are typing the message, you can type the
+command Control-Meta-E to switch to Converse.  The text you had entered, and
+the recipient, will be provided there for you.  In REPLY, you can also type
+Control-Meta-Y, which will insert the contents of the message you are replying
+to.
+
+The function MAIL, when given two arguments (recipient and message),
+no longer enters the editor.  It sends the string as you gave it.
+
+These features were added by HDT.
+
+[I] Network O in SUPDUP and TELNET Toggles Overprinting.
+
+Normally, SUPDUP and TELNET overprint if the remote system sends
+two characters to be output on the same spot without erasing.
+If you are talking to a system that assumes your terminal cannot
+overprint, this may look ugly.  Network O causes SUPDUP or TELNET
+to erase character positions when they are about to be written in,
+so that your screen will look right.
+
+[J] If You Can't See the Bottom of the Screen...
+
+TV:SET-TV-SPEED now takes a second optional argument which specifies
+how many scan lines at the bottom of the screen should be unused.
+This is useful if it is hard to see some of the bottom of the screen
+because it is hidden behind a cover.
+
+If you do not have any preference for the first argument, use 60.5, which is the
+default.
+
+[K] Patches Record Original Source File.
+
+Patches record the original source file of the contents of the patch, so that if the
+patch defines any new functions, the editor will find their definitions in their
+actual source files rather than in the patch file.
+
+[L] The Terminal Resume Command.
+
+When you are notified that a deexposed window is waiting to type out,
+you can type Terminal Resume to permit it to typeout while remaining deexposed.
+It used to be necessary to select the window in order to do this.
+
+[M] Directory Maintenance.
+
+(FS:BALANCE-DIRECTORIES dirspec1 dirspec2 &REST options)
+
+Generates directory lists using the dirspec arguments, then analyzes
+the lists to determine which files appear in one directory and not the
+other; any files that aren't up to date in either directory are
+copied.  The result is that each directory contains up to date copies
+of every file in either directory.
+
+A number of options are available for controlling the actions of the
+program.  Note that dirspec may be anything that is acceptable to
+FS:DIRECTORY-LIST, so it is possible to balance selected parts of a
+directory.  - Hanson.
+
+[N] Local File System Improvements.
+
+Subdirectories are now allowed.
+Subdirectories appear in a pathname separated by periods, before the semicolon:
+	     LM: RMS.SUBDIR.LEVEL2; FOO.BAR#&gt;
+
+Also, Twenex-style pathname syntax is now allowed for the local file
+system as an alternative to the old syntax.  Simply use whichever syntax
+you prefer.
+
+	     LM: &lt;RMS.SUBDIR.LEVEL2&gt;FOO.BAR.0
+
+If the flag FS:*LMFS-USE-TWENEX-SYNTAX* is set to non-NIL, pathnames
+for local files will print out in Twenex syntax, rather than the
+normal ITS-like syntax.  It is always possible to type them in using
+either syntax.
+
+Note that changing the flag's value will not change the printed
+representation of an existing pathname object, since it is cached.
+Setting this flag in your login init file will eliminate most such
+confusion.
+
+[O] "File Already Exists" Error Handled Better.
+
+If you compile a file on a Twenex that has already been compiled, Twenex
+will give a "File already exists" error because a QFASL file of the same
+version was created by the previous compilation.
+
+The Lisp machine will now offer to delete the old QFASL file for you.
+You can type Y, N or P.  If you type N, you get the usual "use what
+filename instead" offer.  P is the same as Y for this question and all
+such questions in the future.  It sets the following variable to T:
+
+FS:*AUTO-DELETE-EXISTING-FILE*
+ If non-NIL, an attempt to write a file with a specific version number
+that already exists will try to delete the old file immediately.
+Initially NIL.
+
+Note: if someone is reading the file, Twenex will not allow it to be
+deleted or renamed.  There is absolutely no way on Twenex to implement
+what is supposed to be the default mode of opening an output file: if a
+file with the specified name and version already exists, to
+replace it when the new file is closed.  Doesn't Twenex suck?
+
+[P] ZMAIL Terminology Changes.
+
+There has been a change in terminology in ZMAIL.  What used to be called
+a "mail file" is now called a "buffer".  "Temporary mail files" are now
+"temporary buffers", or "subset buffers" if they are made with a filter
+(yielding the set of all messages in a universe that satisfy the filter).
+"Disk mail files" are now "mail file buffers".  The term "mail file" is
+still used, but now always refers to an actual file rather than an
+entity within ZMAIL.
+
+[Q] New Hardcopy Functions.
+
+There are some new printer-independent functions for making hardcopy output.
+Each type of printer is named with a keyword; you specify a printer with either
+a printer-type keyword by itself, or with a list containing a printer-type keyword
+and arguments.  The purpose of the arguments is to specify a particular printer
+of that type, if there can be more than one.  Some printer-types want arguments
+and some do not.
+
+For example, :DOVER is a printer type that does not take arguments -- there is no
+provision for more than one Dover.  So the printer you would specify is just the
+keyword :DOVER.
+
+Another type of "printer" is :PRESS-FILE, which means that the "printing" is done
+by writing a press format file on a file server.  This type of printer does require
+an argument, with which you specify the name to give the press file.  So,
+(:PRESS-FILE "&lt;RMS&gt;FOO.PRESS") is an example of a possible printer of type
+:PRESS-FILE.
+
+(HARDCOPY-FILE filename &REST options)
+
+prints the file filename according to options (a list of alternating keywords and values).
+Options include :PRINTER, whose value specifies the printer to use, and
+:FORMAT, whose value is either :TEXT, :PRESS, :XGP or :SUDS-PLOT, which
+specifies how to interpret the contents of the file (this defaults from the
+filetype).  Individual printers can implement other formats, and may fail to
+implement all of these.
+
+Each type of printer may implement other options.  See the on-line
+documentation of HARDCOPY-FILE for more information.
+
+To find out whether your output has been printed, use
+
+(HARDCOPY-STATUS &OPTIONAL printer stream)
+
+which prints the status of the specified or default printer, if that makes sense.
+It will generally describe both the printer itself and the spooler queue if there is
+one.  It is not implemented for all printers (for example, it is not meaningful for
+printers of type :PRESS-FILE).
+
+To print out the contents of an array, such as the screen, as black and white
+dots, use the function
+
+(HARDCOPY-BIT-ARRAY array left top right bottom &REST options)
+
+The first argument is the array to print, and the next four specify the
+subrectangle to use.  All four measure from the top left corner, which is
+element 0, 0 of the array.  options can include :PRINTER.
+
+The default printer to use for HARDCOPY-FILE and HARDCOPY-STATUS is the value
+of SI:*DEFAULT-PRINTER*.  For HARDCOPY-BIT-ARRAY, the default is the value of
+SI:*DEFAULT-BIT-ARRAY-PRINTER*.  The separate default is because not all
+printers can print a full screen bit array.
+
+These two variables are initialized from the site options :DEFAULT-PRINTER and
+:DEFAULT-BIT-ARRAY-PRINTER.  They can also be specified on a per-machine
+basis in the LMLOCS file, as follows.
+
+[R] Overriding Site Options on a Per-Machine Basis.
+
+The file SYS: SITE; LMLOCS LISP, which describes the location of each
+Lisp machine at your site, can now contain a list of site options which
+should be overridden for that particular machine.
+
+The entry for a machine can now have six elements.  The sixth element is
+a list of site option specifications, each of the form
+
+   (site-option-name expression)
+
+This is just like what would go in the SITE file for that option.
+
+For example, it might be useful to specify the :DEFAULT-PRINTER option
+separately for individual machines, so each machine can print on a
+printer near it.
+
+The function GET-SITE-OPTION checks the per-machine specifications
+before the site definition, so no other code should need to be changed.
+
+A new initialization list, SI:SITE-OPTION-INITIALIZATION-LIST, is run at
+an appropriate time when new site files are loaded and also after
+booting.  It is useful for reinitializing anything that depends on a
+site option.  The ADD-INITIALIZATION keyword SITE-OPTION specifies this list.
+
+[S] Recompiling Site Files.
+
+There is now an easy way to recompile the site files, including the host
+table.  Just do (MAKE-SYSTEM 'SITE 'COMPILE).
+
+[T] Turning Off Read-Onliness of Editor Buffers.
+
+The new command C-X C-Q toggles the read-only flag of the selected
+editor buffer.
+
+[U] Advice and Other Encapsulations May Be Compiled.
+
+Recall that ADVISE, TRACE and BREAKON work by putting what are called
+encapsulations on a function, and these are actually separate functions (lambda
+expressions) which refer to the original function.  You can now cause these
+functions to be compiled.  As a result, it becomes practical to use advice
+in places that are called frequently.
+
+(COMPILE-ENCAPSULATIONS function-spec &REST encapsulation-types)
+
+compiles the specified types of encapsulations of function-spec.  Standard types
+of encapsulations include ADVISE, TRACE and BREAKON, and also SI:RENAME-WITHIN
+(a kind of encapsulation that is put on the function FOO if you advise, trace or
+breakon (:WITHIN FOO BAR) for any function BAR called by FOO).
+
+If you don't specify any types of encapsulations, all encapsulations that
+function-spec has are compiled.
+
+If you redefine one of the encapsulations -- for example, if you add additional
+advice -- then that encapsulation is no longer compiled.  However, redefining
+the function itself does not cause encapsulations to be uncompiled.
+
+If the variable COMPILE-ENCAPSULATIONS-FLAG is non-NIL, all encapsulations that
+you create or alter are compiled automatically.
+
+[V] M-X Rename File Offers to Rename Editor Buffers
+
+If you rename with M-X Rename File a file that is being edited, it offers to
+rename the editor buffer as well.
+
+[W] Period Is Now a Word Delimiter.
+
+Except in MIDAS mode, the character Period is now a word delimiter in the editor.
+
+[Z] ZWEI:*MAJOR-MODE-TRANSLATIONS*
+
+If you frequently edit files whose attribute lists specify modes which do not exist
+in ZWEI, you can "translate" those modes to other modes which do exist.
+Push an element of the form (file-mode . translated-mode) onto the variable
+ZWEI:*MAJOR-MODE-TRANSLATIONS*, and files which specify mode file-mode will
+be edited in mode translated-mode.  Both modes should be keywords, and should
+not contain the word MODE.
+
+Initially, this variable has one element: (:SCRIBE . :TEXT)
+
+[] COMPILER:COMPILER-VERBOSE
+
+If this variable is non-NIL the compiler prints a message at the beginning of
+each function it compiles, stating the function's name.
+    </pre>
+
+    <hr/>
+    <p>Last modified: 2025/06/05 09:05:21 (UTC) by ams</p>
+  </body>
+</html>
+
+<!-- Local Variables: -->
+<!-- time-stamp-pattern: "-8/<p>Last modified:[ \t]%:y/%02m/%02d %02H:%02M:%02S (%Z) by %u</p>" -->
+<!-- time-stamp-time-zone: "UTC" -->
+<!-- End: -->

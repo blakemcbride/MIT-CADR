@@ -1,0 +1,1278 @@
+<!DOCTYPE html>
+<html>
+<!-- Created by GNU Texinfo 7.2, https://www.gnu.org/software/texinfo/ -->
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<title>Documentation for tape software</title>
+
+<meta name="description" content="Documentation for tape software">
+<meta name="keywords" content="Documentation for tape software">
+<meta name="resource-type" content="document">
+<meta name="distribution" content="global">
+<meta name="Generator" content="makeinfo">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+
+<link href="#Top" rel="start" title="Top">
+<link href="#Design-of-the-New-Tape-System" rel="next" title="Design of the New Tape System">
+<style type="text/css">
+<!--
+a.copiable-link {visibility: hidden; text-decoration: none; line-height: 0em}
+div.example {margin-left: 3.2em}
+span.r {font-family: initial; font-weight: normal; font-style: normal}
+span:hover a.copiable-link {visibility: visible}
+strong.def-name {font-family: monospace; font-weight: bold; font-size: larger}
+-->
+</style>
+<link rel="stylesheet" type="text/css" href="texinfo.css">
+
+
+</head>
+
+<body lang="en">
+
+<div class="top-level-extent" id="Top">
+<div class="nav-panel">
+<p>
+Next: <a href="#Design-of-the-New-Tape-System" accesskey="n" rel="next">Design of the New Tape System</a> &nbsp; </p>
+</div>
+<h1 class="top" id="Documentation-for-tape-software"><span>Documentation for tape software<a class="copiable-link" href="#Documentation-for-tape-software"> &para;</a></span></h1>
+
+<ul class="mini-toc">
+<li><a href="#Design-of-the-New-Tape-System" accesskey="1">Design of the New Tape System</a></li>
+<li><a href="#The-Generic-Tape-Device" accesskey="2">The Generic Tape Device</a></li>
+<li><a href="#Tape-Format-Objects" accesskey="3">Tape Format Objects</a></li>
+<li><a href="#Error-Handling" accesskey="4">Error Handling</a></li>
+</ul>
+<hr>
+<div class="unnumbered-level-extent" id="Design-of-the-New-Tape-System">
+<div class="nav-panel">
+<p>
+Previous: <a href="#Top" accesskey="p" rel="prev">Documentation for tape software</a>, Up: <a href="#Top" accesskey="u" rel="up">Documentation for tape software</a> &nbsp; </p>
+</div>
+<h2 class="unnumbered" id="Design-of-the-New-Tape-System-1"><span>Design of the New Tape System<a class="copiable-link" href="#Design-of-the-New-Tape-System-1"> &para;</a></span></h2>
+
+
+<p>Since the previous implementation of tape software on the Lambda
+has undergone several years of use and criticism, it has been
+completely redesigned.  The new implementation solves various
+problems inherent in the previous design of the tape software and
+provides a substantial improvement in speed, extensibility and
+functionality.
+</p>
+<p>The basic goal of the new design was user-extensibility.  The
+ability to add support for an arbitrary tape format on any
+supported tape device with a minimal amount of work has been
+accomplished by separating the formatting from the data transfer
+functions into modular parts with a strictly defined interface.
+The result is two distinct object flavors: <code class="code">basic-tape-format</code>
+and <code class="code">basic-tape-device</code>.  Each has a set of required methods
+with specified return values used to effect operations.  There
+are several beneficial side effects which stem from this design:
+</p>	
+<dl class="table">
+<dt><strong class="strong">Multi-unit operations</strong></dt>
+<dd><p>Control locking of the interface hardware for tape devices has
+been implemented at the device object level.  Device locking is
+not permanent by process, as in the previous implementation, but
+controlled by user programs and checked at the device-object
+level.  Although, the software must still inherently rely on the
+competence of the user to guarantee the expected results, this
+scheme offers much more flexibility. In addition, it allows
+easier implementation of specialized tape operations like
+tape-to-tape format translation.
+</p>
+</dd>
+<dt><strong class="strong">User interface</strong></dt>
+<dd><p>The strict specification of operations on tape-devices and
+tape-formats offers a more controlled environment for user
+programs that wish to use tape storage for more obscure purposes,
+while allowing automatic storage programs to operate more
+effectively and need less user assistance.
+</p>
+</dd>
+<dt><strong class="strong">Abstraction of tape operations</strong></dt>
+<dd><p>As any flavor object can be created to the specifications of a
+tape-format or tape-device, non-tape device objects are
+completely interchangeable.  This permits operations like file
+backup to non-tape devices (such as other file-systems), without
+the need of specialized code.
+</p>
+</dd>
+<dt><strong class="strong">Speed of tape devices</strong></dt>
+<dd><p>For dual-speed devices, the device-object can judge the transport
+speed that should be used by the amount of data requested, which
+results in substantial increase in speed for file and band
+transfer operations.
+</p>
+</dd>
+<dt><strong class="strong">Disk Partition Transfer</strong></dt>
+<dd><p>Having tape device objects directly control the transfer of disk
+blocks to the tape allows the fastest data transfer rates
+possible since the device object can optimize operations
+according to the characteristics of the tape hardware.
+</p>
+</dd>
+</dl>
+
+
+<p>The first version of the new tape system should be very stable.
+Yet, as it is not humanly possible to conceive of every
+eventuality or optimization, feedback from implementors of
+tape-device or tape-format support under this scheme is essential
+for improvement of the software.  Submissions of software for
+other standard tape formats not in this release should be sent to
+LMI to be considered for inclusion in a future release.
+Similarly, requests for assistance in the implementation of any
+format are welcome and should be directed to the Customer Service
+Hotline.
+</p>
+</div>
+<div class="chapter-level-extent" id="The-Generic-Tape-Device">
+<h2 class="chapter"><span>1 The Generic Tape Device<a class="copiable-link" href="#The-Generic-Tape-Device"> &para;</a></span></h2>
+
+<p>Support for tape devices has been designed to be very modular,
+complete and easy to use.  Devices as flavor objects need to
+support a relatively small number of operations, which can be
+performed as efficently (or as complexly), as the device can
+handle, but whose interface is simple enough to accomodate a
+variety of higher level formatting software, providing support
+for various standard tape formats.
+</p>
+<p>This chapter outlines the operations each tape device must
+support along with the characteristics particular to each
+operation to ensure the complete modularity of tape devices.
+</p>
+<dl class="first-defop def-block">
+<dt class="defop def-line" id="index-tape-on-Tape"><span class="category-def">Flavor on <code class="code">Tape</code>: </span><span><strong class="def-name">tape</strong> <var class="def-var-arguments">basic-tape-device</var><a class="copiable-link" href="#index-tape-on-Tape"> &para;</a></span></dt>
+<dd>
+<p>This is the base flavor upon which all tape devices should be
+built.  It defines no methods or instance variables, it simply
+<i class="i">requires</i> the necessary methods and instance variables for the
+definition of the device.  Tape devices expected to be used with
+the general tape software, <b class="b">must</b> be built on this flavor, as
+it is used as the type specifier by routines in the general tape
+software to check the validity of tape-device objects.  It is defined
+as an <code class="code">:abstract-flavor</code>.
+</p>
+</dd></dl>
+
+<p>The values of the following instance variables should be
+<i class="i">gettable</i> and <i class="i">settable</i>.  The latter should only be used
+within the object&rsquo;s method definitions, which is assumed to be
+accurate with respect to the limitations of the parameters.  All
+changes of the parameters from an external source should be made
+through the <code class="code">:set-options</code> method explained below.
+</p>
+<dl class="first-defcv first-defivar-alias-first-defcv def-block">
+<dt class="defcv defivar-alias-defcv def-line" id="index-unit-of-tape_002ddevices"><span class="category-def">Instance Variable of <code class="code">tape-devices</code>: </span><span><strong class="def-name">unit</strong><a class="copiable-link" href="#index-unit-of-tape_002ddevices"> &para;</a></span></dt>
+<dd>
+<p>The current unit selected by the device object.
+</p>
+</dd></dl>
+
+<dl class="first-defcv first-defivar-alias-first-defcv def-block">
+<dt class="defcv defivar-alias-defcv def-line" id="index-density-of-tape_002ddevices"><span class="category-def">Instance Variable of <code class="code">tape-devices</code>: </span><span><strong class="def-name">density</strong><a class="copiable-link" href="#index-density-of-tape_002ddevices"> &para;</a></span></dt>
+<dd>
+<p>The selected density of the drive.
+</p>
+</dd></dl>
+
+<p>These methods provide the interface to the device as specified:
+</p>
+<dl class="first-defop def-block">
+<dt class="defop def-line" id="index-tape_002ddevices-on-Tape"><span class="category-def">Operation on <code class="code">Tape</code>: </span><span><strong class="def-name">tape-devices</strong> <var class="def-var-arguments">:initialize &amp;rest init-options</var><a class="copiable-link" href="#index-tape_002ddevices-on-Tape"> &para;</a></span></dt>
+<dd>
+<p>This method is responsible for setting up the device before any
+of the supported operations can be performed.  The initial values
+of device parameters may be supplied in <var class="var">options</var>.
+</p>
+</dd></dl>
+
+<dl class="first-defop def-block">
+<dt class="defop def-line" id="index-tape_002ddevices-on-Tape-1"><span class="category-def">Operation on <code class="code">Tape</code>: </span><span><strong class="def-name">tape-devices</strong> <var class="def-var-arguments">:deinitialize &amp;rest init-options</var><a class="copiable-link" href="#index-tape_002ddevices-on-Tape-1"> &para;</a></span></dt>
+<dd>
+<p>This method is should be invoked before the device is discarded,
+taking care of any cleanup activities necessary (including unlocking
+the device if it is currently locked).
+</p>
+</dd></dl>
+
+<dl class="first-defop def-block">
+<dt class="defop def-line" id="index-tape_002ddevices-on-Tape-2"><span class="category-def">Operation on <code class="code">Tape</code>: </span><span><strong class="def-name">tape-devices</strong> <var class="def-var-arguments">:lock-device</var><a class="copiable-link" href="#index-tape_002ddevices-on-Tape-2"> &para;</a></span></dt>
+<dd>
+<p>This is method should lock the device so that no other processes
+or processors can use it when locked.  The locking scheme used
+and its implementation is completely up to the implementor.  All
+that is required is that no other object/process can use the
+physical device after this operation has been executed, until a
+<code class="code">:unlock-device</code> operation is executed and terminates.  <b class="b">See
+the section on Device Locking for a discussion on this topic.</b>
+</p>
+</dd></dl>
+
+<dl class="first-defop def-block">
+<dt class="defop def-line" id="index-tape_002ddevices-on-Tape-3"><span class="category-def">Operation on <code class="code">Tape</code>: </span><span><strong class="def-name">tape-devices</strong> <var class="def-var-arguments">:unlock-device</var><a class="copiable-link" href="#index-tape_002ddevices-on-Tape-3"> &para;</a></span></dt>
+<dd>
+<p>This method undoes the action of the <code class="code">:lock-device</code> operation.
+</p>
+</dd></dl>
+
+<dl class="first-defop def-block">
+<dt class="defop def-line" id="index-tape_002ddevices-on-Tape-4"><span class="category-def">Operation on <code class="code">Tape</code>: </span><span><strong class="def-name">tape-devices</strong> <var class="def-var-arguments">:device-locked-p</var><a class="copiable-link" href="#index-tape_002ddevices-on-Tape-4"> &para;</a></span></dt>
+<dd>
+<p>This should return <code class="code">t</code> if the device is currently locked for this
+object, or <code class="code">nil</code> if not.
+</p>
+</dd></dl>
+
+<dl class="first-defop def-block">
+<dt class="defop def-line" id="index-tape_002ddevices-on-Tape-5"><span class="category-def">Operation on <code class="code">Tape</code>: </span><span><strong class="def-name">tape-devices</strong> <var class="def-var-arguments">:set-options &amp;rest options-and-args</var><a class="copiable-link" href="#index-tape_002ddevices-on-Tape-5"> &para;</a></span></dt>
+<dd>
+<p><var class="var">options-and-args</var> should be of the form: <var class="var">(&quot;option1 arg1 option2&quot;
+...)</var>.  This should set each of the options to its corresponding argument,
+checking the validity of the arguments beforehand.  If an
+incorrect option is specified, an error should be signalled.  The
+return value is <code class="code">t</code> if the options were correctly set.  If no
+options are specified, this method may, at the implementor&rsquo;s
+wish, pop-up a menu for the device options to change, or
+otherwise query the user.
+</p>
+</dd></dl>
+
+<dl class="first-defop def-block">
+<dt class="defop def-line" id="index-tape_002ddevices-on-Tape-6"><span class="category-def">Operation on <code class="code">Tape</code>: </span><span><strong class="def-name">tape-devices</strong> <var class="def-var-arguments">:reset</var><a class="copiable-link" href="#index-tape_002ddevices-on-Tape-6"> &para;</a></span></dt>
+<dd>
+<p>This operation should reset the physical device associated with
+the flavor object.
+</p>
+</dd></dl>
+
+<dl class="first-defop def-block">
+<dt class="defop def-line" id="index-tape_002ddevices-on-Tape-7"><span class="category-def">Operation on <code class="code">Tape</code>: </span><span><strong class="def-name">tape-devices</strong> <var class="def-var-arguments">:status</var><a class="copiable-link" href="#index-tape_002ddevices-on-Tape-7"> &para;</a></span></dt>
+<dd>
+<p>This should return a list of status descriptors which indicate
+the state of the device.  Each descriptor can be a keyword which
+implies logical truth of the condition or a list whose car is the
+keyword and cdr is a list of information about the condition.
+The supported status descriptors are as follows:
+</p>
+<div class="example lisp">
+<pre class="lisp-preformatted">	:write-protected
+	:busy
+	:off-line
+	:on-line
+	:physical-end-of-tape
+	:load-point
+	:end-of-file
+	(:error . condition-object)
+
+</pre></div>
+
+</dd></dl>
+
+<dl class="first-defop def-block">
+<dt class="defop def-line" id="index-tape_002ddevices-on-Tape-8"><span class="category-def">Operation on <code class="code">Tape</code>: </span><span><strong class="def-name">tape-devices</strong> <var class="def-var-arguments">:speed-threshold</var><a class="copiable-link" href="#index-tape_002ddevices-on-Tape-8"> &para;</a></span></dt>
+<dd>
+<p>Since many tape drives have two transport speeds, and the
+reposition time plays an important factor in the overall
+performance of the read and write operations, this method has
+been provided to allow optimization of certain operations by
+specifying the threshold (in bytes) above which high speed can be
+used.  The operations that currently allow speed specification
+are the spacing operations and search filemark operations this
+optimization is <code class="code">:search-filemark</code> and
+<code class="code">:search-filemark-reverse</code>.
+</p>
+</dd></dl>
+
+<dl class="first-defop def-block">
+<dt class="defop def-line" id="index-tape_002ddevices-on-Tape-9"><span class="category-def">Operation on <code class="code">Tape</code>: </span><span><strong class="def-name">tape-devices</strong> <var class="def-var-arguments">:rewind &amp;optional (wait-p t)</var><a class="copiable-link" href="#index-tape_002ddevices-on-Tape-9"> &para;</a></span></dt>
+<dd>
+<p>This should rewind the tape to BOT.  If <var class="var">wait-p</var> is non-<code class="code">nil</code>,
+the method will wait for the tape to reach its load point, then
+return, otherwise it will return immediately.  The return value 
+should be ignored.
+</p>
+</dd></dl>
+
+<dl class="first-defop def-block">
+<dt class="defop def-line" id="index-tape_002ddevices-on-Tape-10"><span class="category-def">Operation on <code class="code">Tape</code>: </span><span><strong class="def-name">tape-devices</strong> <var class="def-var-arguments">:unload</var><a class="copiable-link" href="#index-tape_002ddevices-on-Tape-10"> &para;</a></span></dt>
+<dd>
+<p>This unloads the tape and/or puts the device <code class="code">:off-line</code>,
+depending on the characteristics of the physical tape drive.
+This method should return immediately, if possible (not waiting
+for the tape to unload completely.
+</p>
+</dd></dl>
+
+<dl class="first-defop def-block">
+<dt class="defop def-line" id="index-tape_002ddevices-on-Tape-11"><span class="category-def">Operation on <code class="code">Tape</code>: </span><span><strong class="def-name">tape-devices</strong> <var class="def-var-arguments">:speed-threshold record-size</var><a class="copiable-link" href="#index-tape_002ddevices-on-Tape-11"> &para;</a></span></dt>
+<dd>
+<p>This should return an integer in 8-bit bytes that determines
+the threshold after which <code class="code">:high</code> speed should be used for
+spacing operations.  This can return any integer if the speed
+optimization is meaningless for a particular device.
+</p>
+</dd></dl>
+
+<dl class="first-defop def-block">
+<dt class="defop def-line" id="index-tape_002ddevices-on-Tape-12"><span class="category-def">Operation on <code class="code">Tape</code>: </span><span><strong class="def-name">tape-devices</strong> <var class="def-var-arguments">:space number-of-records &amp;optional (speed :low)</var><a class="copiable-link" href="#index-tape_002ddevices-on-Tape-12"> &para;</a></span></dt>
+<dd>
+<p>This should move the tape forward the specified number of records.  This
+operation will space over a filemark on the tape, counting it as a record.  The
+<var class="var">speed</var> argument allows the user to specify how fast the drive spaces over
+records for drives that are dual speed.  Valid values are <code class="code">:high</code> or <code class="code">:low</code>.
+This allows faster searching of the filemark when it is expected to be far from
+the current tape position, but the <code class="code">:low</code> speed increses efficency for short
+files, as tape reposition time increases with transport speed.
+</p>
+</dd></dl>
+
+<dl class="first-defop def-block">
+<dt class="defop def-line" id="index-tape_002ddevices-on-Tape-13"><span class="category-def">Operation on <code class="code">Tape</code>: </span><span><strong class="def-name">tape-devices</strong> <var class="def-var-arguments">:space-reverse number-of-records &amp;optional (speed :low)</var><a class="copiable-link" href="#index-tape_002ddevices-on-Tape-13"> &para;</a></span></dt>
+<dd>
+<p>This is the same as space but moves in the reverse direction.
+</p>
+</dd></dl>
+
+<dl class="first-defop def-block">
+<dt class="defop def-line" id="index-tape_002ddevices-on-Tape-14"><span class="category-def">Operation on <code class="code">Tape</code>: </span><span><strong class="def-name">tape-devices</strong> <var class="def-var-arguments">:search-filemark number-of-sequential-filemarks &amp;optional (speed :low)</var><a class="copiable-link" href="#index-tape_002ddevices-on-Tape-14"> &para;</a></span></dt>
+<dd>
+<p>This should move forward until the specified number of sequential
+filemarks have been reached.  The tape should be positioned after the
+last of the filemarks found.  Eventually, if the filemarks are not
+found, a <code class="code">physical-end-of-tape</code> error will be signalled. The <var class="var">:speed</var>
+argument is like for :Space.
+</p>
+</dd></dl>
+
+<dl class="first-defop def-block">
+<dt class="defop def-line" id="index-tape_002ddevices-on-Tape-15"><span class="category-def">Operation on <code class="code">Tape</code>: </span><span><strong class="def-name">tape-devices</strong> <var class="def-var-arguments">:search-filemark-reverse number-of-sequential-filemarks &amp;optional (speed :low)</var><a class="copiable-link" href="#index-tape_002ddevices-on-Tape-15"> &para;</a></span></dt>
+<dd>
+<p>This is just like <code class="code">:search-filemark</code> but in reverse.
+</p>
+</dd></dl>
+
+<dl class="first-defop def-block">
+<dt class="defop def-line" id="index-tape_002ddevices-on-Tape-16"><span class="category-def">Operation on <code class="code">Tape</code>: </span><span><strong class="def-name">tape-devices</strong> <var class="def-var-arguments">:optimal-chunk-size record-size</var><a class="copiable-link" href="#index-tape_002ddevices-on-Tape-16"> &para;</a></span></dt>
+<dd>
+<p>This should return the optimal amount of data (in bytes) for
+read/write array operations for the specified record-size.
+It must be some multiple of <var class="var">record-size</var>.
+</p>
+</dd></dl>
+
+<dl class="first-defop def-block">
+<dt class="defop def-line" id="index-tape_002ddevices-on-Tape-17"><span class="category-def">Operation on <code class="code">Tape</code>: </span><span><strong class="def-name">tape-devices</strong> <var class="def-var-arguments">:read-block dma-buffer record-size</var><a class="copiable-link" href="#index-tape_002ddevices-on-Tape-17"> &para;</a></span></dt>
+<dd>
+<p>This should read one record from the tape into <var class="var">dma-buffer</var>.  The
+number of bytes expected to be in the record on tape is specified as
+<var class="var">record-size</var>.  The return value is the actual number of bytes that
+were in the record on tape.  If this is larger than the specified record
+size, the dma-buffer will have only been filled up to the requested
+record size.  If it is smaller, the dma-buffer will have only been
+filled up to the number of bytes in the record on tape.  As no error is
+signalled in either case, the requestor is expected to check the return
+value against the expected record-size.  In general, if the user does
+not know what the size of the next record will be, a large buffer can be
+used. Although the overhead increases slightly with a larger block, this
+is a perfectly safe thing to do.  In most cases, the larges block size
+that can be used is 64k bytes (sometimes less).
+</p>
+</dd></dl>
+
+<dl class="first-defop def-block">
+<dt class="defop def-line" id="index-tape_002ddevices-on-Tape-18"><span class="category-def">Operation on <code class="code">Tape</code>: </span><span><strong class="def-name">tape-devices</strong> <var class="def-var-arguments">:write-block dma-buffer record-size</var><a class="copiable-link" href="#index-tape_002ddevices-on-Tape-18"> &para;</a></span></dt>
+<dd>
+<p>This should write one record, <var class="var">record-size</var> bytes long, of data
+from <var class="var">dma-buffer</var> on the tape.
+</p>
+</dd></dl>
+
+<dl class="first-defop def-block">
+<dt class="defop def-line" id="index-tape_002ddevices-on-Tape-19"><span class="category-def">Operation on <code class="code">Tape</code>: </span><span><strong class="def-name">tape-devices</strong> <var class="def-var-arguments">:read-array array number-of-records record-size</var><a class="copiable-link" href="#index-tape_002ddevices-on-Tape-19"> &para;</a></span></dt>
+<dd>
+<p>This should read the specified number of record-size records into <var class="var">array</var>
+from tape.  This method should be able to handle the following array types:
+<code class="code">art-8b</code>, <code class="code">art-16b</code>, and <code class="code">art-string</code>.  Record-size must be an even
+multiple of 1024.  The return value should be ignored.
+</p>
+</dd></dl>
+
+<dl class="first-defop def-block">
+<dt class="defop def-line" id="index-tape_002ddevices-on-Tape-20"><span class="category-def">Operation on <code class="code">Tape</code>: </span><span><strong class="def-name">tape-devices</strong> <var class="def-var-arguments">:write-array array number-of-records record-size</var><a class="copiable-link" href="#index-tape_002ddevices-on-Tape-20"> &para;</a></span></dt>
+<dd>
+<p>This is just like <code class="code">:read-array</code> only it writes from the array to tape.
+</p>
+</dd></dl>
+
+<dl class="first-defop def-block">
+<dt class="defop def-line" id="index-tape_002ddevices-on-Tape-21"><span class="category-def">Operation on <code class="code">Tape</code>: </span><span><strong class="def-name">tape-devices</strong> <var class="def-var-arguments">:read-to-disk disk-unit starting-address number-of-blocks</var><a class="copiable-link" href="#index-tape_002ddevices-on-Tape-21"> &para;</a></span></dt>
+<dd><p>record-size &amp;key silent
+</p>
+<p>This should transfer the specified number of disk blocks from the tape to the
+disk starting at <var class="var">starting-address</var>.  Care must be used in checking the
+arguments, as a reference to a non-existent disk address on the Lambda will make
+the machine crash.  <var class="var">Record-size</var> must be an even multiple of 1024.  The
+return values are the number of blocks actually written on disk and an error
+condition or NIL as in :read-array. <code class="code">disk-unit</code> should be a normal disk
+unit spec (i.e. local disk unit number or a string &quot;&lt;host&gt; &lt;unit-number&gt;&quot;).
+</p>
+</dd></dl>
+
+
+<dl class="first-defop def-block">
+<dt class="defop def-line" id="index-tape_002ddevices-on-Tape-22"><span class="category-def">Operation on <code class="code">Tape</code>: </span><span><strong class="def-name">tape-devices</strong> <var class="def-var-arguments">:write-from-disk disk-unit starting-address number-of-blocks</var><a class="copiable-link" href="#index-tape_002ddevices-on-Tape-22"> &para;</a></span></dt>
+<dd><p>record-size &amp;key silent
+</p>
+<p>This is the similar to <code class="code">:read-to-disk</code> except the direction of data transfer
+is reversed.
+</p>
+</dd></dl>
+
+<dl class="first-defop def-block">
+<dt class="defop def-line" id="index-tape_002ddevices-on-Tape-23"><span class="category-def">Operation on <code class="code">Tape</code>: </span><span><strong class="def-name">tape-devices</strong> <var class="def-var-arguments">:write-filemark &amp;optional (number-of-filemarks 1)</var><a class="copiable-link" href="#index-tape_002ddevices-on-Tape-23"> &para;</a></span></dt>
+<dd>
+<p>Instructs the tape device to write the specified number of filemarks
+on the tape.
+</p>
+</dd></dl>
+
+</div>
+<div class="chapter-level-extent" id="Tape-Format-Objects">
+<h2 class="chapter"><span>2 Tape Format Objects<a class="copiable-link" href="#Tape-Format-Objects"> &para;</a></span></h2>
+
+<p>Tape Format objects are flavor objects which implement certain generic
+operations such as writing, restoring and listing files on a tape.
+Their responsibility is to read, examine or write data to or from the
+tape device which represents the correct file data (specified by the
+arguments) in the appropriate format.
+</p>
+
+<dl class="first-defop def-block">
+<dt class="defop def-line" id="index-basic_002dtape_002dformat-on-Tape"><span class="category-def">Flavor on <code class="code">Tape</code>: </span><span><strong class="def-name">basic-tape-format</strong><a class="copiable-link" href="#index-basic_002dtape_002dformat-on-Tape"> &para;</a></span></dt>
+<dd>
+<p>This is the base flavor upon which all tape format flavors
+should be built.  It defines no method or instance variables, it simply
+<i class="i">requires</i> the necessary methods and instance variables for the
+definition of the format.  As with tape-devices, all tape formats
+expected to work with the general tape software must be built on
+this flavor. It is defined as an <code class="code">:abstract-flavor</code>.
+</p>
+</dd></dl>
+
+<dl class="first-defcv first-defivar-alias-first-defcv def-block">
+<dt class="defcv defivar-alias-defcv def-line" id="index-record_002dsize-of-tape_002dformats"><span class="category-def">Instance Variable of <code class="code">tape-formats</code>: </span><span><strong class="def-name">record-size</strong><a class="copiable-link" href="#index-record_002dsize-of-tape_002dformats"> &para;</a></span></dt>
+<dd>
+<p>This is the size in bytes for each record to be written on the 
+tape, or <code class="code">:variable</code> if this format uses variable-length records.
+</p>
+</dd></dl>
+
+<dl class="first-defcv first-defivar-alias-first-defcv def-block">
+<dt class="defcv defivar-alias-defcv def-line" id="index-file_002dstream-of-tape_002dformats"><span class="category-def">Instance Variable of <code class="code">tape-formats</code>: </span><span><strong class="def-name">file-stream</strong><a class="copiable-link" href="#index-file_002dstream-of-tape_002dformats"> &para;</a></span></dt>
+<dd>
+<p>This holds the stream object that is created if the <code class="code">:open-file</code>
+method is invoked.  This will be explained in detail below.
+</p>
+</dd></dl>
+
+<dl class="first-defop def-block">
+<dt class="defop def-line" id="index-tape_002dformats-on-Tape"><span class="category-def">Operation on <code class="code">Tape</code>: </span><span><strong class="def-name">tape-formats</strong> <var class="def-var-arguments">:initialize &amp;rest options</var><a class="copiable-link" href="#index-tape_002dformats-on-Tape"> &para;</a></span></dt>
+<dd>
+<p>This is similar to the operation of the same name on tape devices.  It
+is responsible for setting up the tape format object.  <var class="var">options</var> is
+passed to the <code class="code">:set-options</code> method.
+</p>
+</dd></dl>
+
+<dl class="first-defop def-block">
+<dt class="defop def-line" id="index-tape_002dformats-on-Tape-1"><span class="category-def">Operation on <code class="code">Tape</code>: </span><span><strong class="def-name">tape-formats</strong> <var class="def-var-arguments">:set-options &amp;rest options-and-args</var><a class="copiable-link" href="#index-tape_002dformats-on-Tape-1"> &para;</a></span></dt>
+<dd>
+<p>As for tape devices, this is responsible for checking and setting parameters for
+the tape format.  If no options are specified, the user should be presented
+with options to change by means of a pop-up window or something.
+</p>
+</dd></dl>
+
+<dl class="first-defop def-block">
+<dt class="defop def-line" id="index-tape_002dformats-on-Tape-2"><span class="category-def">Operation on <code class="code">Tape</code>: </span><span><strong class="def-name">tape-formats</strong> <var class="def-var-arguments">:read-tape-header tape-device</var><a class="copiable-link" href="#index-tape_002dformats-on-Tape-2"> &para;</a></span></dt>
+<dd>
+<p>This should return tape header information in the form
+of a disembodied property list.  The car of the list should be the
+flavor symbol of the format (i.e. <code class="t">LMFL</code> format), the cdr an
+alternating list of properties and values.
+</p>
+</dd></dl>
+
+<dl class="first-defop def-block">
+<dt class="defop def-line" id="index-tape_002dformats-on-Tape-3"><span class="category-def">Operation on <code class="code">Tape</code>: </span><span><strong class="def-name">tape-formats</strong> <var class="def-var-arguments">:write-tape-header plist device</var><a class="copiable-link" href="#index-tape_002dformats-on-Tape-3"> &para;</a></span></dt>
+<dd>
+<p>This should take <var class="var">plist</var> and write a proper header according to the
+specification of the format on <var class="var">device</var>.  For safety, it should
+send the device a <code class="code">:rewind</code> message first.
+</p>
+</dd></dl>
+
+<dl class="first-defop def-block">
+<dt class="defop def-line" id="index-tape_002ddevices-on-Tape-24"><span class="category-def">Operation on <code class="code">Tape</code>: </span><span><strong class="def-name">tape-devices</strong> <var class="def-var-arguments">:tape-is-your-format-p device</var><a class="copiable-link" href="#index-tape_002ddevices-on-Tape-24"> &para;</a></span></dt>
+<dd>
+<p>This should check the tape and return <code class="code">t</code> if the tape is of this format,
+assuming that the tape is already rewound, NIL otherwise.
+</p>
+</dd></dl>
+
+<dl class="first-defop def-block">
+<dt class="defop def-line" id="index-tape_002dformats-on-Tape-4"><span class="category-def">Operation on <code class="code">Tape</code>: </span><span><strong class="def-name">tape-formats</strong> <var class="def-var-arguments">:restore-file</var><a class="copiable-link" href="#index-tape_002dformats-on-Tape-4"> &para;</a></span></dt>
+<dd><p>device &amp;key transform query (overwrite :always) (create-directory :always) silent
+	Restore a file from the tape.
+</p>
+<dl class="table">
+<dt><code class="code">:transform</code></dt>
+<dd>
+<p>If this is a pathname or a string, the components of the pathname of the
+file on tape are merged into this one.  If it is a function, it must
+take arguments: (in internal lisp machine format)
+</p><div class="example lisp">
+<pre class="lisp-preformatted">(device directory name type version)
+</pre></div>
+<p>and return a pathname to which the file will be restored.
+</p>
+</dd>
+<dt><code class="code">:query</code></dt>
+<dd><p>If non-<code class="code">nil</code>, the user will be asked for each file whether to
+restore it.
+</p>
+</dd>
+<dt><code class="code">:overwrite</code></dt>
+<dd><p>Decides whether to overwrite an existing non-deleted file with
+the same pathname (including version).  Valid values are:
+<code class="code">:always :query :never</code>.
+</p>
+</dd>
+<dt><code class="code">:create-directory</code></dt>
+<dd><p>Decides whether to create a directory for a file to be restored
+if the directory does not exist.  Valid values are:
+<code class="code">:always :query :never :error</code>.  <code class="code">:never</code> skips over the file,
+<code class="code">:error</code> will signal a directory-not-found error.
+</p>
+</dd>
+<dt><code class="code">:silent</code></dt>
+<dd><p>If non-nil, should not print anything unless a query is in order.
+Otherwise, this method should print out what file the tape file
+is being restored to.
+</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="first-defop def-block">
+<dt class="defop def-line" id="index-tape_002dformats-on-Tape-5"><span class="category-def">Operation on <code class="code">Tape</code>: </span><span><strong class="def-name">tape-formats</strong> <var class="def-var-arguments">:write-file device file</var><a class="copiable-link" href="#index-tape_002dformats-on-Tape-5"> &para;</a></span></dt>
+<dd><p>&amp;key (end-of-tape-action :continue) silent
+</p>
+<p>Writes a file on the tape.  <code class="code">device</code> and <code class="code">silent</code> are as usual.
+</p>
+<dl class="table">
+<dt><var class="var">file</var></dt>
+<dd>
+<p>This should be a string, pathname or a file property list in the form
+<var class="var">(&quot;truename&quot; . (&quot;prop value&quot; ...))</var> as returned by
+<code class="code">fs:directory-list</code>. If the argument is a file plist, then the
+properties in the plist are written to tape, otherwise the file
+properties are derived from the input stream at write time.
+</p>
+</dd>
+<dt><var class="var">end-of-tape-action</var></dt>
+<dd>
+<p>What happens when the end of tape is reached during this operation is dependent
+on this variable.
+</p>
+<dl class="table">
+<dt><code class="code">:continue</code></dt>
+<dd>
+<p>This directs the format software to continue to another tape according to
+the specifications of the format.  This may, though, be an error in some
+cases, since some formats don&rsquo;t know about multi-tape save-sets.
+</p>
+</dd>
+<dt><code class="code">:error</code></dt>
+<dd>
+<p>This means that an error should be signalled according to when the
+filemark was encountered.  The flavor to signal is
+<code class="code">end-of-tape-writing-header</code> or <code class="code">end-of-tape-writing-file</code> depending
+on when the end of tape was encountered.  These error flavors are
+documented elsewhere in this manual.
+</p>
+</dd>
+<dt><code class="code">:return</code></dt>
+<dd>
+<p>This should cause an appropriate error condition to be returned
+immediately.  (See above).
+</p>
+</dd>
+</dl>
+</dd>
+</dl>
+
+</dd></dl>
+
+<dl class="first-defop def-block">
+<dt class="defop def-line" id="index-tape_002dformats-on-Tape-6"><span class="category-def">Operation on <code class="code">Tape</code>: </span><span><strong class="def-name">tape-formats</strong> <var class="def-var-arguments">:write-partition partition device disk-unit</var><a class="copiable-link" href="#index-tape_002dformats-on-Tape-6"> &para;</a></span></dt>
+<dd><p>&amp;key silent number-of-blocks start
+</p>
+<p>Writes a partition to tape.  <code class="code">:device</code> and <code class="code">:silent</code> are as usual.
+</p>
+<dl class="table">
+<dt><code class="code">:partition</code></dt>
+<dd><p>This should be a complete partition name as a string (i.e. &quot;LOD1&quot;)
+</p>
+</dd>
+<dt><code class="code">:disk-unit</code></dt>
+<dd>
+<p>This should be a disk unit argument like those passed the general
+system disk software.  To specify a local disk unit, provide an
+integer.  To specify a disk on a remote host, provide a string
+that looks like &quot;&lt;host-name&gt; &lt;disk-unit-number&gt;&quot;.  Providing a
+string form for the local host will still use the remote disk
+server.
+</p>
+</dd>
+<dt><code class="code">:whole-thing</code></dt>
+<dd>
+<p>If this is T, then the whole partition is copied; if it is a number,
+then that number of blocks is copied; if it is NIL, then only the active blocks
+in cases of compressed format bands will be copied. 
+</p>
+</dd>
+<dt><code class="code">:offset</code></dt>
+<dd>
+<p>If this is provided, it must be an integer representing the offset into the 
+partition to start copying from.
+</p>
+</dd>
+</dl>
+
+</dd></dl>
+
+<dl class="first-defop def-block">
+<dt class="defop def-line" id="index-tape_002dformats-on-Tape-7"><span class="category-def">Operation on <code class="code">Tape</code>: </span><span><strong class="def-name">tape-formats</strong> <var class="def-var-arguments">:compare-file device &amp;key transform silent</var><a class="copiable-link" href="#index-tape_002dformats-on-Tape-7"> &para;</a></span></dt>
+<dd><p>(error-action :return)
+</p>
+<p>Compares the next file on tape with the source it was dumped from.
+Transform is treated exactly as for :restore-file, and should provide
+the pathname of the file to be compared against.  If this argument is NIL,
+then the local host is assumed to be the source.  If silent is nil, then
+this method should print out messages concerning the comparison of the files.
+If the file compares successfully, then the plist of the file should
+be returned.  If the file gets a compare error, <code class="code">error-action</code>
+determines the action to take:
+</p>
+<dl class="table">
+<dt><code class="code">:return</code></dt>
+<dd>
+<p>Returns an error condition instance of the appropriate error
+flavor: <code class="code">compare-error</code>, <code class="code">source-not-found</code>, <code class="code">source-file-changed</code>.
+</p>
+</dd>
+<dt><code class="code">:error</code></dt>
+<dd>
+<p>Signals an appropriate error condition.
+</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="first-defop def-block">
+<dt class="defop def-line" id="index-tape_002dformats-on-Tape-8"><span class="category-def">Operation on <code class="code">Tape</code>: </span><span><strong class="def-name">tape-formats</strong> <var class="def-var-arguments">:beginning-of-file device</var><a class="copiable-link" href="#index-tape_002dformats-on-Tape-8"> &para;</a></span></dt>
+<dd>
+<p>This positions the tape to the beginning of the current file.
+Return value should be ignored.  Warning: Be sure that repeated
+invocations of this method do not space to the previous file.
+</p>
+</dd></dl>
+
+<dl class="first-defop def-block">
+<dt class="defop def-line" id="index-tape_002dformats-on-Tape-9"><span class="category-def">Operation on <code class="code">Tape</code>: </span><span><strong class="def-name">tape-formats</strong> <var class="def-var-arguments">:next-file device &amp;optional (number-of-files 1)</var><a class="copiable-link" href="#index-tape_002dformats-on-Tape-9"> &para;</a></span></dt>
+<dd>
+<p>Positions the tape at the beginning of the file that is <i class="i">number-of-files</i> away
+from the current file (i.e. 1 specifies the next file).
+</p>
+</dd></dl>
+
+<dl class="first-defop def-block">
+<dt class="defop def-line" id="index-tape_002dformats-on-Tape-10"><span class="category-def">Operation on <code class="code">Tape</code>: </span><span><strong class="def-name">tape-formats</strong> <var class="def-var-arguments">:previous-file number-of-files device</var><a class="copiable-link" href="#index-tape_002dformats-on-Tape-10"> &para;</a></span></dt>
+<dd>
+<p>Like <code class="code">:next-file</code> but moves backwards.
+</p>
+</dd></dl>
+
+<dl class="first-defop def-block">
+<dt class="defop def-line" id="index-tape_002dformats-on-Tape-11"><span class="category-def">Operation on <code class="code">Tape</code>: </span><span><strong class="def-name">tape-formats</strong> <var class="def-var-arguments">:find-file device match</var><a class="copiable-link" href="#index-tape_002dformats-on-Tape-11"> &para;</a></span></dt>
+<dd>
+<p>This operations searches for file on tape.  
+<var class="var">match</var> can be of the following types:
+</p><dl class="table">
+<dt><span class="r">list</span></dt>
+<dd><p>Car should a symbol, either <code class="code">or</code> or <code class="code">and</code>, cdr should be
+a list of valid match arguments.  <code class="code">tape-file-match</code> is called on all of
+elements with the same plist, and the values applied to
+<code class="code">and</code> or <code class="code">or</code> appropriately to determine the return value.
+</p>
+</dd>
+<dt><span class="r">string or pathname</span></dt>
+<dd><p>Uses <code class="code">:pathname-match</code> operation on <var class="var">match</var> pathname.
+</p>
+</dd>
+<dt><span class="r">function, closure, or symbol</span></dt>
+<dd><p>Funcall <var class="var">match</var> with plist as the argument.
+</p></dd>
+</dl>
+
+<p>If the processing of the match argument returns non-<code class="code">nil</code>, then
+the tape is positioned at the beginning of the matched file, and
+the file&rsquo;s plist returned.  Otherwise the search continues.
+</p>
+</dd></dl>
+
+<dl class="first-defop def-block">
+<dt class="defop def-line" id="index-tape_002dformat-on-Tape"><span class="category-def">Operation on <code class="code">Tape</code>: </span><span><strong class="def-name">tape-format</strong> <var class="def-var-arguments">:find-file-reverse match device</var><a class="copiable-link" href="#index-tape_002dformat-on-Tape"> &para;</a></span></dt>
+<dd>
+<p>This is like <code class="code">:find-file</code> but moves backwards.  If the 
+beginning of the tape is reached before a match is found, a
+<code class="code">physical-beginning-of-tape</code> error should be signalled.
+</p>
+</dd></dl>
+
+<dl class="first-defop def-block">
+<dt class="defop def-line" id="index-tape_002dformats-on-Tape-12"><span class="category-def">Operation on <code class="code">Tape</code>: </span><span><strong class="def-name">tape-formats</strong> <var class="def-var-arguments">:open-file device &amp;key (:direction :input) (:byte-size :default) (:characters :default) plist</var><a class="copiable-link" href="#index-tape_002dformats-on-Tape-12"> &para;</a></span></dt>
+<dd>
+<p>This function returns a stream according to the arguments which have the
+same meaning as for <code class="code">open</code>.  <var class="var">plist</var> is only meaningful for
+<code class="code">:output</code> streams, and must be supplied in that case.  The file&rsquo;s
+properties are copied onto the si:property-list instance variable
+of the stream, allowing the use of the generic property list functions
+(get, putprop, plist, etc.).  The stream returned is basically exatcly
+like that returned by <code class="code">FS:MAKE-MT-FILE-STEAM</code> in the old tape
+software.
+</p>
+</dd></dl>
+
+
+<dl class="first-defop def-block">
+<dt class="defop def-line" id="index-tape_002dformats-on-Tape-13"><span class="category-def">Operation on <code class="code">Tape</code>: </span><span><strong class="def-name">tape-formats</strong> <var class="def-var-arguments">:list-files device &amp;key (stream *standard-output*) (number-of-files -1)</var><a class="copiable-link" href="#index-tape_002dformats-on-Tape-13"> &para;</a></span></dt>
+<dd>
+<p>Should print a description of each file on the tape to <code class="code">stream</code>.  The
+listing should stop after <var class="var">number-of-files</var> is reached or the end of
+tape is encountered, returning a list of the file property lists if the
+files found.  If <code class="code">:stream</code> is NIL, then nothing should be printed.
+</p>
+</dd></dl>
+
+<dl class="first-defop def-block">
+<dt class="defop def-line" id="index-tape_002dformats-on-Tape-14"><span class="category-def">Operation on <code class="code">Tape</code>: </span><span><strong class="def-name">tape-formats</strong> <var class="def-var-arguments">:finish-tape device</var><a class="copiable-link" href="#index-tape_002dformats-on-Tape-14"> &para;</a></span></dt>
+<dd>
+<p>Marks the logical end of tape on <code class="code">device</code>. For convenience,
+the tape should be re-adjusted so that any further write operations
+will not be after the logical end of tape.  This operation simply
+should guarentee that the logical end of tape is represented on the
+tape.
+</p>
+</dd></dl>
+
+<dl class="first-defop def-block">
+<dt class="defop def-line" id="index-tape_002dformats-on-Tape-15"><span class="category-def">Operation on <code class="code">Tape</code>: </span><span><strong class="def-name">tape-formats</strong> <var class="def-var-arguments">:rewind device &amp;optional (wait-p t)</var><a class="copiable-link" href="#index-tape_002dformats-on-Tape-15"> &para;</a></span></dt>
+<dd>
+<p>This should cause the tape on <var class="var">device</var> to be rewound.  It has the same meaning as
+for tape-devices, but is provided here since some format objects may need to
+update some internal information when the tape is rewound.
+</p>
+</dd></dl>
+
+<dl class="first-defop def-block">
+<dt class="defop def-line" id="index-tape_002dformats-on-Tape-16"><span class="category-def">Operation on <code class="code">Tape</code>: </span><span><strong class="def-name">tape-formats</strong> <var class="def-var-arguments">:unload device</var><a class="copiable-link" href="#index-tape_002dformats-on-Tape-16"> &para;</a></span></dt>
+<dd>
+<p>This should cause the tape on the device specified to be
+unloaded.  This should take the same care of saving the state
+of the tape format object as the <code class="code">:rewind</code> method.
+</p>
+</dd></dl>
+
+
+<dl class="first-defop def-block">
+<dt class="defop def-line" id="index-tape_002dformats-on-Tape-17"><span class="category-def">Operation on <code class="code">Tape</code>: </span><span><strong class="def-name">tape-formats</strong> <var class="def-var-arguments">:position-to-append device</var><a class="copiable-link" href="#index-tape_002dformats-on-Tape-17"> &para;</a></span></dt>
+<dd>
+<p>Position tape so that all subsequent <code class="code">:write-file</code> operations
+will add the files to the end of tape.
+</p>
+</dd></dl>
+
+
+</div>
+<div class="chapter-level-extent" id="Error-Handling">
+<h2 class="chapter"><span>3 Error Handling<a class="copiable-link" href="#Error-Handling"> &para;</a></span></h2>
+
+<p>The new implementation of the tape software has gone quite out of its
+way to provide an accurate and consistent system of error condition
+flavors, to allow reliable catching and handling of various tape errors
+and states. The following set of flavors should be used in all places
+where they logically fit.  Higher level software will depend on this
+consistency and will be able to provide more &lsquo;intelligence&rsquo; to tape
+operations rather than dropping through to the error handler at every
+exception.  Errors are subclassified to allow easier intuitive
+understanding of the condition and also to allow more intelligent user
+interfaces and automated programs to operate more reliably.  Each
+classification flavor (with the exception of <code class="code">hardware-error</code> and
+<code class="code">driver-error</code>) is defined as an <code class="code">:abstract-flavor</code> (see the Lisp
+Machine Manual [flavors]).
+</p>
+
+<p>This is the  base flavor for all tape-related errors; all other
+error flavors use this one.
+</p>
+<dl class="first-defop def-block">
+<dt class="defop def-line" id="index-tape_002derror-on-Tape"><span class="category-def">Flavor on <code class="code">Tape</code>: </span><span><strong class="def-name">tape-error</strong><a class="copiable-link" href="#index-tape_002derror-on-Tape"> &para;</a></span></dt>
+<dd><p>Abstract flavor for the classification of all tape errors, built
+on <code class="code">error</code>.
+</p></dd></dl>
+
+<ul class="mini-toc">
+<li><a href="#Hardware-Errors" accesskey="1">Hardware Errors</a></li>
+<li><a href="#Driver-Errors" accesskey="2">Driver Errors</a></li>
+<li><a href="#Device-Errors" accesskey="3">Device Errors</a></li>
+<li><a href="#Format-Errors" accesskey="4">Format Errors</a></li>
+<li><a href="#User-Errors" accesskey="5">User Errors</a></li>
+<li><a href="#Higher-Level-Software-Errors" accesskey="6">Higher Level Software Errors</a></li>
+</ul>
+<div class="section-level-extent" id="Hardware-Errors">
+<h3 class="section"><span>3.1 Hardware Errors<a class="copiable-link" href="#Hardware-Errors"> &para;</a></span></h3>
+ 
+<p>These errors are internal hardware errors that cannot be
+reasonably handled by other software (fatal hardware errors).
+Use this for building flavors internal to the drivers for
+specific devices.  It is acceptable to allow these conditions
+to be passed through to the error handler in the case of a fatal
+hardware error.
+</p>
+<dl class="first-defop def-block">
+<dt class="defop def-line" id="index-hardware_002derror-on-Tape"><span class="category-def">Flavor on <code class="code">Tape</code>: </span><span><strong class="def-name">hardware-error</strong><a class="copiable-link" href="#index-hardware_002derror-on-Tape"> &para;</a></span></dt>
+<dd><p><code class="code">:device-type</code>, <code class="code">:error-code</code>, and <code class="code">:error-message</code> are
+required instance variables.  The <code class="code">:device-type</code> should be a symbol
+an is primarily for the user to identify the device that has errored
+if the debugger has been entered.  The <code class="code">:error-code</code> driver dependent.
+The <code class="code">:error-message</code> should be a string which is used to report the
+error if the debugger is entered.
+</p>
+</dd></dl>
+
+</div>
+<div class="section-level-extent" id="Driver-Errors">
+<h3 class="section"><span>3.2 Driver Errors<a class="copiable-link" href="#Driver-Errors"> &para;</a></span></h3>
+
+<p>Driver errors are internal errors in the driver software. These should
+be used within the driver software for signalling conditions <i class="i">only</i>
+within the driver level.  All exceptions that need to be signalled to
+higher level software, should be converted into a condition of an
+appropriate flavor (listed below), rather than signalling the internal
+error condition.  Therefore, conventionally, if the debugger is entered
+because of a <code class="code">driver-error</code>, it should be considered a bug in the
+driver software and should be reported to the implementor(s) of the
+driver.
+</p>
+<dl class="first-defop def-block">
+<dt class="defop def-line" id="index-driver_002derror-on-Tape"><span class="category-def">Flavor on <code class="code">Tape</code>: </span><span><strong class="def-name">driver-error</strong><a class="copiable-link" href="#index-driver_002derror-on-Tape"> &para;</a></span></dt>
+<dd><p><code class="code">:device-type</code>, <code class="code">:error-code</code>, and <code class="code">:error-message</code> are
+required instance variables.
+</p></dd></dl>
+
+</div>
+<div class="section-level-extent" id="Device-Errors">
+<h3 class="section"><span>3.3 Device Errors<a class="copiable-link" href="#Device-Errors"> &para;</a></span></h3>
+  
+<p>Device errors are typical, sometimes expected, errors that the device
+may encounter, such as the physical end of the tape, device not ready,
+etc.  The following is the base, uninstantiable flavor upon which all
+other <code class="code">device-error</code> flavors depend.
+</p>
+<dl class="first-defop def-block">
+<dt class="defop def-line" id="index-device_002derror-on-Tape"><span class="category-def">Flavor on <code class="code">Tape</code>: </span><span><strong class="def-name">device-error</strong><a class="copiable-link" href="#index-device_002derror-on-Tape"> &para;</a></span></dt>
+<dd><p>Abstrace flavor for classification of device errors.
+</p></dd></dl>
+
+<p>These are the currently defined device error flavors:
+</p>
+<dl class="first-defop def-block">
+<dt class="defop def-line" id="index-device_002dunavailable-on-Tape"><span class="category-def">Flavor on <code class="code">Tape</code>: </span><span><strong class="def-name">device-unavailable</strong><a class="copiable-link" href="#index-device_002dunavailable-on-Tape"> &para;</a></span></dt>
+<dd>
+<p>This error should be signalled when the device is being used by another
+processor or another process within the same processor. <code class="code">:device-type</code>
+should be a symbol describing the device (i.e.  &rsquo;tapemaster).
+<code class="code">:current-owner</code> should be either an integer or a cons (not a list!).
+If it is an integer, than it is the NuBus slot number of the processor
+currently &lsquo;owning&rsquo; the device hardware interface.  If it is a list, the
+car of the cons is the device that is currently using the device, the
+cdr is the process in which the device object is being accessed.  The
+process may not be significant for some locking schemes, and useful in
+others.  The <strong class="strong">proceed-types</strong> defined for this condition are:
+<code class="code">:steal-device-internally</code>, <code class="code">:steal-device-from-other-processor</code>,
+<code class="code">:wait-for-device-free</code>.
+</p>
+</dd></dl>
+
+<dl class="first-defop def-block">
+<dt class="defop def-line" id="index-wait_002dtimeout-on-Tape"><span class="category-def">Flavor on <code class="code">Tape</code>: </span><span><strong class="def-name">wait-timeout</strong><a class="copiable-link" href="#index-wait_002dtimeout-on-Tape"> &para;</a></span></dt>
+<dd>
+<p>This error should be used for all unrecoverable timeout conditions.
+<code class="code">:device-type</code>, <code class="code">:unit</code>, <code class="code">:seconds-waited</code>, and <code class="code">:wait-string</code>
+are required instance variables for this flavor.  <code class="code">:wait-string</code>
+should describe the timeout.
+</p>
+</dd></dl>
+
+<dl class="first-defop def-block">
+<dt class="defop def-line" id="index-bad_002dtape-on-Tape"><span class="category-def">Flavor on <code class="code">Tape</code>: </span><span><strong class="def-name">bad-tape</strong><a class="copiable-link" href="#index-bad_002dtape-on-Tape"> &para;</a></span></dt>
+<dd>
+<p>This error should be signalled if there is an indication that there is a
+defect in the tape.  <code class="code">:device-type</code> and <code class="code">:unit</code> are required
+instance variable.
+</p>
+</dd></dl>
+
+<dl class="first-defop def-block">
+<dt class="defop def-line" id="index-blank_002dtape-on-Tape"><span class="category-def">Flavor on <code class="code">Tape</code>: </span><span><strong class="def-name">blank-tape</strong><a class="copiable-link" href="#index-blank_002dtape-on-Tape"> &para;</a></span></dt>
+<dd>
+<p>Should be signalled if an attempt to read the tape is made and it is
+detected as blank by the device.  <code class="code">:device-type</code> and <code class="code">:unit</code> is the
+only required instance variable.
+</p>
+</dd></dl>
+
+<dl class="first-defop def-block">
+<dt class="defop def-line" id="index-physical_002dend_002dof_002dtape-on-Tape"><span class="category-def">Flavor on <code class="code">Tape</code>: </span><span><strong class="def-name">physical-end-of-tape</strong><a class="copiable-link" href="#index-physical_002dend_002dof_002dtape-on-Tape"> &para;</a></span></dt>
+<dd>
+<p>When the physical end of the tape is detected, this error should be
+signalled.
+<code class="code">:device-type</code> is as usual.
+<code class="code">:unit</code> should be the unit number for the device
+<code class="code">:data-transferred</code> should be is a signaller dependent value
+that represents how much of the operation (read/write/space)
+was carried out before the end of tape was reached.  For more
+detailed information about this, see the documentation for the
+read and write operations for <code class="code">basic-tape-device</code>.  It is important
+not to confuse this with <code class="code">logical-end-of-tape</code> explained below.
+</p>
+</dd></dl>
+
+<dl class="first-defop def-block">
+<dt class="defop def-line" id="index-physical_002dbeginning_002dof_002dtape-on-Tape"><span class="category-def">Flavor on <code class="code">Tape</code>: </span><span><strong class="def-name">physical-beginning-of-tape</strong><a class="copiable-link" href="#index-physical_002dbeginning_002dof_002dtape-on-Tape"> &para;</a></span></dt>
+<dd>
+<p>This is exactly like <code class="code">physical-end-of-tape</code> except it is for
+reverse direction operations (currently only spacing operations).
+This should NOT be signalled by rewind operations, since the
+beginning of the tape is expected.  <code class="code">:device-type</code>, <code class="code">:unit</code>,
+and <code class="code">:data-transferred</code> are as for the aforementioned flavor.
+</p>
+</dd></dl>
+
+<dl class="first-defop def-block">
+<dt class="defop def-line" id="index-filemark_002dencountered-on-Tape"><span class="category-def">Flavor on <code class="code">Tape</code>: </span><span><strong class="def-name">filemark-encountered</strong><a class="copiable-link" href="#index-filemark_002dencountered-on-Tape"> &para;</a></span></dt>
+<dd>
+<p>This should be signalled when a hard filemark on the tape is 
+encountered during a read operation.  <code class="code">:device-type</code>,
+<code class="code">:unit</code>, and <code class="code">:data-transferred</code> are required instance
+variables.
+</p>
+</dd></dl>
+
+
+</div>
+<div class="section-level-extent" id="Format-Errors">
+<h3 class="section"><span>3.4 Format Errors<a class="copiable-link" href="#Format-Errors"> &para;</a></span></h3>
+
+<p>Format errors are expected conditions (like <code class="code">logical-end-of-tape</code>)
+or errors in the format of information on the tape with
+respect to the specific format standard (a bad file headers, for
+instance).
+</p>
+<dl class="first-defop def-block">
+<dt class="defop def-line" id="index-format_002derror-on-Tape"><span class="category-def">Flavor on <code class="code">Tape</code>: </span><span><strong class="def-name">format-error</strong><a class="copiable-link" href="#index-format_002derror-on-Tape"> &para;</a></span></dt>
+<dd>
+<p>Abstract flavor for the classification of format errors.
+</p>
+</dd></dl>
+
+<dl class="first-defop def-block">
+<dt class="defop def-line" id="index-bad_002dtape_002dheader-on-Tape"><span class="category-def">Flavor on <code class="code">Tape</code>: </span><span><strong class="def-name">bad-tape-header</strong><a class="copiable-link" href="#index-bad_002dtape_002dheader-on-Tape"> &para;</a></span></dt>
+<dd>
+<p>This should be signalled when the tape header (as specified by the
+format) is invalid in some way.  This is in most cases a fatal error.
+<code class="code">header</code> is a string provided for debugging so the user can examine it
+and possibly determine how corrupted the header is.  <code class="code">format-type</code> is 
+provided identify the format of the tape.
+</p>
+</dd></dl>
+
+<dl class="first-defop def-block">
+<dt class="defop def-line" id="index-bad_002dfile_002dheader-on-Tape"><span class="category-def">Flavor on <code class="code">Tape</code>: </span><span><strong class="def-name">bad-file-header</strong><a class="copiable-link" href="#index-bad_002dfile_002dheader-on-Tape"> &para;</a></span></dt>
+<dd>
+<p>This should be signalled when there is an indication that a file header
+on the tape is invalid.  This is usually fatal error, but unfortunately
+in some cases has to be used to determine the logical end of tape.
+<code class="code">:format-type</code>, and <code class="code">:header</code> are the required instance variables,
+as in <code class="code">bad-tape-header</code>.
+</p>
+</dd></dl>
+
+<dl class="first-defop def-block">
+<dt class="defop def-line" id="index-logical_002dend_002dof_002dtape-on-Tape"><span class="category-def">Flavor on <code class="code">Tape</code>: </span><span><strong class="def-name">logical-end-of-tape</strong><a class="copiable-link" href="#index-logical_002dend_002dof_002dtape-on-Tape"> &para;</a></span></dt>
+<dd>
+<p>This indicates the end of the tape, in file terms.  Whether there are
+more files on the tape is dependent on the format.  The format software
+for each format should be careful to correctly handle cases of repeated
+attempts to access any more files, if there aren&rsquo;t any more.
+<code class="code">:device-object</code> is the only required instance variable and should
+hold the device object the format detected the logical end of tape on.
+</p>
+</dd></dl>
+
+<dl class="first-defop def-block">
+<dt class="defop def-line" id="index-end_002dof_002dtape_002dwriting_002dheader-on-Tape"><span class="category-def">Flavor on <code class="code">Tape</code>: </span><span><strong class="def-name">end-of-tape-writing-header</strong><a class="copiable-link" href="#index-end_002dof_002dtape_002dwriting_002dheader-on-Tape"> &para;</a></span></dt>
+<dd>
+<p>This condition is used if a <code class="code">physical-end-of-tape</code> error was signalled
+by a device while the formatting software was trying to read a file
+header.  This might not always be signalled, since the user may opt to
+have the format handle the end of tape internally.  (See the
+<code class="code">:write-file</code> operation for tape formats for more information.)
+<code class="code">:file-plist</code> is the only required instance variable and should hold
+the property list of the file that was being written.  <code class="code">:device</code> is
+the object which signalled the physical end of tape.
+</p>
+</dd></dl>
+
+<dl class="first-defop def-block">
+<dt class="defop def-line" id="index-end_002dof_002dtape_002dreading_002dheader-on-Tape"><span class="category-def">Flavor on <code class="code">Tape</code>: </span><span><strong class="def-name">end-of-tape-reading-header</strong><a class="copiable-link" href="#index-end_002dof_002dtape_002dreading_002dheader-on-Tape"> &para;</a></span></dt>
+<dd>
+<p>This is just like <code class="code">end-of-tape-reading-header</code>, but signalled during a
+file read (or compare) operation.  <code class="code">:device</code> is the only required
+instance variable and should hold the device object which signalled the
+end of tape.
+</p>
+</dd></dl>
+
+<dl class="first-defop def-block">
+<dt class="defop def-line" id="index-end_002dof_002dtape_002dwriting_002dfile-on-Tape"><span class="category-def">Flavor on <code class="code">Tape</code>: </span><span><strong class="def-name">end-of-tape-writing-file</strong><a class="copiable-link" href="#index-end_002dof_002dtape_002dwriting_002dfile-on-Tape"> &para;</a></span></dt>
+<dd>
+<p>This indicates that the physical end of tape was encountered while
+writing the file&rsquo;s data on the tape.  <code class="code">:file-plist</code> and <code class="code">:device</code>
+are as in <code class="code">end-of-tape-writing-header</code>.  <code class="code">bytes-transferred</code>
+indicates how many bytes of the file were transferred before the end of
+the tape was encountered.  Note carefully that <code class="code">bytes-transferred</code>
+corresponds to the <i class="i">BYTE-SIZE</i> of the file, which may vary but is
+typically 8 or 16 bits.
+</p>
+</dd></dl>
+
+<dl class="first-defop def-block">
+<dt class="defop def-line" id="index-end_002dof_002dtape_002dreading_002dfile-on-Tape"><span class="category-def">Flavor on <code class="code">Tape</code>: </span><span><strong class="def-name">end-of-tape-reading-file</strong><a class="copiable-link" href="#index-end_002dof_002dtape_002dreading_002dfile-on-Tape"> &para;</a></span></dt>
+<dd>
+<p>This is just like <code class="code">end-of-tape-writing-file</code> but for read or compare
+operations.  <code class="code">:file-plist</code>, <code class="code">:device</code>, and <code class="code">:bytes-transferred</code> are the
+required instance variables.
+</p>
+</dd></dl>
+	   
+<dl class="first-defop def-block">
+<dt class="defop def-line" id="index-compare_002derror-on-Tape"><span class="category-def">Flavor on <code class="code">Tape</code>: </span><span><strong class="def-name">compare-error</strong><a class="copiable-link" href="#index-compare_002derror-on-Tape"> &para;</a></span></dt>
+<dd>
+<p>Indicates that there was an error comparing a tape file and its
+source.  <code class="code">:source-file</code> is the pathname of the source file used to compare,
+<code class="code">:file-plist</code> is the property list of the file compared.
+</p>
+</dd></dl>
+
+<dl class="first-defop def-block">
+<dt class="defop def-line" id="index-compare_002dsource_002dnot_002dfound-on-Tape"><span class="category-def">Flavor on <code class="code">Tape</code>: </span><span><strong class="def-name">compare-source-not-found</strong><a class="copiable-link" href="#index-compare_002dsource_002dnot_002dfound-on-Tape"> &para;</a></span></dt>
+<dd>
+<p>Indicates that the source for the file to be compared was not 
+found.  <code class="code">:source-file</code> is the file it tried to find.
+</p>
+</dd></dl>
+
+
+<dl class="first-defop def-block">
+<dt class="defop def-line" id="index-compare_002dsource_002dchanged-on-Tape"><span class="category-def">Flavor on <code class="code">Tape</code>: </span><span><strong class="def-name">compare-source-changed</strong><a class="copiable-link" href="#index-compare_002dsource_002dchanged-on-Tape"> &para;</a></span></dt>
+<dd>
+<p>Indicates that the attributes of the source file changed in some way
+since the file was written to tape.  <code class="code">:source-plist</code> is a plist of the
+source file&rsquo;s properties, <code class="code">:file-plist</code> is that of the file on tape.
+</p>
+</dd></dl>
+
+</div>
+<div class="section-level-extent" id="User-Errors">
+<h3 class="section"><span>3.5 User Errors<a class="copiable-link" href="#User-Errors"> &para;</a></span></h3>
+
+<p>User errors are errors that the user can correct and retry, or
+that the user has precipitated by not following the conventions
+(not mounting the tape, for instance).
+</p>
+<dl class="first-defop def-block">
+<dt class="defop def-line" id="index-user_002derror-on-Tape"><span class="category-def">Flavor on <code class="code">Tape</code>: </span><span><strong class="def-name">user-error</strong><a class="copiable-link" href="#index-user_002derror-on-Tape"> &para;</a></span></dt>
+<dd>
+<p>Abstract flavor for the classification of user errors.
+</p>
+</dd></dl>
+
+<dl class="first-defop def-block">
+<dt class="defop def-line" id="index-write_002dprotected-on-Tape"><span class="category-def">Flavor on <code class="code">Tape</code>: </span><span><strong class="def-name">write-protected</strong><a class="copiable-link" href="#index-write_002dprotected-on-Tape"> &para;</a></span></dt>
+<dd>
+<p>This should only be signalled by operations that wish to alter the data
+on the tape.  It obviously indicates that the tape in the driver is
+write protected.  <code class="code">:device-type</code>, and <code class="code">:unit</code> are required instance
+variables that give the appropriate information as to which drive (if
+there are more than one) needs attention.
+</p>
+</dd></dl>
+
+
+<dl class="first-defop def-block">
+<dt class="defop def-line" id="index-tape_002dnot_002dready-on-Tape"><span class="category-def">Flavor on <code class="code">Tape</code>: </span><span><strong class="def-name">tape-not-ready</strong><a class="copiable-link" href="#index-tape_002dnot_002dready-on-Tape"> &para;</a></span></dt>
+<dd>
+<p>This usually means that the tape driver is not <strong class="strong">online</strong> or the tape
+is not mounted.  <code class="code">:device-type</code>, and <code class="code">:unit</code>
+are the required instance variables.
+</p>
+</dd></dl>
+
+
+<dl class="first-defop def-block">
+<dt class="defop def-line" id="index-unknown_002dformat-on-Tape"><span class="category-def">Flavor on <code class="code">Tape</code>: </span><span><strong class="def-name">unknown-format</strong><a class="copiable-link" href="#index-unknown_002dformat-on-Tape"> &para;</a></span></dt>
+<dd>
+<p>This indicates that the tape is of a format unknown to the software.
+This should is signalled by higher level software that checks the tape
+against all the supported tape formats (using :tape-is-your-format-p)
+and fails to find appropriate format support.  <code class="code">:device</code>, <code class="code">:unit</code>,
+are as usual. <code class="code">:header-string</code> is provided for debugging.
+</p>
+</dd></dl>
+
+<dl class="first-defop def-block">
+<dt class="defop def-line" id="index-file_002dstream_002dexists-on-Tape"><span class="category-def">Flavor on <code class="code">Tape</code>: </span><span><strong class="def-name">file-stream-exists</strong><a class="copiable-link" href="#index-file_002dstream_002dexists-on-Tape"> &para;</a></span></dt>
+<dd>
+<p>This indicates that a file stream already exists for this particular
+format object.  It should be signalled by the <code class="code">:open-file</code> method for
+tape formats.  For a discussion of why only one stream may be open at a
+time, see the documentation of the <code class="code">:open-file</code> method for tape
+formats.  Fixing this condition, by closing the existing stream, may not
+always work as desired, depending on the intelligence of the format
+software.  And since programs that use the open file feature should use
+<code class="code">WITH-OPEN-STREAM</code>, this error condition should be considered fatal
+and due to some user mistake, or an internal error in the format
+software.  <code class="code">:format-object</code> holds the format object in which the error
+occurred.  <code class="code">:file-stream</code> is the stream that exists, which is provided
+for closing.  (The file stream is also a &lsquo;gettable&rsquo; instance variable of
+format object.)
+</p>
+</dd></dl>
+
+<dl class="first-defop def-block">
+<dt class="defop def-line" id="index-no_002dsuch_002dpartition-on-Tape"><span class="category-def">Flavor on <code class="code">Tape</code>: </span><span><strong class="def-name">no-such-partition</strong><a class="copiable-link" href="#index-no_002dsuch_002dpartition-on-Tape"> &para;</a></span></dt>
+<dd>
+<p>This error is signalled when the user asks to operate on a partition
+that doesn&rsquo;t exist.  This should be a general system error, but for
+not will be implemented locally here.  <code class="code">:partition</code> is the name of the
+partition requested.  <code class="code">:disk-unit</code> is the drive-number of the disk.
+<code class="code">:host</code> is the machine whose disk we are talking about.
+</p>
+</dd></dl>
+
+<dl class="first-defop def-block">
+<dt class="defop def-line" id="index-invalid_002doption-on-Tape"><span class="category-def">Flavor on <code class="code">Tape</code>: </span><span><strong class="def-name">invalid-option</strong><a class="copiable-link" href="#index-invalid_002doption-on-Tape"> &para;</a></span></dt>
+<dd>
+<p>This should be signalled by the <code class="code">:set-options</code> methods for format
+and device objects (there is no need for a distinction here).
+<code class="code">:option</code> is the invalid option that was supplied, <code class="code">value</code> is
+its corresponding value.  <code class="code">:object</code> is the object which
+rejected the option.
+</p>
+</dd></dl>
+
+<dl class="first-defop def-block">
+<dt class="defop def-line" id="index-write_002din_002dmiddle_002dof_002dtape-on-Tape"><span class="category-def">Flavor on <code class="code">Tape</code>: </span><span><strong class="def-name">write-in-middle-of-tape</strong><a class="copiable-link" href="#index-write_002din_002dmiddle_002dof_002dtape-on-Tape"> &para;</a></span></dt>
+<dd>
+<p>This may be signalled by the formatting software if it is generally
+unacceptable to start writing data if not in the middle of the tape.
+(For example: aborting out of a <code class="code">:list-files</code> operation and then
+using <code class="code">:write-file</code> without rewinding first.)  This adds an extra
+level of protection against lossage due to carelessness, but is by no
+means required by the format software. <code class="code">:device-object</code> is the only
+required instance variable.
+</p>
+</dd></dl>
+
+<dl class="first-defop def-block">
+<dt class="defop def-line" id="index-read_002dduring_002dwrite-on-Tape"><span class="category-def">Flavor on <code class="code">Tape</code>: </span><span><strong class="def-name">read-during-write</strong><a class="copiable-link" href="#index-read_002dduring_002dwrite-on-Tape"> &para;</a></span></dt>
+<dd>
+<p>This is similar to <code class="code">write-in-middle-of-tape</code> but indicated that
+attempt was made to read data on the tape before the end of tape
+was written.  Again, in some cases with some devices, this is an
+acceptable thing to do, but in others might simply confuse things
+and cause the user to re-write the tape.  <code class="code">:device-object</code> is the only
+required instance variable.
+</p>
+</dd></dl>
+
+<dl class="first-defop def-block">
+<dt class="defop def-line" id="index-not_002dsupported-on-Tape"><span class="category-def">Flavor on <code class="code">Tape</code>: </span><span><strong class="def-name">not-supported</strong><a class="copiable-link" href="#index-not_002dsupported-on-Tape"> &para;</a></span></dt>
+<dd>
+<p>This can be used when support for a particular format or device is
+being written.  Since the software requires that all documented
+operations on a device be provided before the object can be used,
+one can use this to signal an error for operations that have not yet
+been implemented.  Its intended use is for non-distributed or special
+user implemented format or device support, where it is allowable to have
+unsupported operations.  <code class="code">:device-object</code> is the object which errored,
+and <code class="code">:operation</code> is the operation in question.
+</p>
+</dd></dl>
+
+
+<dl class="first-defop def-block">
+<dt class="defop def-line" id="index-protocol_002dviolation-on-Tape"><span class="category-def">Flavor on <code class="code">Tape</code>: </span><span><strong class="def-name">protocol-violation</strong><a class="copiable-link" href="#index-protocol_002dviolation-on-Tape"> &para;</a></span></dt>
+<dd>
+<p>This indicates that an argument passed by the user or by software did
+not adhere to the specifications set out by this document.  It is the
+type of error condition that is signalled when you pass an <code class="code">ART-Q</code>
+array as the <strong class="strong">array</strong> argument to the <code class="code">:write-array</code> operation for
+tape devices.  <code class="code">:format-string</code> is the only required instance
+variable.  <code class="code">:format-args</code> is accepted and defaults to <code class="code">NIL</code>.
+</p>
+</dd></dl>
+
+</div>
+<div class="section-level-extent" id="Higher-Level-Software-Errors">
+<h3 class="section"><span>3.6 Higher Level Software Errors<a class="copiable-link" href="#Higher-Level-Software-Errors"> &para;</a></span></h3>
+
+<p>For the purpose of classification without exception, the following
+flavor is defined.  It is expected that all layers between but not
+including the format support and user-interface levels build their error
+flavors on this flavor.  It is not clear exactly how useful this will be
+in the long run, but for purposes of extensibility it will be included. 
+</p>
+<dl class="first-defop def-block">
+<dt class="defop def-line" id="index-higher_002dlevel_002dsoftware_002derror-on-Tape"><span class="category-def">Flavor on <code class="code">Tape</code>: </span><span><strong class="def-name">higher-level-software-error</strong><a class="copiable-link" href="#index-higher_002dlevel_002dsoftware_002derror-on-Tape"> &para;</a></span></dt>
+<dd>
+<p>Abstract flavor for higher level tape software to build error flavors
+upon.
+</p>
+</dd></dl>
+
+
+
+</div>
+</div>
+</div>
+
+
+
+</body>
+</html>

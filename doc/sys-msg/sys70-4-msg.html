@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <link rel="stylesheet" type="text/css"
+	  href="../lm3.css">
+    <title>LM-3 --- Lisp Machine System Release 70 Notes</title>
+  </head>
+  <body>
+    <center><h1>Lisp Machine System Release 70 Notes</h1></center>
+
+    <pre>
+Date: 22 June 1981 03:03-EDT
+From: David A. Moon &lt;Moon at MIT-AI&gt;
+Subject: New system release
+To: INFO-LISPM at MIT-AI
+
+System 70.4, with microcode 766 and Zmail 28.7, is now ready for public
+release and distribution.  It can be found on CADR-6 and a few others.
+The following changes deserve mention:
+
+This system requires microcode 766.  Trying to run it in an older microcode
+will cause it to die totally.  The newer microcode is compatible with
+previous major versions of the system, so it is safe to leave it installed.
+
+The mouse should now be very much easier to use, because heavy paging
+will no longer interfere with tracking of the mouse position and
+recognition of clicks.  Anyone encountering a problem or finding that
+their program no longer works, please contact Moon.  (I don't expect any
+problems, but substantial changes have been made.)  (This facility
+was added in patch 70.4).
+
+The default host for the LOGIN function is now the machine "associated"
+with a particular lisp machine.  These associations are kept in the same
+file as the physical locations (LMIO; LMLOCS &gt;).
+
+New initialization lists, LOGIN and LOGOUT, which are run at login and
+logout time, guaranteed to be run alternately.  They currently only
+contain FS:FILE-LOGIN and the like.   -- DLA
+
+PRESS:PRINT-FILE and friends now take keyword arguments.
+
+There is a new special form, CHECK-ARG-TYPE.  It is a variant of
+CHECK-ARG: instead of taking a predicate form, it takes any value which
+can be passed as the second argument to TYPEP.  It is documented in the
+Lisp Machine Manual source; see AI: LMMAN; ERRORS &gt; for details.
+
+The operations :OPEN, :RENAME, :DELETE, :DIRECTORY-LIST,
+:COMPLETE-STRING, and :CHANGE-PROPERTIES on pathnames now take slightly
+different arguments.  If this affects you, you really should be using
+the functional interface and not sending messages to the pathnames
+directly.
+    </pre>
+
+    <hr/>
+    <p>Last modified: 2025/06/05 08:38:12 (UTC) by ams</p>
+  </body>
+</html>
+
+<!-- Local Variables: -->
+<!-- time-stamp-pattern: "-8/<p>Last modified:[ \t]%:y/%02m/%02d %02H:%02M:%02S (%Z) by %u</p>" -->
+<!-- time-stamp-time-zone: "UTC" -->
+<!-- End: -->

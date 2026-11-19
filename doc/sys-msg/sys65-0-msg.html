@@ -1,0 +1,206 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <link rel="stylesheet" type="text/css"
+	  href="../lm3.css">
+    <title>LM-3 --- Lisp Machine System Release 65 Notes</title>
+  </head>
+  <body>
+    <center><h1>Lisp Machine System Release 65 Notes</h1></center>
+
+    <pre>
+Date: 3 March 1981 04:13-EST
+From: Mike McMahon &lt;MMcM at MIT-AI&gt;
+Subject: Release of new system
+To: INFO-LISPM at MIT-AI
+
+System 65.0 with microcode 739 is released to users.  This system contains
+a large number of changes which users need to know about.  It is consistent
+with the soon-to-be-released new edition of the Chine Nual.
+
+This message is very long, and so begins with a summary.
+
+FILLARRAY and LISTARRAY are Maclisp compatible.
+The BREAK and ABORT keys behave differently.
+The catch tag SI:TOP-LEVEL has been renamed.
+The file LMIO;CHSTBL and the variables it defined are gone.
+INTERN with a symbol as argument is a little different.
+LOAD-PATCHES is global now and takes different arguments.
+The functions &lt;, &gt;, &lt;=, and &gt;= have been changed.
+Notifications and errors inside the window system work better.
+STRING-SEARCH-SET, STRING-TRIM, etc. have been improved.
+(VALUES) works now.
+New subprimitives for hacking closures.
+Who line changes.
+Internal lambdas named differently.
+The arguments to READ, TYI, etc. have been changed slightly.
+----
+
+FILLARRAY and LISTARRAY are now fully Maclisp compatible; they will
+accept arrays of any dimensionality.
+
+The way the ABORT and BREAK keys work has been changed around; the Control
+and Meta shifts modify the action of these keys.  Without Control, the key
+takes effect when it is read.  Some programs (especially the editor) will
+handle this case themselves.  With Control, the key takes effect
+immediately, except in "super image" programs such as SUPDUP; in that case
+the key must be prefixed with TERMINAL, and the Control shift is
+irrelevant.  Without Meta, the BREAK key calls the BREAK function and the
+ABORT key aborts to the previous command level.  With Meta, BREAK goes to
+the error handler and ABORT resets the process.  This is designed so that
+the "double bucky" combination is convenient.  If you have any trouble
+remembering this, as usual type TERMINAL HELP and an explanation will be
+displayed.
+	Old:		New:			Does:
+	break		break			deferred break
+			control-break		immediate break
+			meta-break		deferred error-handler
+	terminal-break	control-meta-break	immediate error-handler
+	abort		abort			deferred abort one level
+			control-abort		immediate abort one level
+			meta-abort		deferred abort all levels
+	control-abort	control-meta-abort	immediate abort all levels
+
+By popular demand, c-Z will act like ABORT in BREAK and the error handler
+again.  Anyone with opinions as to whether or not the CALL key should be
+changed also to be consistent with this scheme should mail them to
+BUG-LISPM.
+
+The following incompatibilities associated with this may be visible to some
+user programs:  The catch tag SI:TOP-LEVEL has been renamed to
+SYS:COMMAND-LEVEL.  The :ABORT, :BREAK, and :FORCE-BREAK messages have been
+flushed.  The variable TV:KBD-IGNORE-ABORT has been replaced by the
+variable TV:KBD-INTERCEPTED-CHARACTERS, which the user can bind to prevent
+ABORT and BREAK without Control from getting their default handling.  Good
+user-interface dictates that in this case the user program should do
+something consistent with the default behavior.
+
+The Chaosnet host table and associated data structures have been
+reorganized as follows.  The file LMIO;CHSTBL and the variables
+CHAOS:KNOWN-NAME-ALIST, CHAOS:FINGER-ALIST, and
+CHAOS:CONSOLE-LOCATION-ALIST have been replaced by the files LMIO;HSTTBL
+(generated automatically) and LMIO;LMLOCS and the variable
+CHAOS:MACHINE-LOCATION-ALIST.
+
+Calling INTERN (or INTERN-LOCAL) with a symbol as the first arg never
+creates a new symbol.  Instead, if the symbol is not found in the specified
+package, it is interned there as well as in its original package.  This
+does not affect the package cell of the symbol.
+Use (INTERN (GET-PNAME sym) pkg) to create a symbol that looks the
+same as sym but is in pkg.
+
+LOAD-PATCHES is now on the global package; you don't have to say "SI:" any
+more (though it will work if you do).  It now takes keyword arguments.  The
+keywords :SELECTIVE and :NOSELECTIVE control whether or not you get asked
+about whether to load patches.  The default is :SELECTIVE, meaning that you
+get asked.  You can use the :SYSTEMS keyword, followed by a list of system
+names to specify which systems to load the patches of.  This is what the
+argument to LOAD-PATCHES used to mean.  The default is to load patches for
+all systems.  (This change to the arguments is incompatible, but it seems
+quite likely that nobody uses the old argument anyway.)
+
+The functions &gt; and &lt; have been upgraded to be exactly the same as GREATERP
+and LESSP; that is, they will now accept more than two arguments.  The
+functions &gt;=, &lt;=, , and  have been reimplemented to work correctly; the
+old implementatation (as macros) did not have the property of evaluating
+all arguments exactly once.  As always, all these functions work on all
+types of numbers.
+
+:BATCH mode works in MAKE-SYSTEM, saving the compiler warnings in a file
+and otherwise conspiring not to want human intervention during compilation.
+
+Notifications (those unsolicited, beeping messages enclosed in square
+brackets) have been extensively revised.  They should behave much better
+now.  As part of this the interface between the error handler and the
+window system has been greatly improved; there should be much less
+mysterious behavior.  The function TV:PRINT-NOTIFICATIONS will reprint all
+the notifications received since the machine was last cold-booted.  If you
+use any of the following, you are obsolete and need to convert (probably no
+user programs use any of these):
+Deleted messages:  :NOTIFY, :NOTIFY-STREAM, :NOTIFY-OUTPUT, :NOTE-INPUT-WAIT
+Deleted variables: TV:BACKGROUND-STREAM-BELL-COUNT
+Deleted functions: TV:GET-NOTIFICATION-STREAM, TV:NOTIFY-USER, TV:MAKE-SELF-INTERESTING
+If you need help converting, don't hesitate to ask; help will be forthcoming.
+
+The string-manipulation functions that deal in sets of characters, such as
+STRING-SEARCH-SET and STRING-TRIM, now accept strings as well as lists for
+representing sets of characters.  (string-trim "ab" "bbfooaa") =&gt; "foo".
+
+The restriction against returning zero values has been lifted.  This is
+only visible when the receiver of the values is a MULTIPLE-VALUE-LIST,
+because of the way the language handles calls in which the callee returns
+fewer values than the caller asked for.  Try typing (VALUES) at a Lisp
+Listener.
+
+New microcoded functions SI:%BINDING-INSTANCES, SI:%USING-BINDING-INSTANCES, and
+SI:%INTERNAL-VALUE-CELL exist.
+  (SI:%BINDING-INSTANCES &lt;list-of-symbols&gt;)  "captures" the current bindings
+     of a list of variables.  This operation is very similar that
+     provided by CLOSURE.  In fact, CLOSURE could have been defined by
+     (DEFUN CLOSURE (VARS FUN) (%MAKE-POINTER DTP-CLOSURE
+					      (CONS FUN (SI:%BINDING-INSTANCES VARS))))
+     The value of SI:%BINDING-INSTANCES is a list of locatives of even length,
+     which alternately point to the internal value cell of a variable and the
+     paired external value cell.
+  (SI:%USING-BINDING-INSTANCES &lt;instance-list&gt;) "installs" an instance list such as
+     created by SI:%BINDING-INSTANCES.  In a manner similiar to the BIND function
+     (which should be called %BIND), these bindings are "added" to the current
+     binding frame, and remain in effect until it is unwound.  For this reason,
+     you probably dont want the "user" to use SI:%USING-BINDING-INSTANCES directly,
+     but a simple interface function which uses it.
+     SI:%USING-BINDING-INSTANCES checks for redundant bindings and ignores them.
+     (A binding is redundant if the symbol is already bound to the desired external
+     value cell).  This check avoids excessive growth of the special pdl in some cases
+     and is also made by the microcode which "enters" closures, entities, and instances.
+  (SI:%INTERNAL-VALUE-CELL &lt;symbol&gt;) returns the current internal value cell of
+     &lt;SYMBOL&gt;.  ONE-Q-FORWARD forwarding pointers are followed, but
+     EXTERNAL-VALUE-CELL-POINTERS are not.
+  In addition, certain internal changes were made to allow EXTERNAL-VALUE-CELL-POINTER
+  datatypes to appear in the PDL-BUFFER.  These should not be visible to the user.
+
+The who line has been reimplemented.  Each field in the who line is now a
+window, and new fields can be added by adding windows in a simple fashion.
+Along with this feature, the who line can change size, and a new mixin
+flavor has been defined to permit changing the size of the "screen", so
+that windows scale correctly.  A new default who line line has been added,
+called the mouse documentation line, which gives a one line description of
+what the mouse can do at any time.  This description is usually supplied by
+the window.  We have documented many system facilities, and will continue
+to improve the documentation as time permits.  The menu item list format
+has been added to in an upwards compatible fashion to permit users to
+document their menus.  If people are interested in general, I'll send out a
+general note on how to use the documentation facility, and on who line
+fields (--HIC).  The who line documentation can be turned on and off with
+the function (TV:WHO-LINE-DOCUMENTATION &optional (ON-P T)).  An argument
+of T (or no arg), turns it on, and an argument of NIL turns it off.  Note
+that the screen is now one line smaller by default.  This will probably
+break some code that uses numbers to specify the size of windows (tough, we
+warned you not to do that).  The documentation window is in the variable
+TV:WHO-LINE-DOCUMENTATION-WINDOW, and if you are bummed out by the reverse
+video, you can send it a :SET-REVERSE-VIDEO-P NIL message.
+
+The function TIME:NWATCH-ON is now TV:NWATCH-ON.  Some people have this in their
+init files.  It is unnecessary to call this function anyway, since it has been
+the default for a long time.
+
+There is a new function-spec, (:INTERNAL function-spec number), which is
+used for internal lambdas in compiled programs--"(FUNCTION (LAMBDA (...".
+This replaces the old "function-INTERNAL-G6985" symbols.
+
+The functions which take optional stream and eof-option arguments
+(READ, TYI, etc.) now interpret these arguments in a more consistent fashion.
+Refer to the on-line copy of the manual for details, or ask someone.
+The change is not completely upward-compatible but should result in
+much more reasonable behavior.
+    </pre>
+
+    <hr/>
+    <p>Last modified: 2025/06/05 08:57:06 (UTC) by ams</p>
+  </body>
+</html>
+
+<!-- Local Variables: -->
+<!-- time-stamp-pattern: "-8/<p>Last modified:[ \t]%:y/%02m/%02d %02H:%02M:%02S (%Z) by %u</p>" -->
+<!-- time-stamp-time-zone: "UTC" -->
+<!-- End: -->

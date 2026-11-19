@@ -1,0 +1,748 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <link rel="stylesheet" type="text/css"
+	  href="../lm3.css">
+    <title>LM-3 --- Lisp Machine System Release 99 Notes</title>
+  </head>
+  <body>
+    <center><h1>Lisp Machine System Release 99 Notes</h1></center>
+
+    <pre>
+System 99 is nigh!! Beware the coming of system 99!
+Who knows what microcode version it will use, but
+it will be  320. (For the CADR)  (For the Lambda, it's XXX)
+
+Files compiled in System 98 will probably run in System 99.
+Files compiled in System 99 will probably not run in System 98. Stay tuned.
+
+CADR Users:
+
+Using some as-yet-unwritten magic, it will be possible to debug System 99 from
+System 98 and perhaps also System 97, but not any earlier systems.
+System 99 can debug all earlier systems. Yow!
+
+Contents of the rest of this file:
+
+   Using Common Lisp in the MIT Lisp Machine System.
+   Incompatible Changes
+   Compatible Lisp Programming Changes
+   Window System Changes
+   User Interface Changes
+   Editor Changes
+   Network Changes
+   Site option Changes
+
+
+Using Common Lisp in the MIT Lisp Machine System.
+
+The variable *DEFAULT-COMMON-LISP* has now gone --- readtables now contain all
+the data which relied upon this variable. To use make a lisp listener use Common
+Lisp reader syntax and functions by default, do
+ (SETQ *READTABLE* SI:COMMON-LISP-READTABLE)
+  or equivalently,  (COMMON-LISP T)
+To use traditional Zetalisp syntax and functions, do
+ (SETQ *READTABLE* SI:STANDARD-READTABLE) or (COMMON-LISP NIL)
+
+To make a file read in using common-lisp syntax, and use common-lisp functions,
+put "Readtable: Common-Lisp" or "Readtable: CL" in the attribute list
+(the "-*-" line) of the file.
+To make a file always read using traditional syntax and functions, use
+"Readtable: Traditional" or just "Readtable: T".
+
+The new editor command m-x Set Readtable will do this for you.
+(See the Editor Changes section.)
+
+Note that Zmacs now understands the different quoting characters ("/" and "\" respectively)
+used by the different readtables, and is parses lisp code based on which readtable is
+current.
+
+Incompatible Changes
+
+] Decimal radix is now the default.
+
+The default values for reading and printing integers is now base 10.
+The value of *nopoint is now T by default. All files (except init files) written
+out by Zmacs in the last few systems have automatically had a base attribute
+added to the "-*-" line, so this should not break many existing files.
+If you want your init file to be in base 8, add Base:8 to the -*- line.
+
+To get back the old behaviour, do (setq *print-base* 8. *read-base* 8. *nopoint nil)
+
+] Lexical Evaluator is now the default.
+
+hacks declarations, leaps tall buildings in a single bound.
+semantics are now exactly the same as those of compiler.
+say something about lexical closures??
+(set 'a 3)
+(defun foo ()
+   (declare (special a))
+   (print a))
+(let ((a 1))
+   (foo))
+will print "3" just as it would if compiled.
+
+Say much much more!!!
+
+(let ((foo 1)) #'(lambda () foo) =&gt;
+
+] Changes to FORMAT control argument.
+
+The control argument to FORMAT has changed for compatibility with Common Lisp.
+There are no longer separate functions FORMAT and CLI:FORMAT, as there were in
+System 98.  This change will affects the following FORMAT directives:
+
+~X	~width,padchar,commacharX
+	      Prints its argument in hexadecimal. (Analogous to ~O, ~B and ~D)
+	This command used to be used to insert spaces into the output.
+
+	Use ~number-of-spaces@T to achieve the same result as the old ~number-of-spacesX directive.
+
+~F	~width,decimal-places,scale,overflowchar,padcharF
+	      Prints a floating-point number in nonexponential notation.
+		Multiplies by 10^scale before printing if scale is specified.
+		Prints in width positions, with decimal-places digits after the decimal point.
+		Pads on left with padchar if necessary.  If then number doesn't fit in width positions,
+		and overflowchar is specified, this command just fills the width positions with
+		that character.
+	This directive used to just take one optional prefix control arg, which specified how many
+		mantissa digits to print. This is the same as 2+decimal-places for the new FORMAT.
+
+	Use ~,n+2F to achieve the same result as the old ~nF directive.
+
+~E	~width,decimal-places,exponent-places,scale,overflowchar,padchar,exptcharE
+	      Prints a floating-point number in exponential notation.
+		Prints in width positions, with exponent-places digits of exponent.
+		If scale (default is 1) is positive, prints scale digits before point, decimal-places-scale+1 after.
+		If scale is zero, prints decimal-places digits after the point, and a zero before if there's room.
+		If scale is negative, prints decimal-places digits after the point, of which the first -scale
+		are zeros.
+		If exptchar is specified, it is used to delimit the exponent (instead of "e" or whatever.)
+		If overflowchar is specified, then if the number doesn't fit in the specified width,
+		or if the exponent doesn't fit in exponent-places positions, the field is filled with overflowchar
+		instead.
+	This directive used to just take one optional prefix control arg, which specified how many
+		mantissa digits to print. This is the same as 2+decimal-places for the new FORMAT.
+
+	Use ~,n+2E to achieve the same result as the old ~nE directive.
+
+~G	~width,decimal-places,exponent-places,scale,overflowchar,padchar,exptcharG
+	      Like ~E, but if the number fits without an exponent, it is printed without one.
+	This command used to be used to go to a particular argument.
+
+	Use ~argument-number@* to achieve the same result as the old ~argument-numberG directive.
+
+  In System 99, CLI:FORMAT has the same function definition as GLOBAL:FORMAT, so code written
+for System 98 which used CLI:FORMAT will work correctly in System 99.
+  Only code which used GLOBAL:FORMAT with any of the above changed FORMAT directives will need
+to be altered to run in System 99.
+
+] The FONTS package no longer USEs GLOBAL.
+
+This means that any fonts created in earlier systems will have to be redumped
+in order to work with system 99. This has been done for all the system's fonts
+appearing  in the SYS: FONTS; directory.
+There are two ways to do update the fonts to run in system 99. The first is to
+write out (using FED) a KST format file of the font, load that into a system 99
+world and then write out a QFASL font file.
+The other technique is to do the following (in either system 98 or system 99)
+   (use-package "GLOBAL" "FONTS")
+   (load file-containing-font)
+   (unuse-package "GLOBAL" "FONTS")
+   (compiler:fasd-symbol-value file-to-contain-font 'fonts:name-of-font)
+Fonts from system 99 will load into system 98, but to load a system 98 font into
+a system 99 world, you will have to perform one of the above conversions.
+
+] Ratios read and print according to current value of *READ-BASE* and *PRINT-BASE*
+
+Ratios used to be always read and printed using decimal notation when using
+traditional (non-common-lisp) syntax.
+Thus, #5r-10\12 (or #5r -10/12 in common-lisp syntax) now represents
+``minus five sevenths.''
+
+] SELECTQ now uses EQL as its test function.
+
+SELECTQ formerly performed all its comparisons using EQ.
+Since everything that is EQ is also EQL, and the only things which are EQL but not EQ
+are flonums, bignums and ratios (which should never have been used as tests for
+SELECTQ in the past for this very reason) there should be no effect on any existing code.
+SELECTQ and the Common Lisp macro CASE are thus now identical.
+
+
+] CATCH and THROW are now synonymous with *CATCH and *THROW respectively.
+
+CATCH and THROW used to be defined in a way which was compatible with Maclisp.
+(CATCH form TAG) used to be what (CATCH 'TAG form) is now, and
+(THROW form TAG) used to be what (THROW 'TAG form) is now.
+Since Maclisp itself has been issuing warnings for years saying to use *CATCH, this
+should cause no problems.
+The implementation restrictions and general weirdness associated with the values from
+CATCH (aka *CATCH) in older system versions have been fixed; CATCH now returns all the
+values from the last form executed (if no THROW occurs) or else the values supplied by
+the second argument to THROW.
+
+] Arguments to APROPOS and WHERE-IS extended
+
+The arguments to apropos are now
+SUBSTRING &OPTIONAL (PACKAGE *ALL-PACKAGES*)
+          &KEY (INHERITORS NIL) (INHERITED T) DONT-PRINT
+               PREDICATE BOUNDP FBOUNDP
+The PACKAGE argument is now the always the second argument
+(it used to be a keyword argument)
+The value of this argument may be NIL, meaning to search all packages,
+a single package or package name, or a list of packages and/or package names.
+
+WHERE-IS now accepts a package or a package name or a list of packages
+and/or package names as it second argument
+
+] DEFSTRUCT Macro Constructors Frob 'foo???
+
+What does this mean ?
+I'll tell you when I fix it.
+
+] Change In Device Delimiting In Filenames
+
+Because of changes in the file access system internals, a device in a
+file specification with no explicit host must be preceded by a colon.
+(This is because the filename parser must check to see if the device name
+could also be a host name.)  For example, :SS:&lt;SYS.UNSUPPORTED&gt;YOW.MAC
+is needed to specify a file on the SS device of a TOPS-20 host (which
+is presumably a part of the defaults).  If the colon were not there, the
+system may try to contact to host table in order to find out if
+``SS'' were really a host.
+
+Note that that change is important only if you most often use
+Twenex, VMS, or ITS file servers.
+
+BOB!!!!!! This MUST get an error if there is no such host!
+It can't just randomly default to the current host! FIX THIS ASAP!
+
+] channge in meanning of seconnd arg (with-respect-to) to fs:parse-pathnname
+
+Compatible Lisp Programming Changes
+
+] New frobs SI:FIND-READTABLE-NAMED SI:*ALL-READTABLES* SI:RDTBL-NAMES
+
+Talk a little about named readtablesat all ?
+
+] New way of initializing process of TV:PROCESS-MIXIN
+
+Normally, if the PROCESS argument to TV:PROCESS-MIXIN is  a symbol,
+it is used as the top level function and MAKE-PROCESS is called with
+no keyword arguments.
+But, as an exception, if PROCESS is T, the top level function is
+to send the window a :PROCESS-TOP-LEVEL message with no arguments.
+So, for example, one could write:
+
+(defflavor crock-window ()
+                        (tv:process-mixin tv:window)
+  (:default-init-plist :process t)
+  (:documentation "A window which displays a crock."))
+
+(defmethod (crock-window :process-top-level) ()
+  (draw-crock self)
+  (do-forever
+    (update-hands)
+    (process-sleep 60.)))
+
+] Compiler Optimization changed.
+
+Many compiler optimizers have been reimplemented, and should often produce
+better code. The most visible change is that any form is only optimized once,
+no matter where it appears. (In earlier systems, a form could sometimes be optimized
+twice, which could produce duplicate compiler warnings) In addition, the order in which
+optimizations are carried out has changed. All the arguments to a function are optimized
+before the call to the function on those arguments, unless the "function" is a macro
+or special form, in which case it is expected to take responsibility for doing its own
+optimizations.
+
+] New :SUBMIT option for opening files
+
+A new :submit option available in OPEN and WITH-OPEN-FILE and friends, when T
+(default NIL) will submit the file for batch processing.  Thus, the :direction
+must be :output as well.  The :submit option is currently effective on VMS and
+Twenex Chaosnet FILE servers.
+
+An example:
+
+(DEFUN RETRIEVE-TWENEX-FILE (F)
+  "Submit a batch job that will retrieve the file F"
+  (SETQ F (FS:PARSE-PATHNAME F))
+  (WITH-OPEN-FILE (S (SEND (SEND (SEND (SEND F :HOST) :SAMPLE-PATHNAME) 
+				 :HOMEDIR)
+			   :NEW-PATHNAME :NAME "_RETRIEVE" 
+			   :TYPE "CTL" :VERSION :NEWEST)
+		     :DIRECTION :OUTPUT
+		     :TEMPORARY T
+		     :SUBMIT T)
+    (FORMAT S "@RETRIEVE ~A~%" (SEND F :STRING-FOR-HOST))))
+
+] New :PROPERTIES operation on file streams
+
+Sending a :properties message to a file stream returns two values: a property
+list, like the kind which is a element of the list returns by FS:DIRECTORY-LIST,
+and a list of settable properties.  There is the usual optional ``error-p'' argument,
+as well.  This operation uses a new PROPERTIES command in the Chaosnet file
+protocol, so it may not work with servers running old software.
+
+User Interface Changes
+
+] New function COMMON-LISP
+
+When this function is called in a lisp-listener, it changes whether Common Lisp
+or Tradtional Zetalisp syntax and incompatible functions are to be used for reading
+and printing lisp objects. It works by SETQing *READTABLE*.
+
+It takes one argument, which should be either T or NIL.
+
+See the section Using Common Lisp in the MIT Lisp Machine System.
+
+] Standard hardcopy options can be defaulted on a per-printer-type basis
+
+(SET-PRINTER-DEFAULT-OPTION printer-type option value) allows the user to set a
+default option for a printer type, which the hardcopy functions look at.
+A common use at MIT may be (SET-PRINTER-DEFAULT-OPTION :DOVER :SPOOL T),
+which will cause Dover output to be spooled unless the :SPOOL option to a
+hardcopy function is supplied.  Currently defaultable options are :FONT,
+:FONT-LIST, :HEADING-FONT, :PAGE-HEADINGS, :VSP, :COPIES, and :SPOOL.
+
+] Usual mail file directory option for ZMail
+
+You can set this option in the Profile editor in ZMail.  It simply informs ZMail to
+use a short name for a mail file in a menu, if that file is found in the
+directory.  (The full name of the file is displayed if it has not been read
+into a buffer yet.)
+
+] New beep types for the type argument to TV:BEEP
+
+	Name			      Condition
+	FQUERY		      FQUERY asks for something and needs to beep.
+	SUPDUP:TERMINAL-BELL   Bell character received
+
+] DRIBBLE-START, DRIBBLE-END gone
+Use (DRIBBLE filename) or (DRIBBLE-ALL filename) to start wallpapering output
+to a file, and (DRIBBLE) with no arguments to terminate output and close the
+file.
+
+] New special form: MULTIPLE-CERROR
+do I really want ot document this??
+
+] string-append frobs array type
+
+] :set method on flavors
+
+
+] SELECT-MATCH and LIST-MATCH-P now accept logical combinations of patterns
+Hack and, or, not appearing at top-level. Not ambiguous, since not quoted.
+
+(defun hack-add-sub (x)
+  (select-match x
+    ((or `(+ ,y 0) `(- ,y 0) `(+ y)) t
+     y)
+    ((not (or `(+ . ,ignore) `(- . ,ignore))) t
+     (ferror nil "You lose"))
+    (t x)))
+
+] Complex and rational arithmetic is now common-lisp compatible.
+
+canonicalization
+rampant floating and complex contagion
+complex rational canonicalization
+real and imag parts of complexnum of same type
+
+There are still some many cases of transcendental functions of complex to be written
+Also atan of one arg.
+
+SYS:NEGATIVE-SQRT gone
+
+new condition SYS:ILLEGAL-EXPT
+
+log takes optional second arg
+sqrt returns complexnum if necesary
+
+] Short-floats have one more bit of mantissa.
+
+Short-floats now have 17 bits of mantissa, 7 bits of exponent magnitude, and
+1 bit of exponent sign.  Short-floats in QFASL files dumped in 99 will load
+properly in System 98 if the mantissa is within the old range; if not, an
+error will be signalled.
+
+] New types NON-COMPLEX-NUMBER and REAL
+
+(TYPEP x (NON-COMPLEX-NUMBER low high)) returns T if x is a non-complex
+number (ie a floating-point number, a ratio or an integer) between low and high,
+the limits as usual being inclusive normally, or exclusive if they constist of a
+list of one element.
+Note that complex-numbers with imaginary part = 0 are never of NON-COMPLEX-NUMBER,
+since they are always of type COMPLEX. To account for this additional case, there
+is another new type, REAL, which is defined such that
+(TYPEP x (REAL low high)) returns T if x is a either a non-complex
+number between low and high, or a complex number with a zero imaginary part
+and a real part lying between low and high.
+
+] Changes to forms specially treated at top-level in the compiler.
+
+Following is a partial list of symbols, which, when appearing as the car of a list in a top-level
+form, will cause that form to be treated specially by the compiler.
+Only those whose meanings have changed, or require clarificatrion, are listed here.
+
+PROGN		Treat all following forms as if they also were at top level.
+		Note that in Maclisp and in systems 97 and earlier, it was
+		necessary for the cadr of the list to be the symbol 'COMPILE
+		for this to happen. This curious behaviour has been eliminated.
+PROCLAIM	The arguments are evaluated, and relevant proclaimations
+		(such as SPECIAL, NOTINLINE) are used in the remainder of the compilation.
+		This is as if the form were contained within a (eval-when (eval compile load) ...)
+EXPORT IMPORT IN-PACKAGE MAKE-PACKAGE SHADOW
+SHADOWING-IMPORT UNEXPORT UNUSE-PACKAGE USE-PACKAGE
+		These perform their relevant actions as if the form contained within a
+		(eval-when (eval compile load) ...)
+REQUIRE	Ditto.
+
+To cause a form not to be treated specially at top-level by the compiler, enclose it in
+an EVAL-WHEN. Eg:
+(EVAL-WHEN (LOAD)		;don't want this package to be consed up when we're just compiling!
+  (MAKE-PACKAGE "LOSSAGE" :USE NIL :SIZE 69))
+
+] New macro: TV:WITH-WHO-LINE-RUN-STATE
+
+Using this macro, it is possible to bind the run-state field of wholine (the one which
+usually either "Keyboard" or "Run") to some user-informative value in a simple manner.
+Before, it was necessary to change an instance variable of the current process, which
+the scheduler would keep bashing to "Run".
+
+Example usage:
+(DEFUN TOP-LEVEL-FROBNICATE (WIDGET)
+  (TV:WITH-WHO-LINE-RUN-STATE ("Preprocessing")
+    (SETQ WIDGET (PREFROBNICATE WIDGET)))
+  (TV:WITH-WHO-LINE-RUN-STATE ("Pass 1")
+    (FROB-1 WIDGET))
+  (TV:WITH-WHO-LINE-RUN-STATE ("Pass 2")
+    (FROB-2 WIDGET)))
+
+] New variable TIME:*DEFAULT-DATE-PRINT-MODE*
+
+What kind of time printing does it effect ?
+ --- see the manual, ``Bob'' Section 34.2, `Printing dates and times,' or sys:io1;time
+ time:print-time, time:print-universal-time, time:print-brief-universal-time,
+ time:print-date, time:print-universal-date
+Description of possible values
+Only one "/" in zl
+ :DD//MM//YY						;27/10{/66}
+ :DD//MM//YYYY						;27/10{/1966}
+ :MM//DD//YY						;10/27{/66}
+ :MM//DD//YYYY						;10/27{/1966}
+ :DD-MM-YY							;27-10{-66}
+ :DD-MM-YYYY						;27-10{-1966}
+ :DD-MMM-YY						;27-Oct{-66}
+ :DD-MMM-YYYY						;27-Oct{-1966}
+Note that use "\" in cl
+ :DD/ MMM/ YY						;27 Oct{ 66}
+ :DD/ MMM/ YYYY						;27 Oct{ 1966}
+ :DDMMMYY							;27Oct{66}
+ :DDMMMYYYY						;27Oct{1966}
+ :YYMMDD							;661027
+ :YYYYMMDD						;19661027
+ :YYMMMDD							;{66}Oct27
+ :YYYYMMMDD						;{1966}Oct27
+ :YY-MMM-DD						;{66-}Oct-27
+ :YYYY-MMM-DD						;{1966-}Oct-27
+ :YY-MM-DD							;{66-}10-27
+ :YYYY-MM-DD						;{1966-}10-27
+these last four, and all the "yyyy" ones are new since the manual
+
+Default value
+ :mm//dd//yy YECH! BLECH! BARF!! I really think that this should be :dd-mmm-yy
+ I cannot see anything that this could break. ``Bob'' would you ask LMI people what
+ they think of that?
+
+] time parser accepts iso format dates (99.10)
+
+understands yyyy-mmm-dd, yyyy-mm-dd
+
+
+] Changes to logical pathnames
+
+This needs much flaming!
+
+Logical pathnames now have structured directories.
+
+Pathname translations are now really translations, not just an alist.
+Example of use.
+
+FS:MAKE-LOGICAL-PATHNAME-HOST
+FS:SET-LOGICAL-PATHNAME-HOST
+
+SYS:SITE;FOO translations
+
+] New function: FS:MERGE-PATHNAME-COMPONENTS
+
+This function extends the functionality of both the commonlisp function MERGE-PATHNAMES
+and the old Lisp Machine function FS:MERGE-PATHNAME-DEFAULTS.
+
+Its argument list is:
+(PATHNAME &OPTIONAL DEFAULTS
+          &KEY DEFAULT-NAME ALWAYS-MERGE-NAME
+               DEFAULT-TYPE ALWAYS-MERGE-TYPE
+               DEFAULT-VERSION ALWAYS-MERGE-VERSION)
+
+MERGE-PATHNAME-COMPONENTS defaults components that are of PATHNAME which are NIL,
+and returns the defaulted pathname.
+DEFAULTS is a pathname or a defaults-list to get defaults from.
+If non-NIL, DEFAULT-NAME, DEFAULT-TYPE and DEFAULT-VERSION respectively are used as the
+defaults for the name, type and version components if those components are not supplied
+by PATHNAME.  Otherwise, those components are defaulted from DEFAULTS in the usual manner.
+ALWAYS-MERGE-NAME, ALWAYS-MERGE-TYPE and ALWAYS-MERGE-VERSION respectively mean that
+the version and type components should always be merged in (from either DEFAULT-xxx
+or from DEFAULTS) even if the relevant component is already specified by PATHNAME.
+
+(MERGE-PATHNAMES PATHNAME DEFAULTS DEFAULT-VERSION) is thus equivalent to:
+(MERGE-PATHNAMES-COMPONENTS PATHNAME DEFAULTS :DEFAULT-VERSION DEFAULT-VERSION
+					      :ALWAYS-MERGE-VERSION T)
+since `CommonLisp says' that the DEFAULT-VERSION argument to MERGE-PATHNAMES is merged
+into the resulting even if PATHNAME already had a version component.
+
+FS:MERGE-PATHNAME-COMPONENTS differs from FS:MERGE-PATHNAME-DEFAULTS in that it performs
+only the merging operation of filling NIL components of one pathname with (possibly NIL)
+components from the defaults, whereas FS:MERGE-PATHNAME-DEFAULTS will never return a pathname
+with a NIL name or type component (and may also do a whole bunch of heuristic dwinoid things,
+which is not always appropriate)
+
+  FS:MERGE-PATHNAME-DEFAULTS is thus a function useful for defaulting a pathname that the user
+has just entered for some purpose, such as to be read.
+  FS:MERGE-PATHNAMES-COMPONMENTS will perform a single merging (and may return a pathname
+which is not accceptable for performing file operations upon --- such as a pathname with a name
+of NIL.) It is useful for programs which need to manipulate filenames in an exact manner
+(such as the file server) and do not want any user-oriented heuristics happening ``behind its back.''
+It ignores such variables as *ALWAYS-MERGE-TYPE-AND-VERSION* and *NAME-SPECIFIED-DEFAULT-TYPE*,
+which FS:MERGE-PATHNAME-DEFAULTS uses.
+  MERGE-PATHNAMES is a lobotomized version of FS:MERGE-PATHNAME-COMPONENTS which Common-Lisp
+implementations understand.
+
+A typical use of FS:MERGE-PATHNAME-COMPONENTS is
+(SETQ QFASL-FILE (FS:MERGE-PATHNAME-COMPONENTS QFASL-FILE LISP-FILE
+                                               :ALWAYS-DEFAULT-VERSION T
+                                               :DEFAULT-TYPE :QFASL
+                                               :ALWAYS-DEFAULT-TYPE T))
+which will produce a file whose version is the same as that of LISP-FILE and whose type is
+always QFASL, and whose other components are the (perhaps NIL) results of merging
+the components of LISP-FILE with QFASL-FILE.
+
+Some examples:
+(setq pn1 (make-pathname :host twenex-host :name "FOO" :version 259))
+  =&gt; #FS::TOPS20-PATHNAME "TWENEX:FOO..259"
+(setq pn2 (make-pathname :host twenex-host :device "DP" :type :TEXT))
+  =&gt; #FS::TOPS20-PATHNAME "TWENEX:DP:.TEXT."
+
+(fs:merge-pathname-components pn1 pn2)
+  =&gt; #FS::TOPS20-PATHNAME "TWENEX:DP:FOO.TEXT.259"
+(fs:merge-pathname-components pn1 pn2 :default-version 5)
+  =&gt; #FS::TOPS20-PATHNAME "TWENEX:DP:FOO.TEXT.259"
+(fs:merge-pathname-components pn1 pn2 :default-version 5 :always-merge-version t)
+  =&gt; #FS::TOPS20-PATHNAME "TWENEX:DP:FOO.TEXT.5"
+(fs:merge-pathname-components pn1 pn2 :default-version 5 :default-type :lisp
+			      :always-merge-version t)
+  =&gt; #FS::TOPS20-PATHNAME "TWENEX:DP:FOO.LISP.5"
+
+(fs:merge-pathname-components pn2 pn1)
+  =&gt; #FS::TOPS20-PATHNAME "TWENEX:DP:FOO.TEXT.259"
+(fs:merge-pathname-components pn2 pn1 :always-merge-type t)
+  =&gt; #FS::TOPS20-PATHNAME "TWENEX:DP:FOO..259"		;merges in null type!
+(fs:merge-pathname-components pn2 pn1 :default-type :lisp)
+  =&gt; #FS::TOPS20-PATHNAME "TWENEX:DP:FOO.TEXT.259"
+(fs:merge-pathname-components pn2 pn1 :default-type :lisp :always-merge-type t)
+  =&gt; #FS::TOPS20-PATHNAME "TWENEX:DP:FOO.LISP.259"
+
+
+] mouse blips (as from :any-tyi) format changed.
+Used to be (:mouse-button # # #/mouse-l-1 ...)
+Now (:mouse-button #/mouse-l-1 window x-position y-position)
+
+This is different from what is documented in windowman.
+Changed for brand s
+
+] TERMINAL C-CLEAR-INPUT is now TERMINAL C-M-CLEAR-INPUT
+
+This keyboard sequence is used to try to unhang some window-system
+problems. It has been changed so that c-clear-input is typeable (by having
+it quoted with "terminal," which causes it to lose its special meaning of "flush
+keyboard typeahead" and be simply passed on to the program which is reading
+from the keyboard.)
+
+Editor Changes
+
+] Editor Aids for Common Lisp
+
+m-X Set Readtable
+How is the readtable name interpreted ?  What are the names for Zetalisp ?
+For Common Lisp ?  What happens if you just type &lt;Return&gt; ?
+
+m-X Set Common-Lisp [???]
+Does this set the base, too ?
+
+Besides binding the readtable for the editor buffer and the break loop,
+the readtable attribute also sets the quoting character (one of the two
+slash characters) as appropriate.
+
+] Lisp Case Changing Commands Renamed
+
+The extended (m-X) commands for changing the alphabetic case of Lisp code
+have been renamed:
+
+  Old name                     New name
+  Lisp Lowercase Region        Lowercase Lisp Code In Region
+  Lisp Uppercase Region        Uppercase Lisp Code In Region
+
+As a result, typing ``m-X lisp'' now completes to ``Lisp Mode.''
+
+] Changes in Two History Yank Commands
+
+When editing in a minibuffer, c-m-Y yanks in the history, making it consisten with
+the action of c-m-y in the rest of the system, and  m-sh-Y inserts the previous command
+given in the minibuffer.
+
+] ZWEI:SEARCH renamed ZWEI:ZWEI-SEARCH to avoid name conflict with GLOBAL:SEARCH
+Note that this is only an internal frob used by people writing their own zmacs commands,
+and is not visible to m-x losers
+
+[Does the old name still work ?]
+Yes, but the compiler barfs. The name should be changed asap, but will continue to work
+for another system version or so, I guess
+
+Network Changes
+
+] SI:PARSE-HOST Uses the HOSTAB Servers By Default
+
+SI:PARSE-HOST's second argument, UNKNOWN-OK, now defaults to T.  That means that if it
+can't find the host on SI:HOST-ALIST, it tries contacting a host table server to see if it
+knows about the host.  If the server contact does not, an error is signalled (or NIL is
+returned) as usual.  The change was made to minimise the penalty for not loading the
+latest site files.  (Up-to-date site information can be a problem at large installations.)
+
+The list of hosts that may be contacted on the Chaosnet for this service are listed in the
+site option :CHAOS-HOST-TABLE-SERVER-HOSTS.
+
+] New Chaos Routing Inspector Functions.
+
+These two functions make use of the DUMP-ROUTING-TABLE protocol,
+documented in the new edition of the Lisp Machine Manual.  They are primarily
+for inspecting the operation of the network and the localisation of
+bridging and routing problems.
+
+(CHAOS:SHOW-ROUTING-TABLE host &optional (stream *STANDARD-OUTPUT*)) will
+print out the routing table of host onto stream.
+
+(CHAOS:SHOW-ROUTING-PATH &key (from SI:LOCAL-HOST) to (stream *STANDARD-OUTPUT*))
+will show how packets will flow from from to to, using the routing information
+supplied by from and any intervening bridges to figure out the path.
+
+For example, (chaos:show-routing-path :from "charon" :to "nu-1") may produce
+the following output:
+
+MIT-CHARON will bounce the packet off MIT-SIPB-11 at cost 81.
+MIT-SIPB-11 will bounce the packet off MIT-INFINITE at cost 63.
+MIT-INFINITE will bounce the packet off MIT-BYPASS at cost 51.
+MIT-BYPASS will bounce the packet off MIT-OZ-11 at cost 37.
+MIT-OZ-11 will bounce the packet off XI (XX-Network-11) at cost 23.
+Direct path from XI (XX-Network-11) to host MIT-NU-1 on subnet 32 at interface 1.
+
+] Chaosnet source files have been reorganised
+
+The old files SYS: IO; CHSNCP and CHSAUX have been moved to
+the NETWORK;CHAOS;  directory.  (See the Site option Changes section for advice
+before restoring the new sources.)  These files have been augmented by a new
+file, CHUSE, which now contains the user connection-level functions previously
+found in CHSAUX.  Also moved from the IO1 directory are CHATST (low-level
+testing functions) and EFTP, an interface to the 3Mb (old) Ethernet Easy File
+Transfer Protocol that requires a protocol-translating gateway.
+
+Site option Changes
+
+] New source directories need to be created
+
+A few new directoires will be used to hold Lisp Machine source files that relate
+to network software.  Please create these directories on the SYS host, and update
+the appropriate sys-host-translations variable(s) in SYS: SITE; SITE LISP :
+
+	Logical directory	Suggested translation
+	NETWORK		L.NETWORK
+	NETWORK; CHAOS	L.NETWORK.CHAOS
+	NETWORK; IP		L.NETWORK.IP
+	IO; FILE	      L.IO.FILE
+
+Say how to use sys:site; system translations to frob this for random hosts
+
+Of course, the names of the directories will be different if you don't store
+sources under a L hierarchy, but the names should follow this form.
+
+] New site option :STANDALONE
+
+If the Lisp Machine is just by itself, the option should be supplied with value T.
+This will cause the Lisp Machine to not to try to use the Chaosnet for getting
+the time, for one thing.  On the Lambda, the time will obtained from the SDU's
+clock.  On the CADR, the time will be obtained from the user.
+
+] New site option :LOCAL-INTERNET-HOST-TABLE
+
+Defaults to SYS: SITE; IN-HOSTS TEXT (if not supplied or with the value
+T), but can be changed to share with other subsystems or machine types.
+
+] New site option :VERIFY-LM-DUMPS
+
+If this site option is T, Lisp Machine file system dump tapes will be verified.
+
+] New Way of specifying file computers
+
+Because of changes to the internals of the file access system, the method
+for specifying file computer at a site has changes.  The old list
+in the site option :CHAOS-FILE-SERVER-HOSTS, but the new option
+:FILE-SERVER-HOSTS is preferred.  Note that:
+
+ * A pathname host does not have to be on the list :FILE-SERVER-HOSTS
+   to actually be recognized as a pathname host.  (This was not true in
+   earlier systems.)  As long as the host is known (either in the host table
+   or known about by a host table server), an error will not occur.
+   Thus, it is not necessary to edit SYS: SITE; SITE LISP when a new
+   file server is attached to the site; the site option merely names what
+   file servers are known initially.
+
+ * For now, the old and new names of the site option are equivalent,
+   (with one exception -- see below) but
+   the new name is preferred in antcipation of when TCP/FTP file access is
+   implemented.
+
+For LMFS support, a file computer in the pathname host list was specified
+as a list of the host and the file system type.  This has been changed
+to be more convenient -- instead, there is new site option
+:SPECIAL-FILE-HOSTS which is a list of
+
+	(file-system-type . hosts)
+
+where file-system-type is a keyword.  The only supported one at the
+moment is :LMFS, as before.
+
+It is now possible is specify the default device of a host by using the
+site option :HOST-DEFAULT-DEVICE-ALIST, an alist of host names and device
+names (with the colon).  This currently only works for Twenex hosts.
+An example of the use of the option:
+
+	  (:HOST-DEFAULT-DEVICE-ALIST '(("OZ" . "OZ")))
+
+Here, we are overriding the default name PS.
+
+If, for example, a Twenex host is configured for a non-PS primary structure
+name, this option should be used, to eliminate some strange interactions
+that can happen when the truenames of files are compared against supplied
+names.
+    </pre>
+
+    <hr/>
+    <p>Last modified: 2025/06/05 09:01:32 (UTC) by ams</p>
+  </body>
+</html>
+
+<!-- Local Variables: -->
+<!-- time-stamp-pattern: "-8/<p>Last modified:[ \t]%:y/%02m/%02d %02H:%02M:%02S (%Z) by %u</p>" -->
+<!-- time-stamp-time-zone: "UTC" -->
+<!-- End: -->

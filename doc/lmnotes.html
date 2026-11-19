@@ -1,0 +1,1619 @@
+<!DOCTYPE html>
+<html>
+<!-- Created by GNU Texinfo 7.2, https://www.gnu.org/software/texinfo/ -->
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<title>Notes on the Lisp Machine</title>
+
+<meta name="description" content="Notes on the Lisp Machine">
+<meta name="keywords" content="Notes on the Lisp Machine">
+<meta name="resource-type" content="document">
+<meta name="distribution" content="global">
+<meta name="Generator" content="makeinfo">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+
+<link href="#Top" rel="start" title="Top">
+<link href="#SEC_Contents" rel="contents" title="Table of Contents">
+<link href="#Quick-Debugging-Tips" rel="next" title="Quick Debugging Tips">
+<style type="text/css">
+<!--
+a.copiable-link {visibility: hidden; text-decoration: none; line-height: 0em}
+div.center {text-align:center}
+div.example {margin-left: 3.2em}
+kbd.kbd {font-style: oblique}
+span:hover a.copiable-link {visibility: visible}
+ul.mark-bullet {list-style-type: disc}
+ul.toc-numbered-mark {list-style: none}
+-->
+</style>
+<link rel="stylesheet" type="text/css" href="texinfo.css">
+
+
+</head>
+
+<body lang="en">
+
+<div class="top-level-extent" id="Top">
+<div class="nav-panel">
+<p>
+Next: <a href="#Quick-Debugging-Tips" accesskey="n" rel="next">Quick Debugging Tips</a> &nbsp; [<a href="#SEC_Contents" title="Table of contents" rel="contents">Contents</a>]</p>
+</div>
+<h1 class="top" id="Notes-on-the-Lisp-Machine"><span>Notes on the Lisp Machine<a class="copiable-link" href="#Notes-on-the-Lisp-Machine"> &para;</a></span></h1>
+
+
+&#12;
+<div class="region-contents" id="SEC_Contents">
+<h2 class="contents-heading">Table of Contents</h2>
+
+<div class="contents">
+
+<ul class="toc-numbered-mark">
+  <li><a id="toc-Quick-Debugging-Tips" href="#Quick-Debugging-Tips">1 Quick Debugging Tips</a>
+  <ul class="toc-numbered-mark">
+    <li><a id="toc-Lisp-Machine-Debugger-Cheat-Sheet" href="#Lisp-Machine-Debugger-Cheat-Sheet">1.1 Lisp Machine Debugger Cheat Sheet</a></li>
+  </ul></li>
+  <li><a id="toc-Site-Creation-Notes" href="#Site-Creation-Notes">2 Site Creation Notes</a></li>
+  <li><a id="toc-Lisp-Machine-Glossary" href="#Lisp-Machine-Glossary">3 Lisp Machine Glossary</a></li>
+  <li><a id="toc-Random-Compiler-Notes" href="#Random-Compiler-Notes">4 Random Compiler Notes</a></li>
+  <li><a id="toc-Serial-SPY-protocol-notes" href="#Serial-SPY-protocol-notes">5 Serial SPY protocol notes</a></li>
+  <li><a id="toc-Notes-on-debugging-in-usim" href="#Notes-on-debugging-in-usim">6 Notes on debugging in usim</a>
+  <ul class="toc-numbered-mark">
+    <li><a id="toc-Macrocode-debug-tracing" href="#Macrocode-debug-tracing">6.1 Macrocode debug tracing</a></li>
+  </ul></li>
+  <li><a id="toc-Notes-on-Clock-Domains-in-the-MIT-CADR-_0028FPGA_0029" href="#Notes-on-Clock-Domains-in-the-MIT-CADR-_0028FPGA_0029">7 Notes on Clock Domains in the MIT CADR (FPGA)</a></li>
+  <li><a id="toc-Notes-on-the-inner-Lisp-Machine-System-_0028version-99-_002f-MIT-CADR_0029" href="#Notes-on-the-inner-Lisp-Machine-System-_0028version-99-_002f-MIT-CADR_0029">8 Notes on the inner Lisp Machine System (version 99 / MIT CADR)</a></li>
+  <li><a id="toc-Notes-on-confusion-or-discrepancies-in-MIT-AI-Memo-528" href="#Notes-on-confusion-or-discrepancies-in-MIT-AI-Memo-528">9 Notes on confusion or discrepancies in MIT AI Memo 528</a></li>
+  <li><a id="toc-TAGS-database" href="#TAGS-database">10 TAGS database</a></li>
+  <li><a id="toc-CADR-HDL-Internals" href="#CADR-HDL-Internals">11 CADR HDL Internals</a></li>
+  <li><a id="toc-Internal-Implementation-Stuff-_0028Lisp-Machine-chapter_0029" href="#Internal-Implementation-Stuff-_0028Lisp-Machine-chapter_0029">12 Internal Implementation Stuff (Lisp Machine chapter)</a>
+  <ul class="toc-numbered-mark">
+    <li><a id="toc-Bootstrap-loading" href="#Bootstrap-loading">12.1 Bootstrap loading</a></li>
+    <li><a id="toc-Lisp-Machine-Storage" href="#Lisp-Machine-Storage">12.2 Lisp Machine Storage</a>
+    <ul class="toc-numbered-mark">
+      <li><a id="toc-DTP_002dTRAP" href="#DTP_002dTRAP">12.2.1 DTP-TRAP</a></li>
+      <li><a id="toc-DTP_002dNULL" href="#DTP_002dNULL">12.2.2 DTP-NULL</a></li>
+      <li><a id="toc-DTP_002dFREE" href="#DTP_002dFREE">12.2.3 DTP-FREE</a></li>
+      <li><a id="toc-DTP_002dSYMBOL" href="#DTP_002dSYMBOL">12.2.4 DTP-SYMBOL</a></li>
+      <li><a id="toc-DTP_002dSYMBOL_002dHEADER" href="#DTP_002dSYMBOL_002dHEADER">12.2.5 DTP-SYMBOL-HEADER</a></li>
+      <li><a id="toc-DTP_002dFIX" href="#DTP_002dFIX">12.2.6 DTP-FIX</a></li>
+      <li><a id="toc-DTP_002dEXTENDED_002dNUMBER" href="#DTP_002dEXTENDED_002dNUMBER">12.2.7 DTP-EXTENDED-NUMBER</a></li>
+      <li><a id="toc-DTP_002dHEADER" href="#DTP_002dHEADER">12.2.8 DTP-HEADER</a></li>
+      <li><a id="toc-DTP_002dGC_002dFORWARD" href="#DTP_002dGC_002dFORWARD">12.2.9 DTP-GC-FORWARD</a></li>
+      <li><a id="toc-DTP_002dEXTERNAL_002dVALUE_002dCELL_002dPOINTER" href="#DTP_002dEXTERNAL_002dVALUE_002dCELL_002dPOINTER">12.2.10 DTP-EXTERNAL-VALUE-CELL-POINTER</a></li>
+      <li><a id="toc-DTP_002dONE_002dQ_002dFORWARD" href="#DTP_002dONE_002dQ_002dFORWARD">12.2.11 DTP-ONE-Q-FORWARD</a></li>
+      <li><a id="toc-DTP_002dHEADER_002dFORWARD" href="#DTP_002dHEADER_002dFORWARD">12.2.12 DTP-HEADER-FORWARD</a></li>
+      <li><a id="toc-DTP_002dBODY_002dFORWARD" href="#DTP_002dBODY_002dFORWARD">12.2.13 DTP-BODY-FORWARD</a></li>
+      <li><a id="toc-DTP_002dLOCATIVE" href="#DTP_002dLOCATIVE">12.2.14 DTP-LOCATIVE</a></li>
+      <li><a id="toc-DTP_002dLIST" href="#DTP_002dLIST">12.2.15 DTP-LIST</a></li>
+      <li><a id="toc-DTP_002dU_002dENTRY" href="#DTP_002dU_002dENTRY">12.2.16 DTP-U-ENTRY</a></li>
+      <li><a id="toc-DTP_002dFEF_002dPOINTER" href="#DTP_002dFEF_002dPOINTER">12.2.17 DTP-FEF-POINTER</a></li>
+      <li><a id="toc-DTP_002dARRAY_002dPOINTER" href="#DTP_002dARRAY_002dPOINTER">12.2.18 DTP-ARRAY-POINTER</a></li>
+      <li><a id="toc-DTP_002dARRAY_002dHEADER" href="#DTP_002dARRAY_002dHEADER">12.2.19 DTP-ARRAY-HEADER</a></li>
+      <li><a id="toc-DTP_002dSTACK_002dGROUP" href="#DTP_002dSTACK_002dGROUP">12.2.20 DTP-STACK-GROUP</a></li>
+      <li><a id="toc-DTP_002dCLOSURE" href="#DTP_002dCLOSURE">12.2.21 DTP-CLOSURE</a></li>
+      <li><a id="toc-DTP_002dSMALL_002dFLONUM" href="#DTP_002dSMALL_002dFLONUM">12.2.22 DTP-SMALL-FLONUM</a></li>
+      <li><a id="toc-DTP_002dSELECT_002dMETHOD" href="#DTP_002dSELECT_002dMETHOD">12.2.23 DTP-SELECT-METHOD</a></li>
+      <li><a id="toc-DTP_002dINSTANCE" href="#DTP_002dINSTANCE">12.2.24 DTP-INSTANCE</a></li>
+      <li><a id="toc-DTP_002dINSTANCE_002dHEADER" href="#DTP_002dINSTANCE_002dHEADER">12.2.25 DTP-INSTANCE-HEADER</a></li>
+      <li><a id="toc-DTP_002dENTITY" href="#DTP_002dENTITY">12.2.26 DTP-ENTITY</a></li>
+      <li><a id="toc-DTP_002dSTACK_002dCLOSURE" href="#DTP_002dSTACK_002dCLOSURE">12.2.27 DTP-STACK-CLOSURE</a></li>
+    </ul></li>
+    <li><a id="toc-Areas-and-Regions" href="#Areas-and-Regions">12.3 Areas and Regions</a></li>
+    <li><a id="toc-The-Lisp-Machine-Macro_002dinstruction-Set" href="#The-Lisp-Machine-Macro_002dinstruction-Set">12.4 The Lisp Machine Macro-instruction Set</a></li>
+    <li><a id="toc-QFASL-format" href="#QFASL-format">12.5 QFASL format</a></li>
+    <li><a id="toc-Paging-internals" href="#Paging-internals">12.6 Paging internals</a></li>
+  </ul></li>
+  <li><a id="toc-Right-way-to-create-a-clean-load-band" href="#Right-way-to-create-a-clean-load-band">13 Right way to create a clean load band</a></li>
+  <li><a id="toc-Notes-on-using-LOCAL_002dFILE" href="#Notes-on-using-LOCAL_002dFILE">14 Notes on using LOCAL-FILE</a>
+  <ul class="toc-numbered-mark">
+    <li><a id="toc-Lisp-Machine-file-name-syntax" href="#Lisp-Machine-file-name-syntax">14.1 Lisp Machine file name syntax</a></li>
+    <li><a id="toc-Copying-files-to-and-from-Lisp-Machine" href="#Copying-files-to-and-from-Lisp-Machine">14.2 Copying files to and from Lisp Machine</a></li>
+  </ul></li>
+  <li><a id="toc-Working-with-gore_002e_002e_002e" href="#Working-with-gore_002e_002e_002e">15 Working with gore...</a></li>
+  <li><a id="toc-Lisp-Machine-Hackers" href="#Lisp-Machine-Hackers">16 Lisp Machine Hackers</a></li>
+</ul>
+</div>
+</div>
+<hr>
+<div class="chapter-level-extent" id="Quick-Debugging-Tips">
+<div class="nav-panel">
+<p>
+Next: <a href="#Site-Creation-Notes" accesskey="n" rel="next">Site Creation Notes</a>, Previous: <a href="#Top" accesskey="p" rel="prev">Notes on the Lisp Machine</a>, Up: <a href="#Top" accesskey="u" rel="up">Notes on the Lisp Machine</a> &nbsp; [<a href="#SEC_Contents" title="Table of contents" rel="contents">Contents</a>]</p>
+</div>
+<h2 class="chapter" id="Quick-Debugging-Tips-1"><span>1 Quick Debugging Tips<a class="copiable-link" href="#Quick-Debugging-Tips-1"> &para;</a></span></h2>
+
+<p>See the &ldquo;Debugger Commands&rdquo; in the manual for more details.
+</p>
+<p>To enter debugger from an already running program hit <kbd class="kbd">M-BREAK</kbd>
+(<kbd class="kbd">BREAK</kbd> is bound to <kbd class="kbd">PgDn</kbd> by default in <code class="code">usim</code>).
+</p>
+<p><kbd class="kbd">C-b</kbd> (and the more verbose <kbd class="kbd">M-b</kbd>) show the back trace.
+</p>
+<p><kbd class="kbd">C-n</kbd> and <kbd class="kbd">C-p</kbd> can be used to navigate the back trace.
+</p>
+<p><kbd class="kbd">M-l</kbd> will dump the current function in disassembled form.w
+</p>
+<p><kbd class="kbd">C-c</kbd> and <kbd class="kbd">M-c</kbd> will try and continue from the current frame.
+</p>
+<p><kbd class="kbd">C-e</kbd> will open the file the function is associated with.
+</p>
+<p><kbd class="kbd">C-r</kbd> will return a value from the current frame.
+</p>
+<p><kbd class="kbd">M-C-r</kbd> will re-run the current frame with the same arguments.
+</p>
+<ul class="mini-toc">
+<li><a href="#Lisp-Machine-Debugger-Cheat-Sheet" accesskey="1">Lisp Machine Debugger Cheat Sheet</a></li>
+</ul>
+<div class="section-level-extent" id="Lisp-Machine-Debugger-Cheat-Sheet">
+<h3 class="section"><span>1.1 Lisp Machine Debugger Cheat Sheet<a class="copiable-link" href="#Lisp-Machine-Debugger-Cheat-Sheet"> &para;</a></span></h3>
+
+<pre class="verbatim"> General information about using the debugger
+
+   You are in the debugger.  If you don't want to debug this error, type &lt;ABORT&gt;.
+   Otherwise you can evaluate expressions in the context of the error, examine
+   the stack, and proceed//throw//return to recover.
+     If you type in a Lisp form, it will be evaluated, and the results printed,
+   using *READTABLE* and base *READ-BASE* in package *PACKAGE*. This
+   evaluation uses the variable environment of the stack frame you are examining.
+     Type &lt;ABORT&gt; or c-Z to get back to top level, or the previous debugger level.
+   While in the debugger, c-G quits back to the debugger top level.
+     If you think this error indicates a bug in the Lisp machine system, use the
+   Control-M command.
+
+ Various ways of obtaining information about the current stack frame
+
+   c-L or &lt;CLEAR SCREEN&gt; clears screen and retypes error message.
+   m-L clears screen and types args, locals and compiled code.
+   c-B gives a backtrace of function names.
+   c-m-B gives a backtrace of function names and argument names and values.
+   m-B is line c-B but shows EVALs, PROGs, CONDs, etc.
+   c-m-A prints an argument to the current function, and sets * to be that
+      argument to let you do more complicated things with it.
+      + is set to a locative to that argument, should you want to modify it.
+      To specify which argument, type the argument number with Control
+      or Meta held down before the c-m-A.
+   c-m-L is like c-m-A but works on the function's locals rather than the args.
+   c-m-V is like c-m-A but works on the values this frame is returning.
+      (This is useful when you get a trap on exit from function).
+   c-m-F does likewise for the function itself.
+   c-A prints the arglist of the function in the current frame.
+   m-S prints the value in this frame of a special variable you specify.
+   c-m-S lists all special variable bindings in this frame.
+
+   Use the functions (EH-ARG n), (EH-LOC n), (EH-VAL n) and (EH-FUN) to get the
+   value of an arg, local, value or function-object respectively from an
+   expression being evaluated. For args and locals, n can be a name or a number.
+   EH-VAL allows numbers only. LOCF and SETF on those expressions are also allowed.
+
+ Selecting Stack Frames to examine
+
+   c-N or &lt;LINE&gt; goes down a frame, c-P or &lt;RETURN&gt; goes up.
+   m-N and m-P are similar but show args, locals and compiled code.
+   c-m-N and c-m-P are similar to c-N and c-P, but they show
+      all the internal EVALs, PROGs, CONDs, etc. of interpreted code,
+      and function calls whose args are still being computed.
+   m-&lt; and m-&gt; go to the top and bottom of the stack, respectively.
+   c-S reads a string and searches down the stack for a frame
+      calling a function whose name contains that substring.
+
+ Stepping though through the program
+
+   c-X toggles the trap-on-exit flag for the current frame.
+   m-X sets the trap-on-exit flag for the current frame and all outer frames.
+   c-m-X clears this flag for the current frame and all outer frames.
+   Trap on exit also occurs if the frame is thrown through.
+   c-D proceeds like &lt;resume&gt;, but first sets the trap-on-next-function-call flag.
+   m-D toggles the trap-on-next-function-call flag.
+   Functions which get a trap on entry are automatically flagged for
+   trap on exit as well.  You can un-flag them with c-X.
+
+ Proceeding from this error and resuming execution
+
+   c-Z aborts to previous debugger or other command loop, or to top level.
+   c-R returns a value or values from the current frame.
+   c-m-R offers to reinvoke the current frame with the same arguments
+      originally supplied (as best as they can be determined).
+   m-R offers to reinvoke the current frame, letting you alter
+      some of the arguments, or use more or fewer arguments.
+   c-T throws to a specific tag.
+
+ Transferring to other systems: Edit, Bug report, Window-based Debugger
+
+   c-E calls the editor to edit the current function.
+   c-M enters the editor to send a bug message, and puts the error
+     message and a backtrace into the message automatically.
+     A numeric argument says how many stack frames to put in the backtrace.
+   c-m-W switches to the window-based debugger.
+</pre>
+<pre class="verbatim">  The 'Resume' (or 'Control-C') command is often synonymous with
+'Super-A'.  But 'Resume' only proceeds, never aborts.  If there is no
+way to proceed, just ways to abort, then 'Resume' does not do anything.
+
+  'Meta-C' is similar to 'Control-C', but in the case of an unbound
+variable or undefined function, actually 'setq's the variable or defines
+the function, so that the error will not happen again.  'Control-C' (or
+'Resume') provides a replacement value but does not actually change the
+variable.  'Meta-C' proceeds using the proceed type ':store-new-value',
+and is available only if that proceed type is provided.
+</pre>&#12;
+<hr>
+</div>
+</div>
+<div class="chapter-level-extent" id="Site-Creation-Notes">
+<div class="nav-panel">
+<p>
+Next: <a href="#Lisp-Machine-Glossary" accesskey="n" rel="next">Lisp Machine Glossary</a>, Previous: <a href="#Quick-Debugging-Tips" accesskey="p" rel="prev">Quick Debugging Tips</a>, Up: <a href="#Top" accesskey="u" rel="up">Notes on the Lisp Machine</a> &nbsp; [<a href="#SEC_Contents" title="Table of contents" rel="contents">Contents</a>]</p>
+</div>
+<h2 class="chapter" id="Site-Creation-Notes-1"><span>2 Site Creation Notes<a class="copiable-link" href="#Site-Creation-Notes-1"> &para;</a></span></h2>
+
+<p>The System 78.48 distribution band has the following site
+configuration:
+</p>
+<div class="example lisp">
+<pre class="lisp-preformatted">    ;;; -*- Mode: LISP; Package: SI; Base: 8 -*-
+    
+    (DEFCONST LISPM-SYS-PATHNAME-TRANSLATIONS
+      '((&quot;CC&quot; &quot;&gt;LMCONS&gt;&quot;)
+        (&quot;CHAOS&quot; &quot;&gt;CHAOS&gt;&quot;)
+        (&quot;DEMO&quot; &quot;&gt;LMDEMO&gt;&quot;)
+        (&quot;DISTRIBUTION&quot; &quot;&gt;DISTRIBUTION&gt;&quot;)
+        (&quot;FONTS&quot; &quot;&gt;LMFONTS&gt;&quot;)
+        (&quot;IO&quot; &quot;&gt;LMIO&gt;&quot;)
+        (&quot;IO1&quot; &quot;&gt;LMIO1&gt;&quot;)
+        (&quot;LMFS&quot; &quot;&gt;LMFS&gt;&quot;)
+        (&quot;LMSYM&quot; &quot;&gt;LMSYM&gt;&quot;)
+        (&quot;LMTAPE&quot; &quot;&gt;LMTAPE&gt;&quot;)
+        (&quot;PATCH&quot; &quot;&gt;LMPAT&gt;&quot;)
+        (&quot;PRESS-FONTS&quot; &quot;&gt;FONTS&gt;&quot;)
+        (&quot;SITE&quot; &quot;&gt;LMSITE&gt;&quot;)
+        (&quot;SYS&quot; &quot;&gt;LISPM&gt;&quot;)
+        (&quot;SYS2&quot; &quot;&gt;LISPM2&gt;&quot;)
+        (&quot;UBIN&quot; &quot;&gt;LISPM1&gt;&quot;)
+        (&quot;UCADR&quot; &quot;&gt;LCADR&gt;&quot;)
+        (&quot;WINDOW&quot; &quot;&gt;LMWIN&gt;&quot;)
+        (&quot;ZMAIL&quot; &quot;&gt;ZMAIL&gt;&quot;)
+        (&quot;ZWEI&quot; &quot;&gt;ZWEI&gt;&quot;)))
+     
+    (DEFSITE :DISTRIBUTION
+      (:SITE-PRETTY-NAME &quot;Distribution&quot;)
+      (:SYS-HOST &quot;DISTRIBUTION-LM1&quot;)
+      (:SYS-DIRECTORY-TRANSLATIONS LISPM-SYS-PATHNAME-TRANSLATIONS)
+      (:CHAOS T)
+      (:TIMEZONE 5)
+      (:ESC-F-ARG-ALIST '((NIL . :LOGIN)
+    		          (1 . :LISP-MACHINES)
+    		          (0 . :READ)))
+      )
+</pre></div>
+
+<p>There seems to be no host table configured
+(<code class="code">SI:MACHINE-LOCATION-ALIST</code> is <code class="code">NIL</code>).  When doing
+<code class="code">SETUP-MY-ADDRESS</code>, if we fail to get a host address from
+<code class="code">GET-HOST-FROM-ADDRESS</code> we will make a unnamed host and put it
+into <code class="code">SI:HOST-ALIST</code>.  At that point, <code class="code">SI:HOST-ALIST</code> will
+contain:
+</p>
+<div class="example lisp">
+<pre class="lisp-preformatted">    ((&quot;UNKNOWN&quot; #&lt;LISPM-CHAOS-HOST UNKNOWN&gt; NIL LISPM DISTRIBUTION CHAOS (401)))
+</pre></div>
+
+<p>The function <code class="code">PRESET-FOR-DISTRIBUTION</code> (see <samp class="file">DISTRIBUTION;
+DIST LISP</samp> &ndash; Slimebolix) is used to setup a cold loaded system for
+distribution.  This <code class="code">NIL</code>s <code class="code">HOST-ALIST</code>, initailizes
+<code class="code">MACHINE-LOCATION-ALIST</code> and cleans up some extra things.  It
+also creates a new <samp class="file">HOSTS TEXT</samp> file that contains
+<code class="code">DISTRIBUTION-LM1</code>, copies
+<samp class="file">LOCAL:&gt;DISTRIBUTION&gt;DISTRIBUTION&gt;SITE.LISP</samp> etc to <code class="code">SITE;
+SITE LISP</code>, etc.  The function assumes that the following files
+exists, it also overwrites whatever is in <samp class="file">LOCAL:&gt;LMSITE</samp>:
+</p>
+<div class="example lisp">
+<pre class="lisp-preformatted">  LOCAL:&gt;DISTRIBUTION&gt;DISTRIBUTION&gt;SITE.LISP
+  LOCAL:&gt;DISTRIBUTION&gt;DISTRIBUTION&gt;HOSTS.TEXT ;This is created by the fucntion.
+  LOCAL:&gt;DISTRIBUTION&gt;DISTRIBUTION&gt;LMLOCS.LISP
+</pre></div>
+
+<p><code class="code">CANON</code> that is being refered in the Slimebolix DIST LISP is a
+system for &quot;Canon LBP software&quot;.
+</p>
+
+<p>In System 222 the scheme is slightly different, and handled during
+<code class="code">COLD</code> initialization.  The function
+<code class="code">SI:SAVE-FOR-DISTRIBUTION</code> is called which sets up so that the
+band will clear any site specific information on <code class="code">COLD</code>
+initialization.
+</p>
+<div class="example">
+<pre class="example-preformatted">SI:SAVE-FOR-DISTRIBUTION  
+     Saves the current environment as a distribution world load; this is
+     how distribution world loads are created.  It prints the disk label,
+     prompts you for the name of partition, and does a DISK-SAVE into that
+     partition.  As is usual with DISK-SAVE, when it is finished, the saved
+     environment is restored, and so when SI:SAVE-FOR-DISTRIBUTION is
+     finished, the machine is in a distribution world load environment.
+</pre></div>
+&#12;
+<hr>
+</div>
+<div class="chapter-level-extent" id="Lisp-Machine-Glossary">
+<div class="nav-panel">
+<p>
+Next: <a href="#Random-Compiler-Notes" accesskey="n" rel="next">Random Compiler Notes</a>, Previous: <a href="#Site-Creation-Notes" accesskey="p" rel="prev">Site Creation Notes</a>, Up: <a href="#Top" accesskey="u" rel="up">Notes on the Lisp Machine</a> &nbsp; [<a href="#SEC_Contents" title="Table of contents" rel="contents">Contents</a>]</p>
+</div>
+<h2 class="chapter" id="Lisp-Machine-Glossary-1"><span>3 Lisp Machine Glossary<a class="copiable-link" href="#Lisp-Machine-Glossary-1"> &para;</a></span></h2>
+
+<ul class="itemize">
+<li>RQB
+Disk request block.
+
+</li><li>PDL
+Push Down List.
+
+</li><li>QLD
+Function in a MAKE-COLD load band that loads the rest of the system over MINI.
+
+</li><li>MINI
+Simple Chaosnet file protocol and server used when creating initial load band; only used during QLD.
+
+</li><li>CC
+CADR console debugger.
+
+</li><li>VMA
+Virtual Memory Address.
+
+</li><li>VPN
+Virtual Page Number.
+
+</li><li>ADL
+Argument Description List.
+
+</li><li>ADI
+Additional Information (for a function call).
+
+</li><li>QF LISP
+Routines that simulate various Lisp Machine microcode making it
+possible to access the memory of a debugee.
+
+</li><li>QLENX
+Just before CADR starts running Lisp Machine macrocode.
+
+</li><li>A-AP
+The A-AP registers contains a PDL address that points to the currently
+executing FEF.
+
+</li><li>RTC
+ReadTable Compiler; <samp class="file">SYS: IO; RTC LISP</samp>.
+
+</li><li>EVCP
+Exernal Value Cell Pointer.
+</li></ul>
+&#12;
+<hr>
+</div>
+<div class="chapter-level-extent" id="Random-Compiler-Notes">
+<div class="nav-panel">
+<p>
+Next: <a href="#Serial-SPY-protocol-notes" accesskey="n" rel="next">Serial SPY protocol notes</a>, Previous: <a href="#Lisp-Machine-Glossary" accesskey="p" rel="prev">Lisp Machine Glossary</a>, Up: <a href="#Top" accesskey="u" rel="up">Notes on the Lisp Machine</a> &nbsp; [<a href="#SEC_Contents" title="Table of contents" rel="contents">Contents</a>]</p>
+</div>
+<h2 class="chapter" id="Random-Compiler-Notes-1"><span>4 Random Compiler Notes<a class="copiable-link" href="#Random-Compiler-Notes-1"> &para;</a></span></h2>
+
+<ul class="itemize mark-bullet">
+<li>FASD LISP
+MACLISP version of FASD(umper).
+</li><li>QFASD LISP
+LispM version of FASD(umper); was renamed later to QCFASD LISP
+</li><li>PEEP LISP
+Peep hole optimizer, was renamed to QCPEEP LISP.
+</li><li>QLF LISP
+LAP for FEFs, was renamed to QCLAP LISP.
+</li></ul>
+
+<p>Overal working of QC:
+</p>
+<ul class="itemize mark-bullet">
+<li>QCFILE LISP
+Handles whole files, main function that drives compilation is
+COMPILE-DRIVER.
+
+</li><li>QCP1 LISP
+Compiles one single function, QCOMPILE0 does the the work and
+QC-TRANSLATE-FUNCTION is the main driver.  QCOMPILE0 calls P2 and
+PEEP.  Generated LAP is put into the variable QCMP-OUTPUT.
+
+</li><li>QCP2 LISP
+Does the main work for converting Lisp to LAP code.
+
+</li><li>QCPEEP LISP
+Peephole optimizer; input is LAP code.
+
+</li><li>QLF LISP
+Takes LAP code and converts it to unboxed fixnums.
+
+</li><li>QCFASD LISP
+FASD(umper); outputs QFASL files.
+</li></ul>
+&#12;
+<hr>
+</div>
+<div class="chapter-level-extent" id="Serial-SPY-protocol-notes">
+<div class="nav-panel">
+<p>
+Next: <a href="#Notes-on-debugging-in-usim" accesskey="n" rel="next">Notes on debugging in usim</a>, Previous: <a href="#Random-Compiler-Notes" accesskey="p" rel="prev">Random Compiler Notes</a>, Up: <a href="#Top" accesskey="u" rel="up">Notes on the Lisp Machine</a> &nbsp; [<a href="#SEC_Contents" title="Table of contents" rel="contents">Contents</a>]</p>
+</div>
+<h2 class="chapter" id="Serial-SPY-protocol-notes-1"><span>5 Serial SPY protocol notes<a class="copiable-link" href="#Serial-SPY-protocol-notes-1"> &para;</a></span></h2>
+
+<p>Serial SPY protocol (values are octal, as usual):
+</p>
+<pre class="verbatim">&lt;ADDRESS&gt;/		Read from address ADDRESS, used by DBG-READ.
+&lt;ADDRESS&gt;:&lt;VALUE&gt;:	Write value VALUE to address ADDRESS, used by DBG-WRITE.
+R			Read status, returns a octal number.
+&lt;N&gt;S			Manipulates some kind of high serial bit.
+&lt;N&gt;A			Set the baud rate of the UART, where N is one of:
+
+	0: 50. baud
+	1: 75. baud
+	2: 110. baud
+	4: 150. baud
+	5: 300. baud
+	6: 600. baud
+	7: 1200. baud
+	10: 1800. baud
+	11: 2000. baud
+	12: 2400. baud
+	13: 3600. baud
+	14: 4800. baud
+	15: 7200. baud
+	16: 9600. baud
+	17: 19200. baud
+
+&lt;LOW&gt;L&lt;MIDDLE&gt;M&lt;HIGH&gt;H0I	CC-EXECUTE-LOAD-DEBUG-IR
+&lt;LOW&gt;L&lt;MIDDLE&gt;M&lt;HIGH&gt;H1I	CC-EXECUTE-R
+&lt;LOW&gt;L&lt;MIDDLE&gt;M&lt;HIGH&gt;H7I	CC-EXECUTE-W
+</pre>
+<p>Error code:
+</p>
+<pre class="verbatim">#o7	ERRONEOUS COMMAND RECEIVED BY DEBUGGER
+#o10	DEBUGGER GOT PARITY ERROR, RESETTING DEBUGGER; when getting this we type out #o33
+#o15	Nothing.
+</pre>
+<pre class="verbatim">;;; The following are the active locations:
+;;; 766100  Reads or writes the debuggee-Unibus location addressed by the registers below.
+;;; 766114  (Write only) Contains bits 1-16 of the debuggee-Unibus address
+;;;	    to be accessed.  Bit 0 of the address is always zero.
+;;; 766110  (Write only) Contains additional modifier bits, as follows.
+;;;	    These bits are reset to zero when the debuggee's Unibus is reset.
+;;;	    1  Bit 17 of the debuggee-Unibus address.
+;;;	    2  Resets the debuggee's Unibus and bus interface.  Write a 1 here then write a 0.
+;;;	    4  Timeout inhibit.  This turns off the NXM timeout for all Xbus and Unibus cycles
+;;;	       done by the debuggee's bus interface (not just those by the debugger).
+;;; 766104  (Read only) These contain the status for bus cycles executed on the debuggee's
+;;;	    busses.  These bits are cleared by writing into location 766044 (Error Status)
+;;;	    on the debuggee's Unibus.  They are not cleared by power up.
+;;;	    1  Xbus NXM Error.  Set when an Xbus cycle times out for lack of response.
+;;;	    2  Xbus Parity Error.  Set when an Xbus read receives a word with bad parity,
+;;;	       and the Xbus ignore-parity line was not asserted.  Parity Error is also set
+;;;	       by Xbus NXM Error.
+;;;	    4  CADR Address Parity Error.  Set when an address received from the processor
+;;;	       has bad parity.
+;;;	   10  Unibus NXM Error.  Set when a Unibus cycle times out for lack of response.
+;;;	   20  CADR Parity Error.  Set when data received from the processor has bad parity.
+;;;	   40  Unibus Map Error.  Set when an attempt to perform an Xbus cycle through the
+;;;	       Unibus map is refused because the map specifies invalid or write-protected.
+;;;	   The remaining bits are random (not necessarily zero).
+</pre>&#12;
+<hr>
+</div>
+<div class="chapter-level-extent" id="Notes-on-debugging-in-usim">
+<div class="nav-panel">
+<p>
+Next: <a href="#Notes-on-Clock-Domains-in-the-MIT-CADR-_0028FPGA_0029" accesskey="n" rel="next">Notes on Clock Domains in the MIT CADR (FPGA)</a>, Previous: <a href="#Serial-SPY-protocol-notes" accesskey="p" rel="prev">Serial SPY protocol notes</a>, Up: <a href="#Top" accesskey="u" rel="up">Notes on the Lisp Machine</a> &nbsp; [<a href="#SEC_Contents" title="Table of contents" rel="contents">Contents</a>]</p>
+</div>
+<h2 class="chapter" id="Notes-on-debugging-in-usim-1"><span>6 Notes on debugging in usim<a class="copiable-link" href="#Notes-on-debugging-in-usim-1"> &para;</a></span></h2>
+
+<ul class="mini-toc">
+<li><a href="#Macrocode-debug-tracing" accesskey="1">Macrocode debug tracing</a></li>
+</ul>
+<div class="section-level-extent" id="Macrocode-debug-tracing">
+<h3 class="section"><span>6.1 Macrocode debug tracing<a class="copiable-link" href="#Macrocode-debug-tracing"> &para;</a></span></h3>
+
+<p>When tracing, the macro disassembler prints out the PC, this can be
+used to figure out where in the LOD:
+</p>
+<pre class="verbatim">        00012140044 054010 BR-NOT-NIL 12140055
+        00012140046 040206 CALL D-PDL FEF|134
+        00012140050 076060 PUSH-NUMBER 48
+        00012140052 042143 MOVE D-PDL FEF|99
+        00012140054 055324 (MISC) LENGTH D-PDL
+</pre>
+<p>E.g, for a load band from System 99:
+</p>
+<pre class="verbatim">   $ ~/l/usim/lod -p 00012140052 LOD
+   %SYS-COM-AREA-ORIGIN-PNTR: 00000000400 03200004000 (0x1a000800)
+   %SYS-COM-BAND-FORMAT: 00000000410 01200000000 (0x0a000000)
+   %SYS-COM-POINTER-WIDTH: 00000000432 01200000031 (0x0a000019)
+   %SYS-COM-MAJOR-VERSION: 00000000427 00600000000 (0x06000000)
+   %SYS-COM-DESIRED-MICROCODE-VERSION: 00000000430 00600000000 (0x06000000)
+
+   fef @ 12140052:
+
+   pc 12140052, addr 2430012
+[...]
+    30602143675 31001656007 (0xc8075c07) 'LISP-REINITIALIZE'
+   00002427411 31200400001 (0xca020001)
+   00002427412 31220000000 (0xca400000)
+[...]
+   00002427771 23401056520 (0x9c045d50)
+
+   00002427772 042401 MOVE D-PDL '401
+   00002427772 173010 POP FEF|8
+   00002427773 042160 MOVE D-PDL FEF|112
+   00002427773 072403 EQ '403
+   00002427774 034004 BR-NIL 2430001
+   00002427774 073157 SET-NIL FEF|111
+   00002427775 073156 SET-NIL FEF|110
+   00002427775 073155 SET-NIL FEF|109
+   00002427776 014011 BR 2430010
+   00002427776 042160 MOVE D-PDL FEF|112
+   00002427777 072404 EQ '404
+   00002427777 034006 BR-NIL 2430006
+   00002430000 075113 (MISC) %lambda-tv-quad-slot D-PDL
+   00002430000 173157 POP FEF|111
+   00002430001 075112 (MISC) %lambda-rg-quad-slot D-PDL
+   00002430001 173156 POP FEF|110
+   00002430002 075116 (MISC) %lambda-sdu-quad-slot D-PDL
+   00002430002 173155 POP FEF|109
+   00002430003 073154 SET-NIL FEF|108
+   00002430003 073153 SET-NIL FEF|107
+   00002430004 073152 SET-NIL FEF|106
+   00002430004 073151 SET-NIL FEF|105
+   00002430005 073150 SET-NIL FEF|104
+   00002430005 073147 SET-NIL FEF|103
+   00002430006 073146 SET-NIL FEF|102
+   00002430006 073145 SET-NIL FEF|101
+   00002430007 042205 MOVE D-PDL FEF|133
+   00002430007 015576 (MISC) BOUNDP D-IGNORE
+   00002430010 034002 BR-NIL 2430013
+   00002430010 002144 MOVE D-IGNORE FEF|100
+   00002430011 054010 BR-NOT-NIL 2430022
+   00002430011 040206 CALL D-PDL FEF|134
+   00002430012 076060 PUSH-NUMBER 48
+   00002430012 042143 MOVE D-PDL FEF|99
+   00002430013 055324 (MISC) LENGTH D-PDL
+   00002430013 031777 + PDL|511 (undefined)
+   00002430014 042207 MOVE D-PDL FEF|135
+   00002430014 142142 MOVE D-LAST FEF|98
+   00002430015 173144 POP FEF|100
+[...]
+</pre>&#12;
+<hr>
+</div>
+</div>
+<div class="chapter-level-extent" id="Notes-on-Clock-Domains-in-the-MIT-CADR-_0028FPGA_0029">
+<div class="nav-panel">
+<p>
+Next: <a href="#Notes-on-the-inner-Lisp-Machine-System-_0028version-99-_002f-MIT-CADR_0029" accesskey="n" rel="next">Notes on the inner Lisp Machine System (version 99 / MIT CADR)</a>, Previous: <a href="#Notes-on-debugging-in-usim" accesskey="p" rel="prev">Notes on debugging in usim</a>, Up: <a href="#Top" accesskey="u" rel="up">Notes on the Lisp Machine</a> &nbsp; [<a href="#SEC_Contents" title="Table of contents" rel="contents">Contents</a>]</p>
+</div>
+<h2 class="chapter" id="Notes-on-Clock-Domains-in-the-MIT-CADR-_0028FPGA_0029-1"><span>7 Notes on Clock Domains in the MIT CADR (FPGA)<a class="copiable-link" href="#Notes-on-Clock-Domains-in-the-MIT-CADR-_0028FPGA_0029-1"> &para;</a></span></h2>
+
+<p>Notes based on the Pipistrello implementation
+</p>
+<ul class="itemize">
+<li>sysclk
+Main clock for the FPGA; 100MHz for the Pipistrello.
+
+<p>This is also used by <em class="emph">ram_controller_BOARD</em> for driving the MIG.
+</p>
+</li><li>clk50
+50MHz clock.
+
+<p>Drives <em class="emph">ram_controller_BOARD</em> and <em class="emph">support_BOARD</em> modules.
+</p>
+</li><li>vga_clk
+VGA clock; 180.333MHz.
+
+</li><li>cpu_clk
+CPU clock driving the CADR; 25MHz.  This is also passed down to
+<em class="emph">uhdl_common</em> to drive the SPY port (which will affect baud rate
+settings).
+
+</li></ul>
+&#12;
+<hr>
+</div>
+<div class="chapter-level-extent" id="Notes-on-the-inner-Lisp-Machine-System-_0028version-99-_002f-MIT-CADR_0029">
+<div class="nav-panel">
+<p>
+Next: <a href="#Notes-on-confusion-or-discrepancies-in-MIT-AI-Memo-528" accesskey="n" rel="next">Notes on confusion or discrepancies in MIT AI Memo 528</a>, Previous: <a href="#Notes-on-Clock-Domains-in-the-MIT-CADR-_0028FPGA_0029" accesskey="p" rel="prev">Notes on Clock Domains in the MIT CADR (FPGA)</a>, Up: <a href="#Top" accesskey="u" rel="up">Notes on the Lisp Machine</a> &nbsp; [<a href="#SEC_Contents" title="Table of contents" rel="contents">Contents</a>]</p>
+</div>
+<h2 class="chapter" id="Notes-on-the-inner-Lisp-Machine-System-_0028version-99-_002f-MIT-CADR_0029-1"><span>8 Notes on the inner Lisp Machine System (version 99 / MIT CADR)<a class="copiable-link" href="#Notes-on-the-inner-Lisp-Machine-System-_0028version-99-_002f-MIT-CADR_0029-1"> &para;</a></span></h2>
+
+<p>These variables are defined in SYS: SYS; SYSDCL LISP.
+</p>
+<p>File loaded into the cold load are defined by COLD-LOAD-FILE-LIST:
+</p>
+<pre class="verbatim">        SYS: FONTS; CPTFON QFASL
+        SYS: SYS; QRAND QFASL
+        SYS: SYS; FSPEC QFASL
+        SYS: IO; QIO QFASL
+        SYS: IO; RDTBL QFASL	-- done specially
+        SYS: IO; CRDTBL QFASL	-- done specially
+        SYS: IO; READ QFASL
+        SYS: IO; PRINT QFASL
+        SYS: WINDOW; COLD QFASL
+        SYS: SYS; SGFCTN QFASL
+        SYS: SYS; EVAL QFASL
+        SYS: SYS; TYPES QFASL
+        SYS: SYS; LTOP QFASL
+        SYS: SYS; QFASL QFASL
+        SYS: IO; MINI QFASL
+        SYS: SYS; QFCTNS QFASL
+        SYS: SYS2; STRING QFASL
+        SYS: SYS2; CHARACTER QFASL
+        SYS: SYS; CLPACK QFASL
+        SYS: COLD; GLOBAL QFASL
+        SYS: COLD; SYSTEM QFASL
+        SYS: COLD; LISP QFASL
+</pre>
+<p>When booting (cold, or warm) we call LISP-TOP-LEVEL.
+</p>
+<p>When doing QLD files listed in MINI-FILE-ALIST-LIST get loaded into
+the running system over MINI:
+</p>
+<pre class="verbatim">        INNER-SYSTEM-FILE-ALIST
+                SYS: SYS2; DEFSEL QFASL		-- By (resource named-structure-invoke)
+                SYS: SYS2; RESOUR QFASL		-- By FILLARRAY
+                SYS: SYS; QMISC QFASL
+                SYS: SYS; SORT QFASL		-- Needed by FLAVOR
+                SYS: IO; FORMAT QFASL		-- ditto
+                SYS: IO1; FQUERY QFASL		-- Needed by everything in sight
+                SYS: SYS2; HASH QFASL		-- Needed by FLAVOR,PATHNM
+                SYS: SYS2; FLAVOR QFASL		-- Needed by PROCES
+                SYS: SYS2; HASHFL QFASL		-- Make flavors really work.
+                SYS: SYS2; PRODEF QFASL		-- Definitions for PROCES
+                SYS: SYS2; PROCES QFASL
+                SYS: SYS2; NUMER QFASL		-- SI:EXPT-HARD needed by PROCES
+                SYS: EH; EH QFASL
+                SYS: EH; EHF QFASL
+                SYS: EH; EHC QFASL
+                SYS: EH; EHBPT QFASL
+                SYS: SYS2; DISASS QFASL		-- EH calls subroutines in DISASS
+                SYS: SYS2; DESCRIBE QFASL	-- For hack value
+                SYS: IO; DISK QFASL
+                SYS: SYS2; LOGIN QFASL		-- ditto
+                SYS: IO; RDDEFS QFASL		-- Load this before trying to read any #\'s
+                SYS: NETWORK; HOST QFASL
+                SYS: NETWORK; PACKAGE QFASL
+                SYS: IO; FILE; ACCESS QFASL
+                SYS: IO; STREAM QFASL		-- Probably needed by any file system
+                -- PATHNM must be the last file in this list.  It
+                -- breaks things while cold loading that QLD knows how
+                -- to fix after this alist is loaded.
+                SYS: IO; FILE; PATHNM QFASL
+
+        REST-OF-PATHNAMES-FILE-ALIST
+                SYS: IO; FILE; PATHST QFASL
+                SYS: IO; FILE; LOGICAL QFASL
+                SYS: FILE2; PATHNM QFASL
+                SYS: FILE; LMPARS QFASL
+                SYS: IO; FILE; OPEN QFASL
+                SYS: NETWORK; CHAOS; CHSNCP QFASL
+                SYS: NETWORK; CHAOS; CHUSE QFASL
+                SYS: NETWORK; CHAOS; QFILE QFASL
+
+        ETHERNET-FILE-ALIST
+                SYS: IO; SIMPLE-ETHER QFASL
+                SYS: IO; ADDR-RES QFASL
+
+        SITE-FILE-ALIST
+                SYS: SITE; SITE QFASL
+
+        HOST-TABLE-FILE-ALIST
+                SYS: SITE; HSTTBL QFASL
+                SYS: SITE; LMLOCS QFASL
+</pre>
+<p>Then, SYSTEM-SYSTEM-FILE-ALIST is loaded:
+</p>
+<pre class="verbatim">        SYS: SYS2; MAKSYS QFASL
+        SYS: SYS2; PATCH QFASL
+        SYS: SYS; SYSDCL QFASL
+</pre>
+<p>At this point, QLD will do MAKE-SYSTEM on SYSTEM to load the rest of
+the Lisp Machine system.  And we are done.
+</p>&#12;
+<hr>
+</div>
+<div class="chapter-level-extent" id="Notes-on-confusion-or-discrepancies-in-MIT-AI-Memo-528">
+<div class="nav-panel">
+<p>
+Next: <a href="#TAGS-database" accesskey="n" rel="next">TAGS database</a>, Previous: <a href="#Notes-on-the-inner-Lisp-Machine-System-_0028version-99-_002f-MIT-CADR_0029" accesskey="p" rel="prev">Notes on the inner Lisp Machine System (version 99 / MIT CADR)</a>, Up: <a href="#Top" accesskey="u" rel="up">Notes on the Lisp Machine</a> &nbsp; [<a href="#SEC_Contents" title="Table of contents" rel="contents">Contents</a>]</p>
+</div>
+<h2 class="chapter" id="Notes-on-confusion-or-discrepancies-in-MIT-AI-Memo-528-1"><span>9 Notes on confusion or discrepancies in MIT AI Memo 528<a class="copiable-link" href="#Notes-on-confusion-or-discrepancies-in-MIT-AI-Memo-528-1"> &para;</a></span></h2>
+
+<pre class="verbatim">This was written by Brad Parker, around 10/17/04.
+</pre>
+<p>While writing a CADR emulator I ran into some issues and/or
+discrepancies in the available documentation. I&rsquo;ve tried to list them
+here.
+</p>
+<p>[These are my conclusions; If you read them and disagree, please send
+me email and set me straight. I do not have a functional hardware
+description (i.e. verilog) yet, so some things are assuptions based on
+quick scans of the schematics]
+</p>
+<ul class="itemize mark-bullet">
+<li>The description of the ALU mode selection using IR7 seems inverted. IR7=0 should select the &rsquo;logic&rsquo; side of the ALU. IR7=1 should select the &quot;math&quot; side.
+
+</li><li>The modification of the rotation count due to &quot;misc function 3&quot;, in 16 bit mode talks about XOR of IR4 and LC1. I think this is inverted, i.e. POS4 := NOT (IR4 XOR LC1)
+
+</li><li>The modification of the dispatch address due to L2 map bits talks about bits 14 &amp; 15. In fact the map bits select L2 bit 18 &amp; 19.
+
+</li><li>The modification of the dispatch address due to L2 map bits talks about replacing bit 0. In fact the l2 map result is or&rsquo;d with the existing bit 0 (see msi 2F01)
+
+</li><li>The PDL pointer, when used in PDL push, increments *before* the write. Conversely, the PDL pointer, when used in PDL pop, decrements *after* the read.
+
+</li><li>The SPC stack pointer, on a push, increments *before* the write. Conversly, the SPC stack pointer, on a pop, increments *before* the write.
+
+<p>Here&rsquo;s an interesting quote:
+</p>
+<div class="example lisp">
+<pre class="lisp-preformatted">        ;NOTE THAT THE LC HARDWARE IGNORES THE LOW BIT
+        ;AND READS IT BACK AS ZERO IN HALFWORD MODE
+</pre></div>
+
+</li><li>It seems a page fault should be generated on a write access if the read access bit is not set, even if the write access bit is set.
+
+</li><li>If the &quot;length of byte&quot; field in a dispatch is zero, the mask is zero and no bits contribute to the dispatch offset.
+
+</li><li>The microcode uses the fact that the MD is valid (for one additional cycle) with the result of a previous memory-read even when a new memory read has been started. (so the memory read pipe must be modeled)
+
+</li><li>The dispatch instruction is affected by the instruction pipeline. Below some of the cases are enumerated for clarity.
+</li></ul>
+
+<p>First, let me quote from &quot;lmdocs: popj.2&quot;, a document which I found
+illuminating.
+</p>
+<pre class="verbatim">POPJ-AFTER-NEXT in combination with JUMP and DISPATCH			[CONTRL]
+
+Dispatch	R	P	N	PC	SPC	NOP
+                0	0	0	jump	pop	no
+                0	0	1	jump	pop	yes
+                0	1	0	jump	push	no
+                0	1	1	jump	push	yes
+                1	0	0	popj	pop	no
+                1	0	1	popj	pop	yes
+                1	1	0	popj	pop	no
+                1	1	1	popj	pop	yes
+
+Jump		R	P	N	PC	SPC	NOP
+(cond		0	0	0	jump	pop	no
+ satisfied)	0	0	1	jump	pop	yes
+                0	1	0	jump	push	no
+                0	1	1	jump	push	yes
+                1	0	0	popj	pop	no
+                1	0	1	popj	pop	yes
+                1	1	0	iwrite
+                1	1	1	iwrite
+</pre>
+<p>Jump with condition not satisfied is similar to ALU and BYTE
+instructions.
+</p>
+<p>Possible mods to increase usefulness:
+</p>
+<p>A dispatch-call or jump-call in combination with popj-after-next
+should neither popj nor pushj but just jump.  If it&rsquo;s xct-next the
+right thing happens.  If the next instruction is inhibited, well
+that&rsquo;s OK.  However, if the next instruction is not inhibited, and
+it&rsquo;s a CALL, normally (without the previous call) would be like tail
+recursive, but here will end up with two return addresses on pdl,
+however, the top one is the address of the place called in the first
+instruction and the one under that is the original return so that&rsquo;s
+right too.
+</p>
+<p>Dispatch example - POPJ+DISPATCH, enumerating cases
+</p>
+<div class="example lisp">
+<pre class="lisp-preformatted">001 LABEL	(CHECK-PAGE-READ)
+002	(POPJ-AFTER-NEXT DISPATCH TRANSPORT READ-MEMORY-DATA) ;FOLLOW ALL INVZ
+003       ((M-T) Q-TYPED-POINTER READ-MEMORY-DATA)	;RETURN C(E) IN M-T
+004
+005
+</pre></div>
+
+<pre class="verbatim">dispatch yields N=0,P=0,R=0
+
+- exec check-page-read jump		fetch 002/popj
+- exec popj + dispatch			fetch 003/alu
+   new pc&lt;- dispatch address
+   (disable popj)
+- exec alu                              fetch new pc (dispatch address)
+
+dispatch yields N=0,P=0,R=1
+
+- exec check-page-read jump		fetch 002/popj
+- exec popj + dispatch			fetch 003/alu
+   new pc &lt;- spc[spc-ptr--]
+   (disable popj)
+- exec alu                              fetch new pc (from stack)
+
+dispatch yields N=0,P=1,R=0
+
+- exec check-page-read jump		fetch 002/popj
+- exec popj + dispatch			fetch 003/alu
+   spc[++spc-ptr] &lt;- 004
+   new pc &lt;- dispatch address
+   (disable popj)
+- exec alu                              fetch new pc (dispatch address)
+
+dispatch yields N=0,P=1,R=1
+
+- exec check-page-read jump		fetch 002/popj
+- exec popj + dispatch			fetch 003/alu
+   ignore dispatch, do popj
+   new pc &lt;- spc[spc-ptr--]
+   if pc14, advance-lc
+- exec alu                              fetch new pc
+
+dispatch yields N=1,P=0,R=0
+
+- exec check-page-read jump		fetch 002/popj
+- exec popj + dispatch			fetch 003/alu
+   new pc&lt;- dispatch address
+   (disable popj)
+- (nop - pipe flush)                    fetch new pc
+
+dispatch yields N=1,P=0,R=1
+
+- exec check-page-read jump		fetch 002/popj
+- exec popj + dispatch			fetch 003/alu
+   new pc &lt;- spc[spc-ptr--]
+   if pc14, advance-lc
+   (disable popj)
+- (nop - pipe flush)                    fetch new pc
+
+dispatch yields N=1,P=1,R=0
+
+- exec check-page-read jump		fetch 002/popj
+- exec popj + dispatch			fetch 003/alu
+   spc[++spc-ptr] &lt;- 005
+   new pc &lt;- dispatch address
+   (disable popj)
+- exec alu                              fetch new pc
+</pre>
+<p>Another Dispatch example - POPJ+DISPATCH with CALL, enumerating cases
+</p>
+<div class="example lisp">
+<pre class="lisp-preformatted">001 LABEL	(CHECK-PAGE-READ)
+002	(POPJ-AFTER-NEXT DISPATCH TRANSPORT READ-MEMORY-DATA) ;FOLLOW ALL INVZ
+003     (CALL-XCT-NEXT FUNC)
+004
+005
+</pre></div>
+
+<pre class="verbatim">dispatch yields N=0,P=0,R=0
+
+- exec check-page-read jump		fetch 002/popj
+- exec popj + dispatch			fetch 003/call
+   new pc&lt;- dispatch address
+   (disable popj)
+- exec call                             fetch new pc (dispatch address)
+   spc[++spc-ptr] &lt;- new pc+1
+   new pc&lt;- call address
+- exec 1st inst @ dispatch address	fetch call address
+- exec 1st inst @ call address
+
+[help! I'm confused here. I don't think the action above is correct.
+When the call returns it will return to new pc + 1...]
+
+dispatch yields N=0,P=0,R=1
+
+- exec check-page-read jump		fetch 002/popj
+- exec popj + dispatch			fetch 003/call
+   new pc &lt;- spc[spc-ptr--]
+   (disable popj)
+- exec call                             fetch new pc (from stack)
+   spc[++spc-ptr] &lt;- new pc+1
+   new pc&lt;- call address
+- exec 1st inst @ new pc		fetch call address
+- exec 1st inst @ call address
+
+[again; I don't think the action above is correct.  When the call
+returns it will return to new pc + 1...]
+
+dispatch yields N=0,P=1,R=0a
+
+- exec check-page-read jump		fetch 002/popj
+- exec popj + dispatch			fetch 003/call
+   spc[++spc-ptr] &lt;- 004
+   new pc &lt;- dispatch address
+   (disable popj)
+- exec call                             fetch new pc (dispatch address)
+   spc[++spc-ptr] &lt;- new pc+1
+   new pc&lt;- call address
+- exec 1st inst @ dispatch address	fetch call address
+- exec 1st inst @ call address
+
+dispatch yields N=0,P=1,R=1
+
+- exec check-page-read jump		fetch 002/popj
+- exec popj + dispatch			fetch 003/call
+   ignore dispatch, do popj
+   new pc &lt;- spc[spc-ptr--]
+   if pc14, advance-lc
+- exec call                             fetch new pc (from stack)
+   spc[++spc-ptr] &lt;- new pc+1
+   new pc&lt;- call address
+- exec 1st inst @ new pc		fetch call address
+- exec 1st inst @ call address
+
+dispatch yields N=1,P=0,R=0
+
+- exec check-page-read jump		fetch 002/popj
+- exec popj + dispatch			fetch 003/call
+   new pc&lt;- dispatch address
+   (disable popj)
+- (nop - pipe flush)                    fetch new pc (dispatch address)
+- exec 1st inst @ new pc		fetch new pc+1
+
+dispatch yields N=1,P=0,R=1
+
+- exec check-page-read jump		fetch 002/popj
+- exec popj + dispatch			fetch 003/call
+   new pc &lt;- spc[spc-ptr--]
+   if pc14, advance-lc
+   (disable popj)
+- (nop - pipe flush)                    fetch new pc (from stack)
+- exec 1st inst @ new pc		fetch new pc+1
+
+dispatch yields N=1,P=1,R=0
+
+- exec check-page-read jump		fetch 002/popj
+- exec popj + dispatch			fetch 003/call
+   spc[++spc-ptr] &lt;- 005
+   new pc &lt;- dispatch address
+   (disable popj)
+- exec call                             fetch new pc (dispatch address)
+   spc[++spc-ptr] &lt;- dispatch address+1
+   new pc&lt;- call address
+- exec 1st inst @ new pc		fetch call address
+- exec 1st inst @ call address
+</pre>
+<p>Another Dispatch example - with CALL, enumerating cases
+</p>
+<div class="example lisp">
+<pre class="lisp-preformatted">001	(NOP)
+002	(DISPATCH TRANSPORT READ-MEMORY-DATA) ;FOLLOW ALL INVZ
+003     (CALL FUNC)
+004
+005
+</pre></div>
+
+<pre class="verbatim">dispatch yields N=0,P=0,R=0
+
+- exec check-page-read jump		fetch 002/dispatch
+- exec dispatch				fetch 003/call
+   new pc &lt;- dispatch address
+- exec call w/n-bit			fetch new pc (dispatch address)
+   spc[++spc-ptr] &lt;- new pc+1
+   new pc&lt;- call address
+- (nop - pipe flush)			fetch call address
+- exec 1nd inst @ call address
+</pre>
+<p>The call pushes the dispatch address + 1 and the pipe stalls because
+the call has the N bit set, followed by the 1st instruction at the
+call address.
+</p>&#12;
+<hr>
+</div>
+<div class="chapter-level-extent" id="TAGS-database">
+<div class="nav-panel">
+<p>
+Next: <a href="#CADR-HDL-Internals" accesskey="n" rel="next">CADR HDL Internals</a>, Previous: <a href="#Notes-on-confusion-or-discrepancies-in-MIT-AI-Memo-528" accesskey="p" rel="prev">Notes on confusion or discrepancies in MIT AI Memo 528</a>, Up: <a href="#Top" accesskey="u" rel="up">Notes on the Lisp Machine</a> &nbsp; [<a href="#SEC_Contents" title="Table of contents" rel="contents">Contents</a>]</p>
+</div>
+<h2 class="chapter" id="TAGS-database-1"><span>10 TAGS database<a class="copiable-link" href="#TAGS-database-1"> &para;</a></span></h2>
+
+<p>For creating a TAGS database that also contains DEFMETHOD mixins for
+:BEFORE or :AFTER, one can pass the following to etags:
+</p>
+<div class="example">
+<pre class="example-preformatted">    -r &quot;/(defmethod ([A-Z-_ \t(]+\(:BEFORE\|:AFTER\)?[ \t]+:\([A-Z-]+\)/\2/i&quot;
+</pre></div>
+&#12;
+<hr>
+</div>
+<div class="chapter-level-extent" id="CADR-HDL-Internals">
+<div class="nav-panel">
+<p>
+Next: <a href="#Internal-Implementation-Stuff-_0028Lisp-Machine-chapter_0029" accesskey="n" rel="next">Internal Implementation Stuff (Lisp Machine chapter)</a>, Previous: <a href="#TAGS-database" accesskey="p" rel="prev">TAGS database</a>, Up: <a href="#Top" accesskey="u" rel="up">Notes on the Lisp Machine</a> &nbsp; [<a href="#SEC_Contents" title="Table of contents" rel="contents">Contents</a>]</p>
+</div>
+<h2 class="chapter" id="CADR-HDL-Internals-1"><span>11 CADR HDL Internals<a class="copiable-link" href="#CADR-HDL-Internals-1"> &para;</a></span></h2>
+
+<div class="center"><strong class="strong">*** TO BE WRITTEN ***</strong>
+</div>&#12;
+<hr>
+</div>
+<div class="chapter-level-extent" id="Internal-Implementation-Stuff-_0028Lisp-Machine-chapter_0029">
+<div class="nav-panel">
+<p>
+Next: <a href="#Right-way-to-create-a-clean-load-band" accesskey="n" rel="next">Right way to create a clean load band</a>, Previous: <a href="#CADR-HDL-Internals" accesskey="p" rel="prev">CADR HDL Internals</a>, Up: <a href="#Top" accesskey="u" rel="up">Notes on the Lisp Machine</a> &nbsp; [<a href="#SEC_Contents" title="Table of contents" rel="contents">Contents</a>]</p>
+</div>
+<h2 class="chapter" id="Internal-Implementation-Stuff-_0028Lisp-Machine-chapter_0029-1"><span>12 Internal Implementation Stuff (Lisp Machine chapter)<a class="copiable-link" href="#Internal-Implementation-Stuff-_0028Lisp-Machine-chapter_0029-1"> &para;</a></span></h2>
+
+<p>The following chapters are intended to be merged into the Lisp Machine
+Manual when they have been written.
+</p>
+
+<ul class="mini-toc">
+<li><a href="#Bootstrap-loading" accesskey="1">Bootstrap loading</a></li>
+<li><a href="#Lisp-Machine-Storage" accesskey="2">Lisp Machine Storage</a></li>
+<li><a href="#Areas-and-Regions" accesskey="3">Areas and Regions</a></li>
+<li><a href="#The-Lisp-Machine-Macro_002dinstruction-Set" accesskey="4">The Lisp Machine Macro-instruction Set</a></li>
+<li><a href="#QFASL-format" accesskey="5">QFASL format</a></li>
+<li><a href="#Paging-internals" accesskey="6">Paging internals</a></li>
+</ul>
+<div class="section-level-extent" id="Bootstrap-loading">
+<h3 class="section"><span>12.1 Bootstrap loading<a class="copiable-link" href="#Bootstrap-loading"> &para;</a></span></h3>
+
+<div class="center"><strong class="strong">*** TO BE WRITTEN ***</strong>
+</div>
+
+</div>
+<div class="section-level-extent" id="Lisp-Machine-Storage">
+<h3 class="section"><span>12.2 Lisp Machine Storage<a class="copiable-link" href="#Lisp-Machine-Storage"> &para;</a></span></h3>
+
+<p>This section describes the format in which objects are stored in
+the Lisp Machine.
+</p>
+<div class="center"><strong class="strong">*** TO BE WRITTEN ***</strong>
+</div>
+
+<pre class="verbatim">
+	----------------------------------------------------------------
+	| 2 |1|    5    |                    24                        |
+	----------------------------------------------------------------
+          |  |       |                          |
+CDR CODE--|  |       |                          |
+USER CONTROL-|       |                          |
+                     |                          |
+DATA TYPE------------|                          |
+POINTER-----------------------------------------|
+</pre>
+<ul class="mini-toc">
+<li><a href="#DTP_002dTRAP" accesskey="1">DTP-TRAP</a></li>
+<li><a href="#DTP_002dNULL" accesskey="2">DTP-NULL</a></li>
+<li><a href="#DTP_002dFREE" accesskey="3">DTP-FREE</a></li>
+<li><a href="#DTP_002dSYMBOL" accesskey="4">DTP-SYMBOL</a></li>
+<li><a href="#DTP_002dSYMBOL_002dHEADER" accesskey="5">DTP-SYMBOL-HEADER</a></li>
+<li><a href="#DTP_002dFIX" accesskey="6">DTP-FIX</a></li>
+<li><a href="#DTP_002dEXTENDED_002dNUMBER" accesskey="7">DTP-EXTENDED-NUMBER</a></li>
+<li><a href="#DTP_002dHEADER" accesskey="8">DTP-HEADER</a></li>
+<li><a href="#DTP_002dGC_002dFORWARD" accesskey="9">DTP-GC-FORWARD</a></li>
+<li><a href="#DTP_002dEXTERNAL_002dVALUE_002dCELL_002dPOINTER">DTP-EXTERNAL-VALUE-CELL-POINTER</a></li>
+<li><a href="#DTP_002dONE_002dQ_002dFORWARD">DTP-ONE-Q-FORWARD</a></li>
+<li><a href="#DTP_002dHEADER_002dFORWARD">DTP-HEADER-FORWARD</a></li>
+<li><a href="#DTP_002dBODY_002dFORWARD">DTP-BODY-FORWARD</a></li>
+<li><a href="#DTP_002dLOCATIVE">DTP-LOCATIVE</a></li>
+<li><a href="#DTP_002dLIST">DTP-LIST</a></li>
+<li><a href="#DTP_002dU_002dENTRY">DTP-U-ENTRY</a></li>
+<li><a href="#DTP_002dFEF_002dPOINTER">DTP-FEF-POINTER</a></li>
+<li><a href="#DTP_002dARRAY_002dPOINTER">DTP-ARRAY-POINTER</a></li>
+<li><a href="#DTP_002dARRAY_002dHEADER">DTP-ARRAY-HEADER</a></li>
+<li><a href="#DTP_002dSTACK_002dGROUP">DTP-STACK-GROUP</a></li>
+<li><a href="#DTP_002dCLOSURE">DTP-CLOSURE</a></li>
+<li><a href="#DTP_002dSMALL_002dFLONUM">DTP-SMALL-FLONUM</a></li>
+<li><a href="#DTP_002dSELECT_002dMETHOD">DTP-SELECT-METHOD</a></li>
+<li><a href="#DTP_002dINSTANCE">DTP-INSTANCE</a></li>
+<li><a href="#DTP_002dINSTANCE_002dHEADER">DTP-INSTANCE-HEADER</a></li>
+<li><a href="#DTP_002dENTITY">DTP-ENTITY</a></li>
+<li><a href="#DTP_002dSTACK_002dCLOSURE">DTP-STACK-CLOSURE</a></li>
+</ul>
+<div class="subsection-level-extent" id="DTP_002dTRAP">
+<h4 class="subsection"><span>12.2.1 DTP-TRAP<a class="copiable-link" href="#DTP_002dTRAP"> &para;</a></span></h4>
+
+<pre class="verbatim">	----------------------------------------------------------------
+	|                                                              |
+	----------------------------------------------------------------
+</pre>
+</div>
+<div class="subsection-level-extent" id="DTP_002dNULL">
+<h4 class="subsection"><span>12.2.2 DTP-NULL<a class="copiable-link" href="#DTP_002dNULL"> &para;</a></span></h4>
+
+<pre class="verbatim">	----------------------------------------------------------------
+	|                                                              |
+	----------------------------------------------------------------
+</pre>
+</div>
+<div class="subsection-level-extent" id="DTP_002dFREE">
+<h4 class="subsection"><span>12.2.3 DTP-FREE<a class="copiable-link" href="#DTP_002dFREE"> &para;</a></span></h4>
+
+<pre class="verbatim">	----------------------------------------------------------------
+	|                                                              |
+	----------------------------------------------------------------
+</pre>
+</div>
+<div class="subsection-level-extent" id="DTP_002dSYMBOL">
+<h4 class="subsection"><span>12.2.4 DTP-SYMBOL<a class="copiable-link" href="#DTP_002dSYMBOL"> &para;</a></span></h4>
+
+<pre class="verbatim">	----------------------------------------------------------------
+	|                                                              |
+	----------------------------------------------------------------
+</pre>
+</div>
+<div class="subsection-level-extent" id="DTP_002dSYMBOL_002dHEADER">
+<h4 class="subsection"><span>12.2.5 DTP-SYMBOL-HEADER<a class="copiable-link" href="#DTP_002dSYMBOL_002dHEADER"> &para;</a></span></h4>
+
+<pre class="verbatim">	----------------------------------------------------------------
+	|                                                              |
+	----------------------------------------------------------------
+</pre>
+</div>
+<div class="subsection-level-extent" id="DTP_002dFIX">
+<h4 class="subsection"><span>12.2.6 DTP-FIX<a class="copiable-link" href="#DTP_002dFIX"> &para;</a></span></h4>
+
+<pre class="verbatim">	----------------------------------------------------------------
+	|                              24                              |
+	----------------------------------------------------------------
+                                        |
+                                        |
+                                        |
+                                        |
+                                        |
+VALUE OF FIXNUM-------------------------|
+</pre>
+</div>
+<div class="subsection-level-extent" id="DTP_002dEXTENDED_002dNUMBER">
+<h4 class="subsection"><span>12.2.7 DTP-EXTENDED-NUMBER<a class="copiable-link" href="#DTP_002dEXTENDED_002dNUMBER"> &para;</a></span></h4>
+
+<pre class="verbatim">	----------------------------------------------------------------
+	|                                                              |
+	----------------------------------------------------------------
+</pre>
+</div>
+<div class="subsection-level-extent" id="DTP_002dHEADER">
+<h4 class="subsection"><span>12.2.8 DTP-HEADER<a class="copiable-link" href="#DTP_002dHEADER"> &para;</a></span></h4>
+
+<pre class="verbatim">	----------------------------------------------------------------
+	|                                                              |
+	----------------------------------------------------------------
+</pre>
+</div>
+<div class="subsection-level-extent" id="DTP_002dGC_002dFORWARD">
+<h4 class="subsection"><span>12.2.9 DTP-GC-FORWARD<a class="copiable-link" href="#DTP_002dGC_002dFORWARD"> &para;</a></span></h4>
+
+<pre class="verbatim">	----------------------------------------------------------------
+	|                                                              |
+	----------------------------------------------------------------
+</pre>
+</div>
+<div class="subsection-level-extent" id="DTP_002dEXTERNAL_002dVALUE_002dCELL_002dPOINTER">
+<h4 class="subsection"><span>12.2.10 DTP-EXTERNAL-VALUE-CELL-POINTER<a class="copiable-link" href="#DTP_002dEXTERNAL_002dVALUE_002dCELL_002dPOINTER"> &para;</a></span></h4>
+
+<pre class="verbatim">	----------------------------------------------------------------
+	|                                                              |
+	----------------------------------------------------------------
+</pre>
+</div>
+<div class="subsection-level-extent" id="DTP_002dONE_002dQ_002dFORWARD">
+<h4 class="subsection"><span>12.2.11 DTP-ONE-Q-FORWARD<a class="copiable-link" href="#DTP_002dONE_002dQ_002dFORWARD"> &para;</a></span></h4>
+
+<pre class="verbatim">	----------------------------------------------------------------
+	|                                                              |
+	----------------------------------------------------------------
+</pre>
+</div>
+<div class="subsection-level-extent" id="DTP_002dHEADER_002dFORWARD">
+<h4 class="subsection"><span>12.2.12 DTP-HEADER-FORWARD<a class="copiable-link" href="#DTP_002dHEADER_002dFORWARD"> &para;</a></span></h4>
+
+<pre class="verbatim">	----------------------------------------------------------------
+	|                                                              |
+	----------------------------------------------------------------
+</pre>
+</div>
+<div class="subsection-level-extent" id="DTP_002dBODY_002dFORWARD">
+<h4 class="subsection"><span>12.2.13 DTP-BODY-FORWARD<a class="copiable-link" href="#DTP_002dBODY_002dFORWARD"> &para;</a></span></h4>
+
+<pre class="verbatim">	----------------------------------------------------------------
+	|                                                              |
+	----------------------------------------------------------------
+</pre>
+</div>
+<div class="subsection-level-extent" id="DTP_002dLOCATIVE">
+<h4 class="subsection"><span>12.2.14 DTP-LOCATIVE<a class="copiable-link" href="#DTP_002dLOCATIVE"> &para;</a></span></h4>
+
+<pre class="verbatim">	----------------------------------------------------------------
+	|                                                              |
+	----------------------------------------------------------------
+</pre>
+</div>
+<div class="subsection-level-extent" id="DTP_002dLIST">
+<h4 class="subsection"><span>12.2.15 DTP-LIST<a class="copiable-link" href="#DTP_002dLIST"> &para;</a></span></h4>
+
+<pre class="verbatim">	----------------------------------------------------------------
+	|                                                              |
+	----------------------------------------------------------------
+</pre>
+</div>
+<div class="subsection-level-extent" id="DTP_002dU_002dENTRY">
+<h4 class="subsection"><span>12.2.16 DTP-U-ENTRY<a class="copiable-link" href="#DTP_002dU_002dENTRY"> &para;</a></span></h4>
+
+<pre class="verbatim">	----------------------------------------------------------------
+	|                                                              |
+	----------------------------------------------------------------
+</pre>
+</div>
+<div class="subsection-level-extent" id="DTP_002dFEF_002dPOINTER">
+<h4 class="subsection"><span>12.2.17 DTP-FEF-POINTER<a class="copiable-link" href="#DTP_002dFEF_002dPOINTER"> &para;</a></span></h4>
+
+<pre class="verbatim">	----------------------------------------------------------------
+	|                                                              |
+	----------------------------------------------------------------
+</pre>
+</div>
+<div class="subsection-level-extent" id="DTP_002dARRAY_002dPOINTER">
+<h4 class="subsection"><span>12.2.18 DTP-ARRAY-POINTER<a class="copiable-link" href="#DTP_002dARRAY_002dPOINTER"> &para;</a></span></h4>
+
+<pre class="verbatim">	----------------------------------------------------------------
+	|                                                              |
+	----------------------------------------------------------------
+</pre>
+</div>
+<div class="subsection-level-extent" id="DTP_002dARRAY_002dHEADER">
+<h4 class="subsection"><span>12.2.19 DTP-ARRAY-HEADER<a class="copiable-link" href="#DTP_002dARRAY_002dHEADER"> &para;</a></span></h4>
+
+<pre class="verbatim">	----------------------------------------------------------------
+	|                                                              |
+	----------------------------------------------------------------
+</pre>
+</div>
+<div class="subsection-level-extent" id="DTP_002dSTACK_002dGROUP">
+<h4 class="subsection"><span>12.2.20 DTP-STACK-GROUP<a class="copiable-link" href="#DTP_002dSTACK_002dGROUP"> &para;</a></span></h4>
+
+<pre class="verbatim">	----------------------------------------------------------------
+	|                                                              |
+	----------------------------------------------------------------
+</pre>
+</div>
+<div class="subsection-level-extent" id="DTP_002dCLOSURE">
+<h4 class="subsection"><span>12.2.21 DTP-CLOSURE<a class="copiable-link" href="#DTP_002dCLOSURE"> &para;</a></span></h4>
+
+<pre class="verbatim">	----------------------------------------------------------------
+	|                                                              |
+	----------------------------------------------------------------
+</pre>
+</div>
+<div class="subsection-level-extent" id="DTP_002dSMALL_002dFLONUM">
+<h4 class="subsection"><span>12.2.22 DTP-SMALL-FLONUM<a class="copiable-link" href="#DTP_002dSMALL_002dFLONUM"> &para;</a></span></h4>
+
+<pre class="verbatim">	----------------------------------------------------------------
+	|                                                              |
+	----------------------------------------------------------------
+</pre>
+</div>
+<div class="subsection-level-extent" id="DTP_002dSELECT_002dMETHOD">
+<h4 class="subsection"><span>12.2.23 DTP-SELECT-METHOD<a class="copiable-link" href="#DTP_002dSELECT_002dMETHOD"> &para;</a></span></h4>
+
+<pre class="verbatim">	----------------------------------------------------------------
+	|                                                              |
+	----------------------------------------------------------------
+</pre>
+</div>
+<div class="subsection-level-extent" id="DTP_002dINSTANCE">
+<h4 class="subsection"><span>12.2.24 DTP-INSTANCE<a class="copiable-link" href="#DTP_002dINSTANCE"> &para;</a></span></h4>
+
+<pre class="verbatim">	----------------------------------------------------------------
+	|                                                              |
+	----------------------------------------------------------------
+</pre>
+</div>
+<div class="subsection-level-extent" id="DTP_002dINSTANCE_002dHEADER">
+<h4 class="subsection"><span>12.2.25 DTP-INSTANCE-HEADER<a class="copiable-link" href="#DTP_002dINSTANCE_002dHEADER"> &para;</a></span></h4>
+
+<pre class="verbatim">	----------------------------------------------------------------
+	|                                                              |
+	----------------------------------------------------------------
+</pre>
+</div>
+<div class="subsection-level-extent" id="DTP_002dENTITY">
+<h4 class="subsection"><span>12.2.26 DTP-ENTITY<a class="copiable-link" href="#DTP_002dENTITY"> &para;</a></span></h4>
+
+<pre class="verbatim">	----------------------------------------------------------------
+	|                                                              |
+	----------------------------------------------------------------
+</pre>
+</div>
+<div class="subsection-level-extent" id="DTP_002dSTACK_002dCLOSURE">
+<h4 class="subsection"><span>12.2.27 DTP-STACK-CLOSURE<a class="copiable-link" href="#DTP_002dSTACK_002dCLOSURE"> &para;</a></span></h4>
+
+<pre class="verbatim">	----------------------------------------------------------------
+	|                                                              |
+	----------------------------------------------------------------
+</pre>
+</div>
+</div>
+<div class="section-level-extent" id="Areas-and-Regions">
+<h3 class="section"><span>12.3 Areas and Regions<a class="copiable-link" href="#Areas-and-Regions"> &para;</a></span></h3>
+
+</div>
+<div class="section-level-extent" id="The-Lisp-Machine-Macro_002dinstruction-Set">
+<h3 class="section"><span>12.4 The Lisp Machine Macro-instruction Set<a class="copiable-link" href="#The-Lisp-Machine-Macro_002dinstruction-Set"> &para;</a></span></h3>
+
+<p>This section describes the Lisp Machine&rsquo;s interpreted order code,
+referred to below as &quot;macrocode.&quot;  The macrocode is designed to be
+highly bit-efficient, and well-suited to Lisp.  The compilation of
+Lisp into macrocode is very straightforward, as will be shown in
+examples below.
+</p>
+<div class="center"><strong class="strong">*** TO BE WRITTEN ***</strong>
+</div>
+
+</div>
+<div class="section-level-extent" id="QFASL-format">
+<h3 class="section"><span>12.5 QFASL format<a class="copiable-link" href="#QFASL-format"> &para;</a></span></h3>
+
+<div class="center"><strong class="strong">*** TO BE WRITTEN ***</strong>
+</div><div class="center"><strong class="strong">[When written, move this under &ldquo;Analyzing QFASL Files&rdquo;]</strong>
+</div>
+
+</div>
+<div class="section-level-extent" id="Paging-internals">
+<h3 class="section"><span>12.6 Paging internals<a class="copiable-link" href="#Paging-internals"> &para;</a></span></h3>
+
+<div class="center"><strong class="strong">*** TO BE WRITTEN ***</strong>
+</div><div class="center"><strong class="strong">[When written, move this under &ldquo;The Paging System&rdquo;]</strong>
+</div>
+&#12;
+<hr>
+</div>
+</div>
+<div class="chapter-level-extent" id="Right-way-to-create-a-clean-load-band">
+<div class="nav-panel">
+<p>
+Next: <a href="#Notes-on-using-LOCAL_002dFILE" accesskey="n" rel="next">Notes on using LOCAL-FILE</a>, Previous: <a href="#Internal-Implementation-Stuff-_0028Lisp-Machine-chapter_0029" accesskey="p" rel="prev">Internal Implementation Stuff (Lisp Machine chapter)</a>, Up: <a href="#Top" accesskey="u" rel="up">Notes on the Lisp Machine</a> &nbsp; [<a href="#SEC_Contents" title="Table of contents" rel="contents">Contents</a>]</p>
+</div>
+<h2 class="chapter" id="Right-way-to-create-a-clean-load-band-1"><span>13 Right way to create a clean load band<a class="copiable-link" href="#Right-way-to-create-a-clean-load-band-1"> &para;</a></span></h2>
+
+<pre class="verbatim">29-Oct-83 11:21:24-CDT,1900;000000000000
+Return-Path: &lt;@MIT-MC:rsl@SPA-NIMBUS&gt;
+Received: from MIT-MC by UTEXAS-20.ARPA with TCP; Tue 25 Oct 83 15:19:04-CDT
+Received: from SPA-RUSSIAN by SPA-Nimbus with CHAOS; Tue 25-Oct-83 13:24:02-PST
+Date: Tuesday, 25 October 1983, 13:23-PST
+From: Richard Lamson &lt;rsl at SPA-NIMBUS&gt;
+Subject: pathname defaulting
+To: Jonathan Slocum &lt;LRC.Slocum at UTEXAS-20 at mc&gt;,
+    cmp.cohen at UTEXAS-20 at mc, HOSS at SCRC-TENEX
+Cc: slug at UTEXAS-20 at mc
+In-reply-to: The message of 25 Oct 83 07:42-PST from Jonathan Slocum &lt;LRC.Slocum at UTEXAS-20&gt;
+
+    Date: Tue 25 Oct 83 10:42:44-CDT
+    From: Jonathan Slocum &lt;LRC.Slocum@UTEXAS-20.ARPA&gt;
+ ....
+    What do you think -- is this a bug, or a feature?  The way things are arranged
+    now, it is not safe to reconfigure a configured band that one has used the
+    editor in [for example], since all sorts of old pathnames start getting saved
+    away for future use.  Beware...
+
+As documented in the Lisp Machine manual on page 424, the &quot;right&quot; way to
+create a world is to do as little as possible in it before saving it.
+That is, you should not use the editor, the File System Editor, Peek,
+etc.  Please read the last paragraph on that page for (slightly)
+incorrect information but sound advice.
+
+You should do something which looks like this:
+
+   &lt;cold boot&gt;
+   (login &quot;whoever&quot; T)	; don't load an init file -- makes your world dirtier
+   (make-system ...)	; load whatever things you want in your world
+or (load ...)		; repeat for each file you want loaded
+   (si:update-site-configuration-info)
+                        ; only if the site information has changed
+   (si:full-gc)		; optional -- makes the world somewhat smaller.
+   (disk-save ...)	; save it away
+
+Although it says to use the function PRINT-DISK-LABEL, I try to do that
+before cold booting, so even the little garbage that function generates
+is not present in the saved world.
+</pre>&#12;
+<hr>
+</div>
+<div class="chapter-level-extent" id="Notes-on-using-LOCAL_002dFILE">
+<div class="nav-panel">
+<p>
+Next: <a href="#Working-with-gore_002e_002e_002e" accesskey="n" rel="next">Working with gore...</a>, Previous: <a href="#Right-way-to-create-a-clean-load-band" accesskey="p" rel="prev">Right way to create a clean load band</a>, Up: <a href="#Top" accesskey="u" rel="up">Notes on the Lisp Machine</a> &nbsp; [<a href="#SEC_Contents" title="Table of contents" rel="contents">Contents</a>]</p>
+</div>
+<h2 class="chapter" id="Notes-on-using-LOCAL_002dFILE-1"><span>14 Notes on using LOCAL-FILE<a class="copiable-link" href="#Notes-on-using-LOCAL_002dFILE-1"> &para;</a></span></h2>
+
+<p>Load the local file system:
+</p>
+<div class="example lisp">
+<pre class="lisp-preformatted">	(MAKE-SYSTEM 'LOCAL-FILE)
+</pre></div>
+
+<p>If doing this is the first time (this only needs to be done once):
+</p>
+<ul class="itemize mark-bullet">
+<li>Create a FILE partition using <code class="code">SI:EDIT-DISK-LABEL</code>.
+</li><li><code class="code">(FS:INITIALIZE-FILE-SYSTEM)</code>
+</li><li><code class="code">(FS:BOOT-FILE-SYSTEM)</code>, good to do; but shouldn&rsquo;t be needed.
+</li></ul>
+
+<p>Good idea to do <code class="code">DISK-SAVE</code> at this point.
+</p>
+<p>To create a directory, e.g., your home directory:
+</p>
+<div class="example lisp">
+<pre class="lisp-preformatted">(CREATE-DIRECTORY &quot;LM:AMS;&quot;)
+</pre></div>
+
+<p>To edit your Lisp Machine login file:
+</p>
+<div class="example lisp">
+<pre class="lisp-preformatted">(ed &quot;LM:AMS;LISPM.INIT&quot;
+</pre></div>
+
+<p>Start DIRED in the root directory:
+</p><div class="example lisp">
+<pre class="lisp-preformatted">(dired &quot;LM:&lt;&gt;&quot;)		  ; 
+</pre></div>
+
+<p>See the Lisp Machine Manual for more file system operations.
+</p>
+
+<p>The file <samp class="file">SYS:FILE;FSDOC TEXT</samp> documents some aspects of the local file
+system.
+</p>
+<ul class="mini-toc">
+<li><a href="#Lisp-Machine-file-name-syntax" accesskey="1">Lisp Machine file name syntax</a></li>
+<li><a href="#Copying-files-to-and-from-Lisp-Machine" accesskey="2">Copying files to and from Lisp Machine</a></li>
+</ul>
+<div class="section-level-extent" id="Lisp-Machine-file-name-syntax">
+<h3 class="section"><span>14.1 Lisp Machine file name syntax<a class="copiable-link" href="#Lisp-Machine-file-name-syntax"> &para;</a></span></h3>
+
+<p>Lisp Machine file name syntax (from FSDOC.TEXT):
+</p>
+<div class="example">
+<pre class="example-preformatted">HOST: DEVICE: DIRECTORY; FILENAME.TYPE#VERSION
+</pre></div>
+
+<p>The DEVICE field has no meaning.
+The DIRECTORY field is actually
+</p>
+<div class="example">
+<pre class="example-preformatted">  [DIRECTORY[.SUBDIRECTORY[.SUBDIRECTORY[...]]]]
+</pre></div>
+
+<p>The order of the fields is not important:
+</p>
+<div class="example">
+<pre class="example-preformatted">&quot;LM: DLA; FOO.LISP&quot;
+&quot;LM: DLA; FOO#&lt;&quot;
+&quot;DLA;.LISP&quot;
+&quot;#4&quot;
+&quot;.LISP FOO DLA;#4 LM:&quot;
+</pre></div>
+
+<p>The host LM always refers to the Local Machine.
+</p>
+<p>VERSION can be one of the following tokens:
+</p><div class="example">
+<pre class="example-preformatted">  &gt;          Newest.  Same meaning as ITS.
+  &lt;          Oldest.  Same meaning as ITS.
+  0          Newest.  On output, this will not create a new file if one already
+             exists, rather, it will overwrite the existing newest version.
+  *          Wild.  Same meaning as ITS.
+  (absent)   Unspecific.  This is the same as &gt; unless there are wildcard characters
+             elsewhere in the name and type.  In that case, it is identical to *.
+  n or +n    Refers to a specific version, as on ITS.
+  -n         Refers to the version NEWEST minus n.
+</pre></div>
+
+</div>
+<div class="section-level-extent" id="Copying-files-to-and-from-Lisp-Machine">
+<h3 class="section"><span>14.2 Copying files to and from Lisp Machine<a class="copiable-link" href="#Copying-files-to-and-from-Lisp-Machine"> &para;</a></span></h3>
+
+<p>To copy files use the COPY-FILE function.
+</p>
+<div class="example lisp">
+<pre class="lisp-preformatted">;; Copy lispm.init from host to LispM.
+(copy-file &quot;oz://home//ams//lispm.init&quot; &quot;lm:ams;lispm.init&quot;)
+
+;; Copies all files in LM:AMS; to OZ:/tmp.
+(copy-file &quot;lm:ams;*.*#*&quot; &quot;oz://tmp&quot;) 
+
+</pre></div>
+&#12;
+<hr>
+</div>
+</div>
+<div class="chapter-level-extent" id="Working-with-gore_002e_002e_002e">
+<div class="nav-panel">
+<p>
+Next: <a href="#Lisp-Machine-Hackers" accesskey="n" rel="next">Lisp Machine Hackers</a>, Previous: <a href="#Notes-on-using-LOCAL_002dFILE" accesskey="p" rel="prev">Notes on using LOCAL-FILE</a>, Up: <a href="#Top" accesskey="u" rel="up">Notes on the Lisp Machine</a> &nbsp; [<a href="#SEC_Contents" title="Table of contents" rel="contents">Contents</a>]</p>
+</div>
+<h2 class="chapter" id="Working-with-gore_002e_002e_002e-1"><span>15 Working with gore...<a class="copiable-link" href="#Working-with-gore_002e_002e_002e-1"> &para;</a></span></h2>
+
+<p>If modifying the following (anything under DEFS in SYSTEM-INTERNALS):
+</p>
+<ol class="enumerate">
+<li> SYS: SYS2; PRODEF
+</li><li> SYS: IO; RDDEFS
+</li><li> SYS: SYS2; SGDEFS
+</li><li> SYS: SYS2; NUMDEF
+</li></ol>
+
+<p>Recompile everything.  To incrementally test this do:
+</p>
+<div class="example lisp">
+<pre class="lisp-preformatted">(RECOMPILE-COLD-LOAD-FILES)
+</pre></div>
+
+<p>Make a new COLD load band, and check that everything works.
+</p>
+<div class="example lisp">
+<pre class="lisp-preformatted">(RECOMPILE-MINI-FILES)
+</pre></div>
+
+<p>See if the system loads.
+</p>
+<div class="example lisp">
+<pre class="lisp-preformatted">(NEW-SYSTEM T)
+</pre></div>
+
+<p>And then MAKE-COLD, QLD, DISK-SAVE.
+</p>
+<p>If just modifying some of the cold load files, or MINI file
+</p>
+<div class="example lisp">
+<pre class="lisp-preformatted">(CHECK-COLD-LOAD-FILES)
+</pre></div>
+
+<p>or
+</p>
+<div class="example lisp">
+<pre class="lisp-preformatted">(CHECK-MINI-FILES)
+</pre></div>
+
+<p>as suitable.
+</p>&#12;
+<hr>
+</div>
+<div class="chapter-level-extent" id="Lisp-Machine-Hackers">
+<div class="nav-panel">
+<p>
+Previous: <a href="#Working-with-gore_002e_002e_002e" accesskey="p" rel="prev">Working with gore...</a>, Up: <a href="#Top" accesskey="u" rel="up">Notes on the Lisp Machine</a> &nbsp; [<a href="#SEC_Contents" title="Table of contents" rel="contents">Contents</a>]</p>
+</div>
+<h2 class="chapter" id="Lisp-Machine-Hackers-1"><span>16 Lisp Machine Hackers<a class="copiable-link" href="#Lisp-Machine-Hackers-1"> &para;</a></span></h2>
+
+<pre class="verbatim">GAB
+AKR	Alex Krymm
+ALR	Andrew L. Ressler
+DULCEY	Mark J. Dulcey
+ELISHA	Elisha Sacks
+FILECOMPUTER
+HDT	Howard D. Trachtman
+JGB	Jonathan G. Bliss
+LISPM	A Default User
+LMFILE	Use by @code{FILE-COMPUTER} as a default user.
+MLY	Richard Mlynarik
+MUSE	Tom Cloney
+PGS	Patrick G. Sobalvarro
+RAMESH	Ramesh S. Patil
+RLK	Robert L. Krawitz
+RMS	Richard M. Stallman
+RPK	Robert P. Krajewski
+STRAZ	Steve Strassmann
+SUNDAR	Sundar Narasimhan
+TIM	Tim McNerney
+ADS	Sathya D.Narayanan
+KAB	Kim A. Barrett
+PHILIP	Philippe Brou
+RG	Richard Greenblatt
+SAZ	David M. J. Saslav
+HIC	Howard I. Cannon
+TAFT	Jonathan D. Taft
+</pre>
+</div>
+</div>
+
+
+
+</body>
+</html>

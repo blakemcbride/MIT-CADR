@@ -1,0 +1,757 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <link rel="stylesheet" type="text/css"
+	  href="../lm3.css">
+    <title>LM-3 --- Lisp Machine System Release 86 Notes</title>
+  </head>
+  <body>
+    <center><h1>Lisp Machine System Release 86 Notes</h1></center>
+
+    <pre>
+Date: 16 June 1982 07:01-EDT
+From: Richard M. Stallman &lt;RMS at MIT-AI&gt;
+Subject: System 86 announcement
+To: INFO-LISPM at MIT-AI
+
+The announcement for system 86 is finished.
+System 86 has no known new bugs now,
+and several interesting new features,
+including tail recursion as a run-time option.
+
+See LMDOC;SYS86 MSG.
+
+System 86 comes with microcode 136.
+Microcode 136 will work with system 85.
+Microcodes 117, 123 and 124 will work with system 86, modulo minor bugs
+that existed for months or years, if you do not use tail recursion.
+
+There are no major incompatibilities in source code between system 85 and
+system 86.  System 85 compiled code will also all run in system 86.
+86 is very well debugged, and there is little reason for anyone not
+to move from 85 to 86 right away.
+
+Major Changes::
+   [1] DEFSUBST functions now run compiled.
+   [2] :SELF-FLAVOR declarations.
+   [3] The Mode Line functions and editor commands have been renamed.
+   [4] You can now make flavor instances print out so they can read back.
+   [5] Tail Recursion!
+
+New Functions:
+   [6] MAKE-ARRAY accepts a new argument keyword :INITIAL-VALUE.
+   [7] The function (STORE-CONDITIONAL location oldvalue newvalue) now exists.
+   [10] VIEWF, UNDELETEF, FUNDEFINE and PRINT-HERALD are now in GLOBAL.
+   [11] The function UNDEFUN is improved.
+   [12] New functions LOCATION-BOUNDP and LOCATION-MAKUNBOUND.
+   [13] The functions SEND and LEXPR-SEND are now defined.
+   [14] The special form WITH-HELP-STREAM creates a stream for a help message.
+   [15] FS:DIRECTORY-LIST and FS:DIRECTORY-LIST-STREAM are improved.
+   [16] Window input operations: :ANY-TYI and :WAIT-FOR-INPUT-WITH-TIMEOUT.
+   [17] ZWEI:INTERVAL-WITH-FONTS-IO now supports :SET-POINTER (to 0 only),
+   [20] New functions for closures.
+   [21] New special forms: VARIABLE-BOUNDP, VARIABLE-MAKUNBOUND, VARIABLE-LOCATION.
+   [22] The new function TIME-INCREMENT adds a number to a time (such as (TIME)
+   [23] The new function FUNCTION-NAME, returns the name of any sort of function object.
+   [24] The new function FS:FLAVOR-ALLOWED-INIT-KEYWORDS.
+   [25] New functions to read and print intervals of time.
+   [26] SI:NULL-STREAM.
+   [27] How to add new keywords for ADD-INITIALIZATION.
+   [28] New macro WITH-OPEN-STRING.
+   [29] WITH-INPUT-FROM-STRING and WITH-OUTPUT-TO-STRING can now be nested.
+
+Utilities and Operation:
+   [@] Compiler warnings are now recorded in a data base of list structure.
+   [A] New font handling features in PRESS:PRINT-FROM-STREAM.
+   [B] You can specify a filename instead of a buffer name in ZWEI.
+   [C] You can easily insert defaults while typing a filename in ZWEI.
+   [D] M-X Save All Files now asks all its questions immediately.
+   [E] C-M-L now operates on all the buffers that you see in a List Buffers.
+   [F] ZWEI can display a file while still reading it.
+   [G] New ZWEI commands for producing hardcopy:
+   [H] Inspector improvements.
+   [I] Passwords for file jobs are remembered for you.
+   [J] Better DWIM in BREAKON, TRACE and ADVISE.
+   [K] Reloading files from which some methods have been deleted.
+   [L] Changes in Terminal key commands.
+   [M] Reading multi-font files into ZWEI should be much faster.
+   [N] New ZWEI feature for visiting lists of things (callers, etc.)
+   [O] There are three new commands for manipulating patches:
+   [P] DRIBBLE-ALL is a new alternate way of saving your terminal i/o.
+   [Q] Conversation-motion commands in CONVERSE.
+   [R] CHAOS:NOTIFY and CHAOS:NOTIFY-ALL-LMS
+   [S] DIRED features.
+   [T] It is no longer necessary to do TV:SET-TV-SPEED.
+   [U] Each lisp listener window now has its own binding of PACKAGE.
+   [V] TV:SET-DEFAULT-FONT now works "right".
+   [W] New feature to allow shift keys to replace double-clicking.
+   [X] New feature in Choose-Variable-Values.
+   [Y] Hosts not in the host table can be named, as CHAOS|nnnn.
+   [Z] Control-Shift-letter and Meta-Shift-letter in ZWEI:
+   [AA] Help Apropos in ZWEI is now much faster.
+
+The worst incompatibility comes from this feature:
+
+[1] DEFSUBST functions now run compiled.
+
+You can now compile a DEFSUBST just like any other function.  The resulting
+compiled subst executes with the speed of compiled code when applied, but
+the expr definition is still present as well to enable the compiler to open code
+explicit calls to the DEFSUBST.
+
+These compiled DEFSUBSTs run properly in old systems, but only system 86
+knows how to expand them when you compile calls to them.  If you do your
+compilation in 86, the resulting binary files should work in earlier systems, but
+if you compile a file of definitions in 86, load the result into 85, and compile
+other files there which use the definitions, they will fail to be open-coded.  This
+can be patched in 85 if people need it.  But it may be easier for you to simply
+stop using 85.
+
+Undeclared free variables in DEFSUBSTs do not get warnings, because they occur
+frequently (default pointers in DEFSTRUCTs, etc.).  Such a DEFSUBST is reasonable
+as long as you intend it only to be expanded; if you call it at run time, an error
+will occur then since the variable will be unbound.
+
+Changes in programming:
+
+[2] :SELF-FLAVOR declarations.
+
+In place of DECLARE-FLAVOR-INSTANCE-VARIABLES around a function, you
+can now use (DECLARE (:SELF-FLAVOR flavorname)) as the first thing in the body
+of the function.  This is cleaner because it allows the DEFUN itself to be the
+top-level list in your file.  While this form of code can only be compiled in
+system 86, the compiled code is identical to that produced for
+DECLARE-FLAVOR-INSTANCE-VARIABLES, and runs at full speed in system 85, and
+at lower speed in system 79.
+
+The purpose of this change is to reduce the need to put anything "around" the
+DEFUNs in source files.
+
+[3] The Mode Line functions and editor commands have been renamed
+(to Attribute List).
+
+The list of properties obtained from the "-*-" line at the front of a text file is
+now called the file's attribute list rather than its property list.  The functions for
+accessing this are now
+
+  FS:FILE-EXTRACT-ATTRIBUTE-LIST (stream) return the attribute list
+	read from that stream, which should initially be at beginning of file.
+	The stream will have its pointer returned to the beginning after the
+	operation.  The list is returned as an alternating list of properties
+	(interned in USER) and values.  :MODE, :PACKAGE, :BASE are typical.
+  FS:FILE-READ-ATTRIBUTE-LIST (generic-pathname stream)
+	read the attribute list from the stream, and put each attribute
+	as a property on the generic pathname.
+  FS:FILE-ATTRIBUTE-LIST (pathname)
+	return the attribute list of the specified file (text or qfasl).
+  FS:FILE-ATTRIBUTE-BINDINGS (generic-pathname)
+	returns two values describing the bindings to be made before
+	reading things from that file.  The two values are a list of
+	variables and a list of values.  They can be passed to PROGV
+	to do the binding.  Variables bound will typically include
+	PACKAGE, BASE and IBASE.
+
+The ZWEI commands Update Mode Line and Reparse Mode Line now have new
+names Update Attributes List and Reparse Attributes List.  The former
+changes the file's -*- line to contain the current mode, package, fonts, and base.
+The latter examines the attribute line and sets the current mode, package, fonts,
+and base.  A related new ZWEI command is Dired Print File Attributes
+(invoked by , in DIRED) which prints out the attribute list of the file indicated
+by the cursor.
+
+[4] You can now make flavor instances print out so they can read back.
+
+Pathnames use this mechanism; you will see that they print out a little
+differently.  You can make use of this feature for any other sort of abstract
+object (flavor or class instance, or named structure).  Your object must print
+itself out as #typename additional-data.  (For those not reading this on a Lisp
+machine,  and  are horseshoes).  You can bring this about by defining the
+object's :PRINT-SELF operation to print that way, using whatever additional-data
+you need.  typename is a keyword that READ uses to figure out how to read in
+the rest of the printed representation and construct the object.  It is read in in
+package USER (but it can contain a package prefix).  The resulting symbol
+should either have a SI:READ-INSTANCE property or be the name of a flavor
+which handles the :READ-INSTANCE operation.
+
+In the first case, the property is applied as a function to the typename symbol
+itself and the input stream.  In the second, the handler for that operation is
+applied to the operation name (as always), the typename symbol, and the input
+stream (three arguments, but the first is implicit and not mentioned in the
+DEFMETHOD).  SELF will be NIL and instance variables should not be used.  In
+either case, the handler function should read the remaining data from the stream,
+and construct and return the datum it describes.  It should return with the ""
+character waiting to be read from the input stream (:UNTYI it if necessary).  READ
+will get an error after it is returned to if a "" character doesn't follow.
+
+The typename can be any symbol with an appropriate property or flavor, not
+necessarily related to the type of object that is created; but for clarity, it is good
+if it is the same as the TYPEP of the object printed.  Since the type symbol is
+passed to the handler, one flavor's handler can be inherited by many other
+flavors and can examine the type symbol read in to decide what flavor to
+construct.
+
+[5] Tail Recursion!
+
+The Lisp machine is now tail-recursive if the variable TAIL-RECURSION-FLAG is
+not NIL.  Specifically, any time one function finishes by calling another function,
+if no special variables or catches are present in the calling function, the caller's
+stack frame will be thrown away.  This means that certain programs will now
+execute in bounded stack space which used to require unbounded stack space.
+It has an intrinsic drawback: less information is left on the stack to be examined
+in the error handler.  It is for this reason that the new mode is optional.
+
+Tail recursion does not take place when
+   -- the calling function has bound special variables
+   -- the call is within a *CATCH in the calling function.
+   -- the calling function has a &REST argument
+	which lives on the stack.
+   -- the calling function has asked for the location of any
+	argument or local variable.
+
+
+New Functions:
+
+[6] MAKE-ARRAY accepts a new argument keyword :INITIAL-VALUE.
+
+The value supplied with the :INITIAL-VALUE keyword is stored in every element
+of the array.  This uses the new function (ARRAY-INITIALIZE array value start end)
+which is by far the fastest way to propagate one value through an array.  Another
+new function is ARRAY-RANK, which is a new name for ARRAY-/#-DIMS.
+
+[7] The function (STORE-CONDITIONAL location oldvalue newvalue) now exists.
+
+It stores the new value only if the contents match the old value.  This is a basic
+building block for atomic testing-and-modifying operations for interlocking.
+**NOTE** if given a list as first argument, it tests and stores into the CDR of the
+list, not its CAR.  This is in accord with the general principle that you should
+reference locatives with CDR rather than CAR: then CDR of the list pointer gets
+you the cdr of the cons cell, and CDR of the locative pointer gets you the car of
+the cons.  Thus, by passing a function either the list pointer or the locative, you
+can cause the function, which uses CDR, to refer to either the car or the cdr of
+the cell you have in hand.  (LOCF (CAR ...)) and (LOCF (CDR ...)) are defined so
+as to work with this convention.
+
+[10] VIEWF, UNDELETEF, FUNDEFINE and PRINT-HERALD are now in GLOBAL.
+
+VIEWF prints the contents of a file.  UNDELETEF undeletes a file.  FUNDEFINE
+undefines any function spec.  PRINT-HERALD prints the things that are printed at
+the top of the screen when you boot (system version numbers, machine host
+name, etc).
+
+[11] The function UNDEFUN, which reverts a function spec to its previous
+definition, now offers to FUNDEFINE the function spec if it has no previous
+definition.
+
+[12] New functions LOCATION-BOUNDP and LOCATION-MAKUNBOUND.
+
+The function LOCATION-BOUNDP, given a locative, tells you whether the
+loction is bound, as opposed to "unbound" (contains DTP-NULL).
+(LOCATION-BOUNDP (VALUE-CELL-LOCATION exp)) is equivalent to (BOUNDP exp).
+Similarly, there is LOCATION-MAKUNBOUND, which makes the location be
+"unbound".
+
+[13] The functions SEND and LEXPR-SEND are now defined.
+
+These are now the preferred names for message-passing to objects.  At present,
+they are simply macros which expand into FUNCALL and LEXPR-FUNCALL
+respectively.  It is possible that at some future time additional functionality
+might be added to message passing which will require the use of the new
+functions.
+
+[14] The special form WITH-HELP-STREAM creates a stream for use in printing a
+long help message.  It takes the form
+  (WITH-HELP-STREAM (stream . options) &BODY body)
+Options are :LABEL label, :WIDTH width-var, :HEIGHT height-var, and :SUPERIOR
+superior-window.  The label should be something appropriate for the message.
+The WIDTH and HEIGHT options are useful if the program wants to format the
+help message based on the size of the window.  The body gets turned into a
+LAMBDA-expression with the stream and the width and height variables bound
+appropriately; note that this means that variables from the surrounding program
+that are to be accessed by the body must be special.
+
+[15] FS:DIRECTORY-LIST and FS:DIRECTORY-LIST-STREAM are improved.
+
+The directory list element for pathname NIL, which describes the directory as a
+whole, now contains a property named :PATHNAME whose value is the pathname
+which the directory list was made from.  If you specify a directory that does not
+exist, and type a name to use instead from the terminal, this will be the name
+that was actually used.  ZWEI uses this, so that it correctly understands what
+directory was ultimately specified in DIRED, etc.
+
+Note how this has no connection with any "new error system".  Having hacked the
+error handler recently, I can appreciate some of the benefits to be had from a
+new error system, and I plan to implement one as soon as Symbolics has finished
+(so it can be compatible in use).  But I also believe it has been used as an
+excuse in many contexts where it is not really relevant.
+
+[16] Window input operations: :ANY-TYI and :WAIT-FOR-INPUT-WITH-TIMEOUT.
+
+The operation :ANY-TYI is now defined on all windows (all which have :TYI,
+that is -- it is in TV:STREAM-MIXIN).  The only thing that TV:ANY-TYI-MIXIN does
+now is cause :TYI to discard everything but fixnums.  This will eventually
+become the default behavior and TV:ANY-TYI-MIXIN will become a no-op.
+
+The operation :WAIT-FOR-INPUT-WITH-TIMEOUT is also now defined in
+TV:STREAM-MIXIN.  This operation takes an argument, an amount of time in
+60'ths of a second, and returns in that amount of time or when input is available,
+whichever comes first.
+
+[17] ZWEI:INTERVAL-WITH-FONTS-IO now supports :SET-POINTER (to 0 only),
+:PATHNAME, and :FRESH-LINE messages.  This means these fake files act more like
+real ones than before; this might be useful to someone.  (ZWEI:INTERVAL-IO
+streams have supported these for some time; however, a related bug has been
+fixed.)
+
+[20] New functions for closures.
+
+CLOSURE-VARIABLES returns a list of the
+variables bound in a closure; EQUAL to the first argument used when the closure
+was made.
+
+COPY-CLOSURE returns a new closure with the same function, variables andvalues
+as the one you provide.  The new closure and the old one do not share bindings.
+
+(BOUNDP-IN-CLOSURE closure symbol-or-locative) returns T if that symbol or
+locative would be BOUNDP (or LOCATIVE-BOUNDP) if you were inside the closure.
+MAKUNBOUND-IN-CLOSURE, with the same arguments, makes it be not bound.
+These join the existing functions SYMEVAL-IN-CLOSURE and SET-IN-CLOSURE.
+All four can read or write the current binding of the variable if the closure does
+not bind it.
+
+[21] New special forms: VARIABLE-BOUNDP, VARIABLE-MAKUNBOUND, VARIABLE-LOCATION.
+
+(VARIABLE-LOCATION &QUOTE variable-name) returns a locative pointing to where
+the value of the variable is stored.  This used to be written as
+(VALUE-CELL-LOCATION 'variable-name), but it is really incorrect for
+VALUE-CELL-LOCATION to know about local variables.  It should always refer to
+the symbol's value cell, like SYMEVAL and SET.  For now, it still does know about
+local variables, but the compiler warns you if you use it that way.
+
+Similarly, use (VARIABLE-BOUNDP variable-name) to test whether a variable is
+bound.  For ordinary local variables, this is not useful, since the answer is always
+T; but for flavor instance variables it is useful.  (BOUNDP 'variable-name)
+continues to work, but elicits a warning from the compiler.
+VARIABLE-MAKUNBOUND also exists.
+
+Compiled code using these new special forms will run properly in earlier
+systems even though the special forms do not exist in those systems.
+
+[22] The new function TIME-INCREMENT adds a number to a time (such as (TIME)
+returns) to get a new time.  The number is in units of 1/60 second.  This
+function joins TIME-DIFFERENCE and TIME-LESSP.
+
+[23] The new function FUNCTION-NAME returns the name of any sort of function.
+
+If the argument is a function object for which a name can be determined,
+FUNCTION-NAME returns that name; otherwise, it returns the original object.
+This is useful for printing messages about a function.  The second value
+returned is T if a name was actually found.  A second optional argument, if
+non-nil, says that if the first argument is an instance of a flavor, the flavor name
+should be returned as the function name.  This is not always desirable, because
+the flavor name doesn't identify the particular instance.
+
+[24] FS:FLAVOR-ALLOWED-INIT-KEYWORDS.
+
+The new function FS:FLAVOR-ALLOWED-INIT-KEYWORDS returns a list of all the
+init keywords which a specified flavor understands.  The argument is a flavor
+name (a symbol).
+
+[25] New functions to read and print intervals of time.
+
+There are new functions for reading and printing time intervals.  They convert
+between strings of the form "3 minutes 23 seconds" and fixnums representing
+numbers of seconds.  Here are the details:
+
+TIME:PRINT-INTERVAL-OR-NEVER interval &OPTIONAL (stream standard-output)
+    interval should be a non-negative fixnum, or NIL.  This function
+    prints interval's representation as a time interval onto stream.
+    If interval is NIL, it prints "Never".
+
+TIME:PARSE-INTERVAL-OR-NEVER string &OPTIONAL start end
+    string is the character string representation of an interval of time.
+    start and end specify a substring of string to be parsed; they
+    default to the beginning and end of string, respectively.  The
+    function returns a fixnum if string represented an interval, or NIL if
+    string represented "never".  If string is anything else, an error is
+    signalled.  Here are some examples of acceptable strings:
+
+	"4 seconds" "4 secs" "4 s"
+	"5 mins 23 secs" "5 m 23 s" "23 SECONDS 5 M"
+	"3 yrs 1 week 1 hr 2 mins 1 sec"
+	"never" "not ever" "no" ""
+
+    Note that several abbreviations are understood, the components may be in
+    any order, and case (upper versus lower) is ignored.  Also, "months" are
+    not recognized, since various months have different lengths and there is
+    no way to know which month is being spoken of.  This function will
+    always accept anything that was produced by TIME:PRINT-INTERVAL-OR-NEVER;
+    furthermore, it will return exactly the same fixnum (or NIL) that was printed.
+
+TIME:READ-INTERVAL-OR-NEVER &OPTIONAL (stream standard-input)
+    This function reads a line of input from stream (using READLINE) and
+    then calls TIME:PARSE-INTERVAL-OR-NEVER on the resulting string.
+
+[26] SI:NULL-STREAM.
+
+SI:NULL-STREAM (the symbol itself, not its value) can be used as an I/O
+stream which discards all output and returns immediate EOF on input.
+
+[27] How to add new keywords for ADD-INITIALIZATION.
+
+If you want to add new keywords that can be understood by ADD-INITIALIZATION
+and the other initialization functions, you can do so by pushing a new element
+onto the following variable:
+
+SI:INITIALIZATION-KEYWORDS [Variable]
+    Each element on this list defines the name of one initialization list.
+    Each element is a list of two or three elements.  The first is the
+    keyword symbol that names the initialization list.  The second is a
+    special variable, whose value is the initialization list itself.  The
+    third, if present, is a symbol defining the default "time" at which
+    initializations added to this list should be evaluated; it should be
+    SI:NORMAL, SI:NOW, SI:FIRST, or SI:REDO.  This third element just acts
+    as a default; if the list of keywords passed to ADD-INITIALIZATION
+    contains one of the keywords NORMAL, NOW, FIRST, or REDO, it will
+    override this default.  If the third element is not present, it is as if
+    the third element were SI:NORMAL.
+
+Note that the "keywords" used in ADD-INITIALIZATION need not be
+keyword-package symbols (you are allowed to use FIRST as well as :FIRST),
+because STRING-EQUAL is used to recognize the symbols.
+
+In addition to the system initialization lists mentioned in Revision 4 of the Lisp
+Machine Manual (on p. 490), there is a new initialization lists called SITE.  This
+list is executed by the function SI:UPDATE-SITE-CONFIGURATION-INFO just after it
+loads the site table.
+
+Of the pre-defined system initialization lists, the default "time" for almost all of
+them is NORMAL, with the following exceptions: the SYSTEM and ONCE
+initialization lists default to FIRST, and the SITE initialization list defaults to NOW.
+
+[28] New macro WITH-OPEN-STRING.
+
+(WITH-OPEN-STRING (stream string . options) &BODY body)
+creates a stream associated with the specified string.  This takes a keyword
+argument list instead of the positional arguments of WITH-INPUT-FROM-STRING
+and WITH-OUTPUT-TO-STRING, and permits the creation of bidirectional string
+streams.  (The other macros expand into this now.)
+
+[29] WITH-INPUT-FROM-STRING and WITH-OUTPUT-TO-STRING can be nested.
+
+String input and output has been reimplemented based on select-methods and
+closures.  (The stream given to the user is now a closure.)  This means that
+these forms can be nested as desired, and the streams can be passed downward
+(the closures are not killed in any way by unwind-protects).  The new
+implementation also supports :READ-POINTER and :SET-POINTER operations.
+(Read the comments in AI: LISPM2; STRING &gt; for more information.)
+
+Changes in utilities and operating the machine:
+
+[@] Compiler warnings are now recorded in a data base of list structure.
+
+Each time a function is compiled, an entry for that function is made in the
+compiler warnings data base or updated.  Warnings from the latest compilation go
+in the data base and warnings from previous compilations that did not happen
+this time are thrown away.
+
+The command Edit Warnings asks you, for each file that has warnings, whether
+you want to edit that file's warnings.  Then, it fills the buffer *Warnings* with
+an up-to-date list of warnings for those files and starts you stepping through
+them.  You use the two commands C-Shift-W and M-Shift-W to go to the next
+or previous warning.  The command Edit File Warnings edits the warnings for
+one file only; you specify the file.  Edit System Warnings edits the warnings for
+all the source files of a system; you specify the system.
+
+If you visit the buffer *Warnings*, you can go to any warning and type C-/ to
+visit the code for that warning.
+
+You can also do Insert Warnings to insert a complete current list of warnings in
+the buffer at point.  The mark is placed after the end, though the region is not
+turned on.  Insert File Warnings inserts the warnings for one file only.
+
+Meanwhile, errors in reading or macro expansion during compilation now
+produce warnings.  They do not go to the error handler.  This is so your
+compilation will finish and give you the rest of the errors in the file.  If you
+need to go to the error handler, as before, set the variable
+COMPILER:WARN-ON-ERRORS to NIL and recompile.
+
+You can write part of the compiler warnings data base to a file for later
+reloading.  Use SI:PRINT-WARNINGS (list-of-files stream).  The :BATCH option of
+MAKE-SYSTEM now writes the data base in this fashion to a file whose name you
+are asked for.  Reload the warnings written in the file, if necessary, with
+READFILE or M-X Load File.
+
+The warnings data base is not only for compilation.  To learn how to interface to
+it, see the file LISPM;QNEW.
+
+[A] New font handling features in PRESS:PRINT-FROM-STREAM
+(and therefore PRESS:PRINT-FILE, PRESS:SPOOL-FILE, M-X Print File, M-X Print Buffer,
+M-X Print All Buffers, Hyper-Meta-P, the P command in DIRED, etc.):
+
+    If the file being printed has a FONTS attribute, and you have not
+    specified a FONT or FONT-LIST explicitly, PRINT-FROM-STREAM will attempt
+    to do the right thing by reading your FONTS list.  What it does is:
+
+    1.  If your file only specifies one font, it is treated as (:FONT font).
+	This causes the whole file to be printed in an appropriate font.
+    2.  If your file specifies more than one font, is is treated as
+	(:FONT-LIST (list-of-fonts)).  This causes epsilon (code 006)
+	characters in the file (such as ZWEI outputs for a fontified file)
+	to be treated specially, so everything is printed in the correct font.
+
+    The system associates Lisp Machine fonts with Dover fonts by looking
+    them up in the A-list PRESS:DOVER-FONT-EQUIVALENCES.  It currently knows
+    about most of the popular Lisp Machine text fonts.  Feel free to extend
+    it to cover additional fonts.
+
+[B] You can specify a filename instead of a buffer name in ZWEI.
+
+When ZWEI asks you for a buffer name, you can now type C-Shift-F
+and then a filename (with defaulting and completion available as usual).
+The buffer containing that file is used.  The file is read in if necessary.
+
+[C] You can easily insert defaults while typing a filename in ZWEI.
+
+Whenever ZWEI asks you for a file name, you can now type C-Shift-Y
+to yank the default value (as mentioned in the prompt) into the minibuffer,
+or M-Shift-Y to yank the last filename you typed previously (as you had
+typed it).  Previously, ZWEI used to push these onto the kill ring
+temporarily.  This interfered with moving text between the mini buffer
+and top level on the kill ring.
+
+[D] M-X Save All Files now asks all its questions immediately,
+and then does whatever saving you requested.
+
+[E] C-M-L now operates on all the buffers that you see in a List Buffers,
+with the exception of DIREDs and MAILs that you have exited normally
+(Q in DIRED, End in MAIL).  And List Buffers (C-X C-B) shows you
+the same order of buffers that C-M-L rotates.
+
+[F] ZWEI can display a file while still reading it.
+
+If you set the variable ZWEI:*FIND-FILE-EARLY-SELECT* to non-NIL,
+then when you visit a new file in ZWEI, the beginning of the file will
+be displayed as soon as enough of the file is read in.  Editing commands
+will not be executed, though, until the file is all in.  Also, if the
+file is being read in as part of some more complicated command (such as
+Meta-.) then this display will not take place, since the beginning of
+the file may be the wrong part to display.
+
+[G] New ZWEI commands for producing hardcopy:
+
+M-X Print Buffer	      Sends a buffer to the Dover.  Prompts in minibuffer.
+M-X Print All Buffers   Asks if you want each of your buffers printed,
+			      then prints the ones you asked for.
+Hyper-Meta-P	      (Quick Print Buffer) Prints the current buffer.
+
+The file LMLIB;DOVERB is now obsolete.
+
+[H] Inspector improvements.
+
+The inspector now has keyboard commands to do
+the things that the menu does.  In particular, you can modify a field
+by selecting it with the mouse while holding down the Hyper key.  You
+can return by typing End; the value of * is returned from the function
+INSPECT if you had reached the inspector that way.  Type Help to find
+out more about keyboard commands.
+
+While in the inspector, the variables *, ** and *** have as their
+values the three objects being displayed in the inspection panes.  *
+is the bottom one and *** is the top one.
+
+Lists are now displayed in a more appropriate format, and very large
+or deep lists are truncated.  The ellipses "..." and "**" replace what
+is not displayed.  Click on them to see what they abbreviate.
+
+[I] Passwords for file jobs are remembered for you.
+
+The passwords you specify when you connect to file servers are now
+remembered on FS:USER-HOST-PASSWORD-ALIST for the duration of your session
+unless you set FS:RECORD-PASSWORDS-FLAG to NIL.  In any case, any
+passwords which are on the alist (perhaps from your init file) will be
+used rather than asking you for one.  If you are super paranoid,
+you can set the alist to NIL in your init file as well as setting
+the flag to NIL.
+
+[J] Better DWIM for functions in the wrong package in BREAKON, TRACE and ADVISE.
+
+If BREAKON, TRACE or ADVISE says the function is not defined and
+offers you some other function to use instead, it now works to say
+yes.
+
+[K] Reloading files from which some methods have been deleted.
+
+If you load a file and some methods that were previously defined in
+that file are no longer there, you are asked whether to undefine those
+methods.  Undefining the methods may be vital to cause other methods
+to be inherited where they should be.
+
+[L] Changes in Terminal key commands.
+
+Terminal M now sets the selected window's **more** processing
+enable rather than the global one.  Terminal &gt;= (Top-M) switches the
+mouse screen.
+
+[M] Reading multi-font files into ZWEI should be much faster.
+
+[N] New ZWEI feature for visiting lists of things (callers, etc.)
+
+ZWEI commands such as List Callers, List Changed Functions, etc.
+which give you a list of functions to look at now put the list in a
+buffer called *Possibilities*.  The command C-Shift-P goes to the next
+possibility in the list; or you can visit the buffer yourself and type
+C-/ to visit the possibility you are positioned at.  You can also move
+the pointer in that buffer and go back to stepping through with C-Shift-P.
+As a result, once you have waited for a List Callers to be done, the
+list remains available to use whenever you wish.
+
+Meta-Period also uses this mechanism when there are multiple
+definitions.  Meta-Period with argument is what goes to the next
+possibility in this case, and the definitions are stored in the buffer
+*Definitions*.
+
+[O] There are three new commands for manipulating patches:
+M-X Start Patch, Resume Patch and Cancel Patch.
+
+Start Patch begins a patch, like Add Patch, but does not put anything in it.
+This is nearly equivalent to doing Add Patch with an empty region.
+Resume Patch resumes editing a patch which you started but did not finish
+(on another machine, or before cold booting).  You specify both the
+name of the system to patch, and the patch version to resume working on.
+If you had saved the patch buffer before booting, you start off with the
+latest existing version of the patch file source.
+Cancel Patch, when you are in the middle of making a patch, removes
+that patch from the data base; it cancels having begun to make a patch.
+This is the same as Symbolics's Abort Patch, but that name interferes with
+the completion of Add Patch, so I believe this name is superior.
+
+[P] DRIBBLE-ALL is a new alternate way of saving your terminal i/o.
+
+The new function DRIBBLE-ALL opens a dribble file in which all I/O
+in the current process, including break loops, queries and errors,
+will be recorded.  Close it with DRIBBLE-END like an ordinary dribble
+file.
+
+[Q] Conversation-motion commands in CONVERSE.
+
+In CONVERSE, the commands to move up and down by conversations are
+now M-{ and M-}.  The M-[ and M-] keys are left as the usual paragraph
+commands.  The comversation movers are improved, in that they move
+forward or back until reaching the spot at the end of a To: line.
+
+[R] CHAOS:NOTIFY and CHAOS:NOTIFY-ALL-LMS
+
+Symbolics generously contributed its functions (CHAOS:NOTIFY host &OPTIONAL
+message) and (CHAOS:NOTIFY-ALL-LMS &OPTIONAL message) The first sends a
+notification to the specified host, with the specified message (or one read from
+the terminal if you omit it).  The second sends the same notification to all lisp
+machines.  Note that the function CHAOS:SHOUT is still supported; however, its
+useis discouraged, since shouting at System 79 users will throw them into
+Converse!  I assume that, by putting these functions in our files, they agree to
+their unlimited redistribution.
+
+[S] DIRED features.
+
+When you exit DIRED, you can now type E as an alternative to Y, N or Q.
+E means go ahead and delete the files (like Q), then expunge the directory.
+The new command "," in DIRED prints out the attribute list of the file you
+are pointing at.
+
+[T] It is no longer necessary to do TV:SET-TV-SPEED.
+
+60hz is now the default.  This speed works fine on CPT monitors as
+well as VMI's (which was true in earlier system versions as well.
+CPTs are happy at any speed, during their short lifetimes).
+
+[U] Each lisp listener window now has its own binding of PACKAGE.
+
+The window remembers its top-level binding of PACKAGE in an instance
+variable, and provides operations :PACKAGE and :SET-PACKAGE.  You can
+change the package either by doing (PKG-GOTO ...) in the listener's
+process or by sending a :SET-PACKAGE message.  The process and window
+exchange information just before each time the process does a
+top-level READ.  The global binding of PACKAGE, which is still used
+for random background processes, is also the initial package for newly
+created lisp listeners.  You can set it, as before, by doing
+(PROCESS-RUN-FUNCTION "Foo" 'PKG-GOTO package-or-refname)
+
+[V] TV:SET-DEFAULT-FONT now works "right".
+
+I believe that all existing windows are notified and adjusted properly
+for the new font.  Note that it makes a difference whether a window is
+using teh default font or using a specific font which happens to be
+the default at the moment; TV:SET-DEFAULT-FONT will affect the former
+but not the latter.  That is, dependency information is preserved.
+
+Note however that menus and labels do not use the default font.
+They use the standard fonts for menus and labels.  You can set those
+standard fonts by doing (TV:SET-STANDARD-FONT ':MENU font-descriptor)
+or likewise for ':LABEL. TV:SET-DEFAULT-FONT simply does
+(TV:SET-STANDARD-FONT ':DEFAULT ...). These standard font names are
+looked up on the font alist of the screen in use.
+
+[W] New feature to allow shift keys to replace double-clicking.
+
+For those who don't like double-clicking of mouse buttons, there is a
+new feature.  If you click a mouse button while holding down any of the
+keys labelled SHIFT, CONTROL, or HYPER, your click will be interpreted
+as a double-click.  Furthermore, if you set TV:MOUSE-DOUBLE-CLICK-TIME
+to NIL, then double-clicking in the usual way will be disabled, and the
+system will no longer wait, after you click, to see whether you are
+going to click again.  This can improve mouse-click response time.
+
+This feature is under control of the following variable.  You can set
+this variable to NIL if you want to turn off the new behavior (you might
+want to LOGIN-SETQ it in your INIT file).
+
+TV:*MOUSE-INCREMENTING-KEYSTATES* [Variable]
+    The value is a list of the names of those shifting keys which, if held
+    down, will make a single-click of the mouse into a double-click.  Its
+    default value is (:SHIFT :CONTROL :HYPER).
+
+Holding down two of these keys produces a triple click.  This was
+inspired by the name of the variable; perhaps it works in Brand S
+also.
+
+[X] New feature in Choose-Variable-Values.
+
+The Choose-Variable-Values facility has been extended so that the
+variable specification can be a locative or a cons cell instead of a
+special variable.  This lets arbitrary cells in the machine be examined
+and modified by Choose-Variable-Values.  (If a cons cell is passed, its
+CAR is the memory location used, and the long form of specification
+must be used to avoid syntactic ambiguity.)
+
+[Y] Hosts not in the host table can be named, as CHAOS|nnnn.
+
+It is now possible to name hosts that are not in the host table.  The address
+CHAOS|nnnn, where "nnnn" is an octal numeral (of any length), refers to the host
+with that number on the Chaosnet.  For example, CHAOS|401 and CHAOS|17003
+are valid addresses.  Normally, all hosts at your site are in the host table and
+have mnemonic names, so you shouldn't need to use this syntax.  However, it
+comes in useful if your host table is incorrect or out-of-date, in which case you
+may need to communicate with a host that's not in your host table.
+
+[Z] Control-Shift-letter and Meta-Shift-letter in ZWEI:
+
+This isn't new, but since I've never seen it documented anywhere, folks might
+like to know that in ZWEI Control-Shift-letter = Hyper-Control-letter, and
+Meta-Shift-letter = Hyper-Meta-letter.  If you type Control-Shift- it is internally
+translated into Hyper-Control-, and the latter is what you must use when you
+call SET-COMTAB to redefine a character.
+
+[AA] Help Apropos in ZWEI is now much faster.  Also, if a command is not
+otherwise assigned, it now tells you that it can be invoked via C-M-X, instead of
+simply saying that is is not on any keys.
+    </pre>
+
+    <hr/>
+    <p>Last modified: 2025/06/05 08:57:08 (UTC) by ams</p>
+  </body>
+</html>
+
+<!-- Local Variables: -->
+<!-- time-stamp-pattern: "-8/<p>Last modified:[ \t]%:y/%02m/%02d %02H:%02M:%02S (%Z) by %u</p>" -->
+<!-- time-stamp-time-zone: "UTC" -->
+<!-- End: -->

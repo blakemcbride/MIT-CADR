@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <link rel="stylesheet" type="text/css"
+	  href="../lm3.css">
+    <title>LM-3 --- Lisp Machine System Release 30.3 Notes</title>
+  </head>
+  <body>
+    <center><h1>Lisp Machine System Release 30.3 Notes</h1></center>
+
+    <pre>
+Date: 12 JUL 1980 0220-EDT
+From: MOON at MIT-AI (David A. Moon)
+Subject: New system pre-release
+To: INFO-LISPM at MIT-AI
+
+System 30.3 has been tentatively installed on CADR-1 for the benefit of those
+who want to test their programs.  There are a number of incompatible changes
+described later in this message which will necessitate recompilation for
+some people and actual program changes for those who are still using functions
+of the old window-system.  The 30 series system will be installed on most
+machines sometime next week, assuming there aren't too many bugs.
+
+Please do not copy this system to any other machine yet (in fact 30.3 will not
+boot on a machine without a color screen, but that will be fixed in 30.4,
+hopefully tomorrow.)
+
+Please do not recompile any system programs in worlds older than this,
+as that is very likely to cause hidden bugs.
+
+Lisp machine systems 30 and above contain only the "new" window system.
+The vestiges of the old window system present in previous systems (with
+the "nws" designation) have been removed.  In addition, the GLOBAL
+package has been cleaned up.  It is advisable that you recompile your
+programs in this system before trying to run them, both because of
+symbols having changed packages and because of some other changes
+including the value of the #\MOUSE-n-n syntax.  If you need help
+in converting please contact HIC, Moon, or MMcM.
+
+There is a new package, TIME.  Some of the date/time functions that were
+formerly in the CHAOS package randomly, are now in the TIME package.
+They work better and present a more reasonable interface.
+
+The following symbols have been removed from GLOBAL; if you use any of
+these in your programs you have a problem and need to convert.  Some of
+these symbols are obsolete, a few were misspellings, and some have been
+moved into SYSTEM.  A lot of these symbols are used as keywords,
+properly requiring a colon prefix, but had been globalized so that old
+programs without the colon prefix would work.  Said old programs will
+now need to be fixed.
+
+These symbols no longer exist in GLOBAL:
+
+/' /, /; /] /` ACTIVE-WINDOWS CC-LOAD-UCODE-SYMBOLS
+COMPLETING-READ-PROMPT-SIMPLE COMPLETING-READ-SIMPLE CONSOLE-IO-PC-PPR
+CURRENT-JOB CURRENT-STACK-GROUP DECODE-DEFINITION ED-INITIALIZE
+ED-READ-TAG-TABLE ED-REDEFINE-KEYS EDPROP EDT EDVAL EXPOSED-WINDOWS
+FILE-COMMAND FILE-COMMAND-BUFFER FILE-COMMAND-CAREFUL FILE-ERROR
+FILE-MAPPED-OPEN FILE-PROPERTY-VARIABLES FOR-CADR FORCE-KBD-INPUT
+FREEZE-WHO-LINE GET-UNIQUE-ID INHIBIT-AUTOEXPOSE-FLAG
+INHIBIT-SCREEN-RESTORATION-FLAG INHIBIT-SCREEN-SAVING-FLAG
+INITIAL-STACK-GROUP INTERRUPT KBD-SIMULATED-CLOCK-FCN-LIST
+KBD-SUPER-IMAGE-P LOCK-SCREEN-LAYOUT MAKE-TYPEOUT-STREAM MENU-CHOOSE
+MENU-CLASS MENU-CREATE MOUSE MULTIPLE-VALUE-PASS-BACK PAINT PC-PPR
+PRINT-NAME-CELL-LOCATION PROCESS-FORCED-INPUT
+PROCESS-FORCED-INPUT-INDEX PROCESS-INPUT-PROCESS REAL-IO
+SCHEDULER-STACK-GROUP SCREEN SELECTED-PROCESS SELECTED-WINDOW
+STANDARD-PC-PPR SWITCH-REGISTER TOP-WINDOW TRIVIAL-PROCESS
+UNFREEZE-WHO-LINE WHO-LINE-FROZEN WHOSTATE XOR
+
+Also a whole bunch starting with prefixes DRAW-, JOB-, MOUSE-,
+PC-PPR-, SCREEN-, and TV-.
+
+These have been moved into the SYSTEM package:
+
+%%HEADER-REST-FIELD %%HEADER-TYPE-FIELD %ARRAY-LEADER-LENGTH
+%ERROR-HANDLER-STACK-GROUP %HEADER-TYPE-ARRAY-LEADER
+%HEADER-TYPE-BIGNUM %HEADER-TYPE-COMPLEX %HEADER-TYPE-ERROR
+%HEADER-TYPE-FEF %HEADER-TYPE-FLONUM %HEADER-TYPE-RATIONAL-BIGNUM
+%INITIAL-STACK-GROUP %INITIALLY-DISABLE-TRAPPING ACTIVE-PROCESSES
+LENGTH-OF-ATOM-HEAD
+
+Moved into SI:
+
+LOCALLY-KNOWN-DEVICES
+
+These are keywords that were formerly global:
+
+ACTIVATE-P ARG1 ARG2 BINARY BLACK BLINK BLINK-FCN BLINKER-P BLOCK BOTH
+BOTTOM BOTTOM-MARGIN CAR-NUM-MODE CAR-SYM-MODE CDR-NUM-MODE
+CDR-SYM-MODE CLEAR-INPUT CLEAR-OUTPUT COMPACT-CONS COMPLETE CONFIRM
+CONSTRUCTOR DEFAULT-POINTER DEFS DYNAMIC END-LINE-FCN END-SCREEN-FCN
+FINISH FOLLOW-P FONT-MAP FONTS FORCE-OUTPUT FORM FRESH-LINE GC
+GROUPED-ARRAY HALF-PERIOD HEIGHT IN INCLUDE INTEGRAL-P LEFT LEFT-MARGIN
+LINE-IN LINE-OUT LISTEN MORE-FCN MORE-P NAME NOCOMPILE NOCONFIRM NOLOAD
+NORELOAD NORMAL OUT PC-PPR PDL PLANE-MASK READ-ONLY READ-POINTER
+RECURSIVE REFERENCES REGION-SIZE REGULAR-PDL-AREA REGULAR-PDL-SIZE
+RELOAD REPRESENTATION REVERSE-VIDEO-P RIGHT RIGHT-MARGIN ROVING-P SAFE
+SELECTIVE SET-PC-PPR SG-AREA SIDEWAYS-P SINGLE SIZE SIZE-MACRO
+SPECIAL-PDL-AREA SPECIAL-PDL-SIZE STATIC STRING-OUT STRUCTURE
+SWAP-SV-OF-SG-THAT-CALLS-ME SWAP-SV-ON-CALL-OUT TOP TOP-MARGIN UNTYI
+UNTYO UNTYO-MARK VISIBILITY VSP WHICH-OPERATIONS WHITE WIDTH WRITE
+
+The following symbols have been added to GLOBAL.  (There may have been
+others added since whichever system you are used to using.)
+BEEP, INSPECT, %%KBD-HYPER, %%KBD-SUPER,
+COND-EVERY, SELECTQ-EVERY, DESTRUCTURING-BIND,
+GET-HANDLER-FOR, LOCATE-IN-INSTANCE, SET-IN-INSTANCE, SYMEVAL-IN-INSTANCE,
+DEFINE-USER-OPTION-ALIST, DEFINE-USER-OPTION, CHOOSE-USER-OPTIONS,
+RESET-USER-OPTIONS, WRITE-USER-OPTIONS,
+DEFRESOURCE, WITH-RESOURCE, ALLOCATE-RESOURCE, DEALLOCATE-RESOURCE
+    </pre>
+
+    <hr/>
+    <p>Last modified: 2025/06/05 08:46:18 (UTC) by ams</p>
+  </body>
+</html>
+
+<!-- Local Variables: -->
+<!-- time-stamp-pattern: "-8/<p>Last modified:[ \t]%:y/%02m/%02d %02H:%02M:%02S (%Z) by %u</p>" -->
+<!-- time-stamp-time-zone: "UTC" -->
+<!-- End: -->

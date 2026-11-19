@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <link rel="stylesheet" type="text/css"
+	  href="../lm3.css">
+    <title>LM-3 --- Lisp Machine System Release 68 Notes</title>
+  </head>
+  <body>
+    <center><h1>Lisp Machine System Release 68 Notes</h1></center>
+
+    <pre>
+Date: 5 May 1981 23:12-EDT
+From: Mike McMahon &lt;MMcM at MIT-AI&gt;
+Subject:  new system release
+To: INFO-LISPM at MIT-AI
+
+System 68 is now released to the users.  It has been around on a number
+of machines for some time anyway, and will make it to the rest soon.
+Except for the couple of things noted below, this system is an
+accumulation of bug fixes from the previous system.  Please note that
+early (and some intermediate) versions of this system have serious
+problems and you should make sure you have the latest patches.  At this
+moment, that is system 68.9.
+
+New global function, CATCH-ERROR, which is like ERRSET but returns two
+values instead of a list.  The first value is the value of the body form
+and the second is non-NIL if an error occurs.
+
+CLEAR-UNIBUS-MAP is called directly from LISP-REINITIALIZE, before
+SYSTEM-INITIALIZATION-LIST.  Thus things on SYSTEM-INITIALIZATION-LIST
+may initialize unibus-map pages.
+    </pre>
+
+    <hr/>
+    <p>Last modified: 2025/06/05 08:38:12 (UTC) by ams</p>
+  </body>
+</html>
+
+<!-- Local Variables: -->
+<!-- time-stamp-pattern: "-8/<p>Last modified:[ \t]%:y/%02m/%02d %02H:%02M:%02S (%Z) by %u</p>" -->
+<!-- time-stamp-time-zone: "UTC" -->
+<!-- End: -->

@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <link rel="stylesheet" type="text/css"
+	  href="../lm3.css">
+    <title>LM-3 --- Lisp Machine System Release 45 Notes</title>
+  </head>
+  <body>
+    <center><h1>Lisp Machine System Release 45 Notes</h1></center>
+
+    <pre>
+Date:  6 OCT 1980 0033-EDT
+From: Moon at MIT-AI (David A. Moon)
+Subject: New system release
+To: INFO-LISPM at MIT-AI
+
+System 45.2 with microcode 692 is now available.  Currently it is only on CADR-6
+but it will migrate to other machines soon.  This system fixes several serious
+bugs in 44.3.  Note that system 45.2 does not have ZMAIL in it; a 45.3 with
+ZMAIL should come out in a day or two.
+
+The following changes may be of interest:
+
+A new special form, WITH-OPEN-FILE.  This should be used in most cases
+rather than calling OPEN, since it arranges for proper cleanup upon
+abnormal exit.
+	(WITH-OPEN-FILE (var filename options)
+		body1
+		body2 ... )
+evaluates the forms body1, body2, ... with var bound to a stream
+which is the result of (OPEN filename options).  The stream is
+closed after evaluating the body.  The stream is also closed if
+control is thrown out of the body, and in this case if if the file
+is being written the partially-written file is deleted.
+
+New hash-table facility available.  Documentation is in a section
+of the file AI:LMMAN;FD.CON &gt;.
+
+If you don't know about the WITH-INPUT-FROM-STRING and WITH-OUTPUT-TO-STRING
+special forms, documentation may be found in the file AI:LMMAN;FD.STR &gt;.
+
+Some serious bugs in the process system have been fixed.  The most
+noticeable was that the Abort key did not run unwind-protects!
+
+The usual large number of small bug fixes, especially to file names,
+processes, and typeahead.
+
+The special characters that represent function keys now display with their
+new-keyboard names.  The page-separator now displays as &lt;PAGE&gt; rather than
+&lt;FORM&gt;.  Typing TERMINAL/HELP will give a better display with documentation
+on all the function keys on the new keyboard (even if you're on an old keyboard!).
+
+A couple things have been renamed; probably few people were using them.
+The :DRAW-FILLED-IN-CHORD message is now :DRAW-FILLED-IN-SECTOR.
+If you added anything to TV:WINDOW-TYPES-ITEM-LIST you should
+add it to TV:DEFAULT-WINDOW-TYPES-ITEM-LIST instead; the reason is
+that this list can be per-screen and per-frame now.  The :STATUS
+message returns a new value, :EXPOSED-IN-SUPERIOR.
+    </pre>
+
+    <hr/>
+    <p>Last modified: 2025/06/05 08:38:11 (UTC) by ams</p>
+  </body>
+</html>
+
+<!-- Local Variables: -->
+<!-- time-stamp-pattern: "-8/<p>Last modified:[ \t]%:y/%02m/%02d %02H:%02M:%02S (%Z) by %u</p>" -->
+<!-- time-stamp-time-zone: "UTC" -->
+<!-- End: -->

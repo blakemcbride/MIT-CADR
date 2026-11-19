@@ -1,0 +1,941 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <link rel="stylesheet" type="text/css"
+	  href="../lm3.css">
+    <title>LM-3 --- Lisp Machine System Release 97 Notes</title>
+  </head>
+  <body>
+    <center><h1>Lisp Machine System Release 97 Notes</h1></center>
+
+    <pre>
+19-Sep-83 01:15:58-EDT,817;000000000000
+Return-path: &lt;RMS@MIT-OZ&gt;
+Date: Monday, 19 September 1983, 01:11-EDT
+From: Richard M. Stallman &lt;RMS@MIT-OZ&gt;
+Subject: System 97 is now released.
+To: info-lispm-mit@MIT-OZ
+
+Documentation for System 97 is in OZ:SRC:&lt;L.DOC&gt;SYS97.MSG.
+I have been using system 97 for a month, and it is pretty solid.
+Make sure you use a band that uses microcode 257!
+Good sources of these are CADR1 and CADR18.
+
+The current version is 97.6.
+
+The most interesting improvements are:
+
+ A new Common-Lisp-compatible package system.
+
+ An improved undo facility,
+  the best an editor has ever had.
+
+ Incremental band saving:
+  save just the differences between your world
+  and the system you loaded, in a small partition.
+
+There are some incompatibilities, mostly due to Common Lisp,
+ so make sure you read SYS97.MSG.
+
+Notes on System 97.
+
+System 97 comes with microcode 257.  It will not run with system 94 microcodes,
+nor will microcode 257 run with systems before 97.  97 was initially released with
+microcode 255, but 257 fixes an important bug and should be installed in all
+system 97 bands.
+
+All files must be recompiled in system 97 in order to work in system 97.
+Files compiled in system 97 can usually be used in older system versions.
+Problems are sometimes caused by the symbols which are global in 97
+but not global in 94; see the end of the following page.
+
+To debug a system 97 from another machine running system 94, you must
+have patch 94.41 loaded.  97 can also debug 94.
+
+Noteworthy Features.
+  Selective Undo in ZWEI.
+  Incremental band saving.
+  New package system.
+
+Incompatibilities Now.
+
+     A] Package System Replaced.
+     B] Case-Sensitive and -Insensitive String Comparison Functions.
+     C] 'COMPILE No Longer Needed in PROGN.
+     D] EVAL-WHEN Rationalized.
+     E] TV:SHEET-FORCE-ACCESS Does Not Prepare the Sheet.
+     F] Change to SI:FULL-GC-INITIALIZATION-LIST.
+     G] Flushed Processes.
+     H] PROGV With More Variables Than Values.
+     I] New Global Symbols -- Backwards Compatibility Problems.
+
+A] Package System Replaced.
+
+There is now a new package system, essentially that of Common Lisp plus a few
+compatibility features.  Its highlights are:
+
+ Symbols in a package are now marked either internal or external.
+ Only the external symbols are inherited by other packages.
+
+ Packages are no longer arranged in a hierarchy; inheritance is no
+ longer required to be transitive.  Now you can specify exactly which
+ other packages' external symbols are to be inherited by a new package.
+
+ KEYWORD and USER are now two distinct packages.  No symbol is shared
+ between KEYWORD and GLOBAL, so that COMPILE and :COMPILE are two
+ distinct symbols, and so are NIL and :NIL.  Your code must now be
+ careful to use the correct symbol (keyword or global) in all such cases,
+ where it used to make no difference.
+
+For full details, see the file SYS: DOC; CLPACK TEXT.  It should be noted
+that similar changes will probably be in the next Symbolics release.
+
+B] Case-Sensitive and -Insensitive String Comparison Functions.
+
+The function EQUAL now considers the strings "A" and "a" to be distinct.
+Use EQUALP if you wish to ignore case in the comparison.
+This is a Common Lisp change.
+
+CHAR-EQUAL and STRING-EQUAL always ignore case.
+To consider case in comparing characters or strings this way,
+use = for characters and the new function STRING= for strings.
+
+SAMEPNAMEP now considers case significant.
+
+The functions of the STRING-SEARCH series now take an extra optional
+argument which says whether to consider case.
+
+The old flag ALPHABETIC-CASE-AFFECTS-STRING-COMPARISON is now used
+only by the %STRING-SEARCH and %STRING-EQUAL microcode primitives.
+These primitives now consider font significant as well as case when the
+flag is non-NIL.
+
+C] 'COMPILE No Longer Needed in PROGN.
+
+Any PROGN encountered at top level by the compiler is now handled
+by treating each element as if it had been found at top level.
+Macros that used to expand into (PROGN 'COMPILE forms...)
+can now expand into just (PROGN forms...)
+
+This is a Common Lisp change.
+
+D] EVAL-WHEN Rationalized.
+
+The treatment of (EVAL-WHEN (LOAD) forms...) by the compiler is now
+identical to the treatment of forms encountered with no EVAL-WHEN.  They are
+put into the file to be evaluated on loading, or compiled if they are DEFUNs,
+and any macros defined are made available for expansion during the compilation.
+
+As a consequence, you can no-op an EVAL-WHEN by supplying (LOAD EVAL)
+as its first argument.  It is then equivalent in all cases to no EVAL-WHEN at all.
+
+Nested EVAL-WHENs now effectively intersect their list of times to evaluate.
+As a result,
+   (EVAL-WHEN (COMPILE LOAD EVAL)
+     compile-time-forms...
+     (EVAL-WHEN (LOAD EVAL)
+       forms...))
+treats the forms in the ordinary manner, overriding the special treatment
+given to the compile-time-forms.
+   (EVAL-WHEN (COMPILE) (EVAL-WHEN (LOAD) ignored-forms...))
+does not do anything with the ignored-forms.
+
+Please let me know if this causes any problem.
+
+E] TV:SHEET-FORCE-ACCESS Does Not Prepare the Sheet.
+
+The macro TV:SHEET-FORCE-ACCESS (documented in the window system manual)
+used to put a TV:PREPARE-SHEET into its expansion unless an optional argument
+was supplied to inhibit doing so.
+
+It turned out that most uses of the macro had no need to prepare the sheet but
+were neglecting to supply the optional argument.  Since combining the
+two facilities is unmodular, the prepare-sheet has simply been flushed from
+TV:SHEET-FORCE-ACCESS.  If you really want to do one, simply write a
+TV:PREPARE-SHEET explicitly in the body of the TV:SHEET-FORCE-ACCESS.
+
+The old optional dont-prepare-flag argument is still accepted but has no effect now.
+
+F] Change to SI:FULL-GC-INITIALIZATION-LIST.
+
+The SI:FULL-GC-INITIALIZATION-LIST initializations are now run
+before the garbage collection in SI:FULL-GC, rather than after.
+A new initialization list, SI:AFTER-FULL-GC-INITIALIZATION-LIST,
+is run after.  The old list which now runs before GC can be requested
+with the keyword :FULL-GC in ADD-INITIALIZATION, and the
+new list which runs after can be requested with :AFTER-FULL-GC.
+
+This change is for greater compatibility with Symbolics systems.
+
+G] Flushed Processes.
+
+A flushed process now has the symbol SI:FLUSHED-PROCESS
+as its wait function.  This function is equivalent to FALSE in that
+it always returns NIL, but it is distinguishable from FALSE.
+Thus, flushed processes can reliably be distinguished from
+those that have done PROCESS-WAIT-FOREVER.
+
+H] PROGV With More Variables Than Values.
+
+The function PROGV accepts a list of variables and a list of values.
+In the past, if the list of variables was longer, NIL was used in place of the
+missing values.  Now, in this case, the extra variables which have no corresponding
+values will be made "unbound".  This is a Common Lisp change.
+
+I] New Global Symbols -- Backwards Compatibility Problems.
+
+The many new global symbols present in system 97 for Common Lisp
+do not require changes in programs unless you are already using
+the same names for other things, but they sometimes cause
+trouble for compiling a file in system 97 and loading it in system 94.
+
+For example, in system 97, the symbol PATHNAME is global.  If your
+code refers to FS:PATHNAME (the base flavor of pathnames), when
+it is read into system 97 during compilation this will get the global
+symbol.  The QFASL file thus produced will not say "package FS" for
+that symbol, because the distinction no longer exists.  If the QFASL
+file is then loaded into system 94, it will refer to a symbol PATHNAME
+in whatever package you are loading into.  This will not be the same symbol
+as FS:PATHNAME, so the program will not work.
+
+Most problems of this sort can be fixed by INTERNing the intended symbol
+in the package you are loading into.  In the above example, doing
+    (INTERN 'FS:PATHNAME 'mypackagename)
+before loading the file would make it work.  You would probably do this
+in the file containing the PACKAGE-DECLARE.  It will have no effect
+when loading into system 97.
+
+Incompatibilities Coming In Future Systems.
+
+     A] Decimal Radix Will Become the Default.
+     B] Row-Major Order of Array Indices.
+     C] The Flag Bit Will Cease to Exist.
+     D] COMPILER:RETURN-FROM-T May Go Away.
+     E] Bit Fields in Character Codes May Be Rearranged.
+
+A] Decimal Radix Will Become the Default.
+
+In some future system, base 10. will become the default.  This is a Common Lisp
+change.  However, it will still be possible to specify the radix for each file
+individually.  To avoid any difficulties, place Base: 8; in the attribute list (the
+-*- line) of any file which is supposed to be in octal.
+
+B] Row-Major Order of Array Indices.
+
+Arrays are currently stored in column-major order, but for Common Lisp it is
+necessary to store them in row-major order.  This change is likely to happen
+in the next system released after 97.  For more details on how to ride this change
+conveniently, see section 8.8 of the Lisp Machine manual.
+
+C] The Flag Bit Will Cease to Exist.
+
+In a future version of the system, there will not be a flag bit.
+This is to enable pointers to be 25 bits long.
+If you use the flag bit, you should start converting now to stop using it.
+
+D] COMPILER:RETURN-FROM-T May Go Away.
+
+If you have macros that produce expansions that use COMPILER:RETURN-FROM-T,
+you should start changing them to expand into BLOCKs instead.  BLOCK is a new
+Common Lisp control construct, described in detail below.  You can use a
+gensym BLOCK name to avoid any possibility of interference with the code in
+which the macro is used.
+
+E] Bit Fields in Character Codes May Be Rearranged.
+
+This will probably not require you to change your code, if you refer
+to characters only through standard byte pointers such as %%KBD-CONTROL and
+standard types of character naming such as #\Control-F, but it will require
+recompilation of all files that contain codes for control characters.
+
+Compatible Programming Changes:
+
+     A] Many New Global Symbols.
+     B] New Macro PUSHNEW.
+     C] Common Lisp Control Constructs BLOCK and TAGBODY.
+     D] LEXPR-FUNCALL And APPLY Now Synonymous.
+     E] :ALLOW-OTHER-KEYS Special Keyword for &KEY Arguments.
+     F] Character Objects Exist.
+     G] READING-FROM-FILE, READING-FROM-FILE-CASE Special Forms.
+     H] New Function FS:EXTRACT-ATTRIBUTE-BINDINGS.
+     I] GET Accepts Third Argument.
+     J] Common Lisp Numeric Functions.
+     K] CHAOS:SEND Is No More.
+     L] New Function DEFF-MACRO.
+     M] Named Structure Operation :FASLOAD-FIXUP.
+     N] FUNCALLing a Named Structure.
+     O] Note on DEFSELECT and Named Structures.
+     P] TV:MAKE-WINDOW Now Identical to MAKE-INSTANCE.
+     Q] Window Manual Error: TV:MOUSE-WAKEUP and TV:MOUSE-RECONSIDER.
+     R] Delaying Flavor Recompilation.
+     S] :INSTANCE-AREA-FUNCTION Flavor Keyword.
+     T] %PAGE-STATUS Change.
+     U] Testing Values for Pointerhood.
+     V] Infix Expressions.
+     W] EH:REQUIRE-PDL-ROOM.
+     X] Rubout Handler Option :DONT-SAVE.
+     Y] New Host Operation :NETWORK-ADDRESSES.
+     Z] Error in Manual: SI:FILE-INPUT-STREAM-MIXIN.
+     AA] New Error Condition SYS:NO-SERVER-UP.
+     BB] New Function CHAOS:UP-HOSTS.
+     CC] GET and GETHASH with Three Arguments.
+     DD] New Macro TYPECASE.
+
+A] Many New Global Symbols.
+
+The file SYS: DOC; CLISP-GLOBAL-SORTED TEXT contains a list of many
+symbols inserted in the GLOBAL package because they are standard
+Common Lisp constructs.  Some of them have been defined already
+in system 97; more will be defined as patches, and others in the next system.
+
+B] New Macro PUSHNEW.
+
+    (PUSHNEW elt list)
+
+is equivalent to
+
+    (OR (MEMQ elt list)
+	(PUSH elt list)
+
+C] Common Lisp Control Constructs BLOCK and TAGBODY.
+
+BLOCK takes a block name and a body:
+
+    (BLOCK name body...)
+
+and executes the body, while allowing a RETURN-FROM name to be used within
+it to exit the BLOCK.  If the body completes normally, the values of the last
+body form are the values of the BLOCK.
+
+A BLOCK whose name is NIL can be exited with plain RETURN, as well as with
+RETURN-FROM NIL.
+
+BLOCK can be thought of as the essence of what named PROGs do, isolated and
+without the other features of PROG (variable binding and GO tags).
+
+Every function defined with DEFUN whose name is a symbol contains an automatically
+generated BLOCK whose name is the same as the function's name, surrounding the
+entire body of the function.
+
+TAGBODY, on the other hand, is the essence of GO tags.  A TAGBODY form contains
+statements and tags, just as a PROG's body does.  A symbol in the TAGBODY form is
+a tag, while a list is a statement to be evaluated.  The value returned by a
+TAGBODY is always NIL.  TAGBODY does not have anything to do with RETURN.
+
+PROG is now equivalent to a macro
+
+    (MACRO PROG (FORM)
+	(LET* ((NAME (AND (SYMBOLP (CADR FORM)) (CADR FORM)))
+		 (VARS (IF NAME (CADDR FORM) (CADR FORM)))
+		 (BODY (IF NAME (CDDDR FORM) (CDDR FORM))))
+	  (IF NAME
+		`(BLOCK ,NAME
+		   (BLOCK NIL
+		     (LET ,VARS
+			 (TAGBODY . ,BODY))))
+	    `(BLOCK NIL
+		 (LET ,VARS
+		   (TAGBODY . ,BODY))))))
+
+if we ignore the added complication of PROGs named T and RETURN-FROM-T.
+
+D] LEXPR-FUNCALL And APPLY Now Synonymous.
+
+APPLY now accepts any number of arguments and behaves like LEXPR-FUNCALL.
+LEXPR-FUNCALL with two arguments now works the way APPLY used to, passing
+an explicit rest-argument rather than spreading it.  This eliminates the old
+reasons why LEXPR-FUNCALL was not the best thing to use in certain cases,
+and paves the way for APPLY to translate into it.
+
+E] :ALLOW-OTHER-KEYS Special Keyword for &KEY Arguments.
+
+When a function whose argument list includes &KEY is called, if the keyword arguments
+passed include the keyword :ALLOW-OTHER-KEYS with a non-NIL value, then any
+unrecognized keywords present in the argument list will not be an error.
+You do not have to do anything in the function definition to make :ALLOW-OTHER-KEYS
+work.
+
+For example,
+
+    (DEFUN FOO (&KEY A B) (LIST A B))
+    (FOO ':A 3 ':B 4 ':C 5 ':ALLOW-OTHER-KEYS T)
+       ; The ':C and its value are ignored
+       ; rather than causing an error.
+
+It does not matter where among the keywords the :ALLOW-OTHER-KEYS is found.
+
+F] Character Objects Exist.
+
+A new data type, DTP-CHARACTER, has been created for character objects.  These
+print out as things like #/A for the character A.  This printed representation
+can be read back in.  Note that this is not the same as the Common Lisp printed
+representation for characters; that cannot be used in Zetalisp because it is
+already defined and means something else.  Zetalisp and Common Lisp syntax
+differ in a number of other ways as well.  When Common Lisp syntax is
+provided, in another system version this fall, Zetalisp syntax will remain available
+and will be the same as it is now.
+
+Characters can be used in arithmetic like fixnums, and compared
+like fixnums.  (= 101 #/A) is T, but (EQUAL 101 #/A) is NIL.
+EQUALP when comparing two characters ignores case, so that
+(EQUALP #/A #/a) is T.
+
+Characters can also be used to index arrays, just like fixnums,
+and can be printed out on windows and to files.
+
+Characters evaluate to themselves.
+
+G] READING-FROM-FILE, READING-FROM-FILE-CASE Special Forms.
+
+These two special forms are a straightforward aid in writing code that reads Lisp
+forms from a file, while obeying the attribute list of the file.  (The attribute list
+file's pathname object or generic pathname object is not updated with this
+special form.)
+
+The following form prints out the result of evaluating each form in the file:
+
+  (FS:READING-FROM-FILE (FORM FILE)
+     (FORMAT T "Values from ~S are: " FORM)
+     (FORMAT:PRINT-LIST T "~S" (MULTIPLE-VALUE-LIST (EVAL FORM))))
+
+FS:READING-FROM-FILE-CASE is a cross between FS:READING-FROM-FILE and
+WITH-OPEN-FILE-CASE, except there's an additional argument error for use
+in the clauses.
+
+   (FS:READING-FROM-FILE-CASE (FORM FILE ERROR)
+       ((FS:FILE-NOT-FOUND
+	  (FORMAT T "~&Options file ~A not found, using default values." FILE))
+	(FS:FILE-ERROR
+	     (FORMAT T "~&Error: ~A" (SEND ERROR ':REPORT-STRING)))
+	(:NO-ERROR (PROCESS-OPTION FORM))))
+
+There must be a :NO-ERROR clause.
+
+H] New Function FS:EXTRACT-ATTRIBUTE-BINDINGS.
+
+FS:EXTRACT-ATTRIBUTE-BINDINGS stream
+   returns two values: a list of variables, and a corresponding list of values to bind them to,
+   to set up an environment to read data from stream in accordance with stream's attribute list.
+
+I] GET Accepts Third Argument.
+
+    (GET symbol property default-value)
+
+returns default-value if the requested property is not present.
+
+J] Common Lisp Numeric Functions.
+
+Nearly all the Common Lisp numeric functions, with the exception of transcendental
+functions with complex arguments or values, are now implemented.
+
+Two remaining exceptions:
+   // still truncates fixnums, and you must still use
+   %DIV to divide and make a rational from them.
+
+   REM still is and will remain a function for nondestructive removal
+   of elements from a list, rather than a numeric remainder function.
+
+K] CHAOS:SEND Is No More.
+
+The symbol CHAOS:SEND no longer exists; SEND used to be shadowed in the
+CHAOS package, but it isn't anymore.  CHAOS:SEND did not have a definition,
+value, or properties for quite a while.
+
+L] New Function DEFF-MACRO.
+
+DEFF-MACRO &quote function-spec &eval definition
+  defines function-spec as definition, just like DEFF.
+  The difference comes in compiling a file, where the compiler assumes
+  that DEFF-MACRO is defining a macro and makes the definition available
+  for expansion during this compilation.  DEFF, on the other hand, is just
+  passed through to be evaluated when the file is loaded.
+  To use DEFF-MACRO properly, definition must be a list starting with
+  MACRO or a suitable subst function (a list starting with SUBST or a
+  compiled function which records an interpreted definition which is
+  a list starting with SUBST).
+
+M] Named Structure Operation :FASLOAD-FIXUP.
+
+The named structure operation :FASLOAD-FIXUP is invoked by FASLOAD whenever
+a named structure is created according to data in a QFASL file.  This operation
+can do whatever is necessary to make the structure properly valid, in case just
+reloading it with all its components is not right.  For most kinds of structures,
+this operation need not do anything; it is enough if it does not get an error.
+
+N] FUNCALLing a Named Structure.
+
+You can now funcall a named structure to invoke a generic operation on it,
+just as you would a flavor instance.  In fact, you can have code which operates
+on named structures and flavor instances indiscriminately, if you make sure
+that the named structures you are using support whichever operations you
+plan to use.
+
+For example,
+    (FUNCALL PACKAGE ':DESCRIBE)
+invokes the :DESCRIBE operation on the current package, just as
+    (NAMED-STRUCTURE-INVOKE ':DESCRIBE PACKAGE)
+would do.
+
+This has not been made ultra-fast, but that can be done in a future
+microcode release once all the machines have the full control memory plugged in.
+
+O] Note on DEFSELECT and Named Structures.
+
+DEFSELECT, by default, defines the function to signal an error if it is called
+with a first argument not defined in the DEFSELECT (except for :WHICH-OPERATIONS,
+which is defined implicitly by DEFSELECT).
+
+If you use DEFSELECT to define the handler function for a named structure type,
+and you use this default behavior, you will get errors at times when the system
+invokes operations that you may not know or care about, such as :SXHASH or
+:FASLOAD-FIXUP.
+
+To avoid this problem, specify IGNORE as the default handler in the DEFSELECT.
+IGNORE accepts any arguments and returns NIL.
+
+P] TV:MAKE-WINDOW Now Identical to MAKE-INSTANCE.
+
+Windows can now be created with MAKE-INSTANCE just like any other flavor instances.
+The function TV:MAKE-WINDOW will be supported indefinitely since it is so widely used.
+
+Q] Window Manual Error: TV:MOUSE-WAKEUP and TV:MOUSE-RECONSIDER.
+
+The window manual says that you should call the function TV:MOUSE-WAKEUP to
+report a change in screen configuration.  This is not exactly true.
+
+The function TV:MOUSE-WAKEUP causes the mouse process to look again at the
+position of the mouse.  It is called by the function TV:MOUSE-WARP, so that the
+mouse will be tracked to its specified new position.  It is also the thing to use if
+you redisplay a menu-like window with a new set of menu items, for example,
+so that the mouse process will notice whether the mouse position is now inside a
+different menu item.
+
+However, actual changes in the window configuration may make it necessary to
+force recomputation of which window owns the mouse.  This is done by setting
+the variable TV:MOUSE-RECONSIDER non-NIL.  Calling TV:MOUSE-WAKEUP may not
+be enough, since the current mouse position may still be inside the old screen
+area of a no-longer-eligible window.
+
+R] Delaying Flavor Recompilation.
+
+Normally the system recompiles combined methods automatically when
+you make a change that requires this.  If you plan to make more than one change,
+you might wish to recompile only once.  To do this, set the variable
+SI:*DONT-RECOMPILE-FLAVORS* non-NIL before you make the changes.
+Then set it back to NIL, and use RECOMPILE-FLAVOR to perform
+the appropriate recompilations.
+
+S] :INSTANCE-AREA-FUNCTION Flavor Keyword.
+
+You can now control which area flavor instances are consed in, on a per-flavor basis,
+by giving a flavor an instance-area function.  This is a function which will be
+called whenever the flavor is instantiated, and expected to return the area to
+cons in (or NIL, if it has no opinion).  The function is passed one argument,
+the init-plist, so if you want to have an init option for the caller to specify the
+area, the instance-area function can use GET to get the value the caller specified.
+
+The instance-area function is specified with
+
+     (:INSTANCE-AREA-FUNCTION function)
+
+in the flavor definition, and it is inherited by flavors which use this one
+as a component.
+
+T] %PAGE-STATUS Change.
+
+The subprimitive %PAGE-STATUS now returns the entire first word
+of the page hash table entry for a page, if the page is swapped in;
+or NIL for a swapped-out page, or for certain low-numbered areas
+(which are all wired, so their pages' actual statuses never vary).
+The argument is an address in the page you are interested in--data type is irrelevant.
+The %%PHT1- symbols in SYS: SYS; QCOM LISP are byte pointers
+you can use for decoding the value.
+
+U] Testing Values for Pointerhood.
+
+%POINTERP object
+  returns non-NIL if object points to storage.  For example,
+  (%POINTERP "FOO") is T, but (%POINTERP 5) is NIL.
+
+%P-POINTERP location
+  returns non-NIL if the contents of the word at location points to storage.
+  This is similar to (%POINTERP (CONTECTS location)), but the latter may get
+  an error if location contains a forwarding pointer, a header type, or an
+  unbound marker.  In such cases, %P-POINTERP will correctly tell you whether
+  the header or forward points to storage.
+
+%P-POINTERP-OFFSET location offset
+  similar to %P-POINTERP but operates on the word offset words beyond location.
+
+%P-CONTENTS-SAFE-P location
+  returns non-NIL if the contents of word location are a valid Lisp object, at least
+  as far as data type is concerned.  It is NIL if the word contains a header type,
+  a forwarding pointer, or an unbound marker.  If the value of this function is
+  non-NIL, you will not get an error from (CONTENTS location).
+
+%P-CONTENTS-SAFE-P-OFFSET location offset
+  similar to %P-CONTENTS-SAFE-P but operates on the word offset words beyond location.
+
+%P-SAFE-CONTENTS-OFFSET location offset
+  returns the contents of the word offset words beyond location as accurately as
+  possible without getting an error.
+
+  If the data there are a valid Lisp object, it is returned exactly.
+  If the data are not a valid Lisp object but do point to storage,
+  the value returned is a locative which points to the same place in storage.
+  If the data are not a valid LIsp object and do not point to storage,
+  the value returned is a fixnum with the same pointer field.
+
+%POINTER-TYPE-P data-type
+  returns non-NIL if the specified data type is one which points to storage.
+  For example, (%POINTER-TYPE-P DTP-FIX) returns NIL.
+
+V] Infix Expressions.
+
+You can now include infix expressions in your Lisp code.
+For example,
+   #X:Y+CAR(A1[I,J])
+is equivalent to
+   (SETQ X (+ Y (CAR (AREF A1 I J))))
+
+# begins an infix expression, and  ends it.
+
+The atomic terms of infix expressions include
+
+      symbols: use \ to quote special characters.
+
+      numbers: any valid Lisp real or imaginary number is accepted.
+	Complex numbers can be constructed by addition or subtraction.
+
+      strings: the same as in ordinary Lisp syntax.
+
+      raw Lisp data: ! followed by any Lisp expression, as in
+	  # FOO . !(CAR BAR)   =&gt;  (LIST* FOO (CAR BAR))
+
+Combining operations:
+
+Highest precedence
+	a [ i ]	(AREF a i)
+	a [ i, j ]	(AREF a i j)		and so on
+  examples
+	X[I,J+3]   =&gt;   (AREF X (+ J 3))
+      (GET-MY-ARRAY(FOO))[I]   =&gt;   (AREF (GET-MY-ARRAY FOO) I)
+
+	f ( a )	(f a)
+	f ( a, b )	(f a b)		and so on
+  examples
+	CAR(X)   =&gt;   (CAR X)
+
+	( exp )	exp			parentheses control order of evaluation.
+  examples
+	(X+1)*Y   =&gt;   (* (+ X 1) Y)
+
+	( e1, e2 )	(PROGN e1 e2)	and so on
+  examples
+	(X:5, X*X)   =&gt;   (PROGN (SETQ X 5) (* X X))
+
+	[ elt ]	(LIST elt)
+	[ e1, e2 ]	(LIST e1 e2)		and so on
+  examples
+	[!'X,Y,Z]   =&gt;   (LIST 'X Y Z)
+
+Precedence 180 on left, 20 on right
+	a : b	      (SETF a b)
+  examples
+	X: 1 + Y: Z+5   =&gt;   (SETQ X (+ 1 (SETQ Y (+ Z 5))))
+
+Precedence 140
+	a ^ b	      (EXPT a b)		right associative
+  examples
+	X ^ N ^ 2   =&gt;   (EXPT X (EXPT N 2))
+
+Precedence 120
+	a * b	      (* a b)
+	a * b * c	(* a b c)		and so on
+	a / b	      (// a b)
+	a / b / c	(// a b c)		and so on
+
+Precedence 100
+	- a		(- a)
+	a + b	      (+ a b)
+	a + b + c	(+ a b c)		and so on
+	a - b	      (- a b)
+	a - b - c	(- a b c)		and so on
+
+Precedence 95
+	a . b	      (LIST* a b)
+	a . b . c	(LIST* a b c)	and so on
+	a @ b	      (APPEND a b)
+	a @ b @ c	(APPEND a b c)	and so on
+
+Precedence 80
+	a  b	      (MEMQ a b)
+	a = b	      (= a b)
+	a = b = c	(= a b c)		and so on
+	&lt;, &gt;, , ,  are like =.
+
+Precedence 70
+	NOT a	      (NOT a)
+
+Precedence 60
+	a AND b		(AND a b)
+	a AND b AND c	(AND a b c)	and so on
+
+Precedence 50
+	a OR b			(OR a b)
+	a OR b OR c		(OR a b c)	and so on
+
+Precedence 45 for c, 25 for a and b.
+	IF c THEN a		(IF c a)
+	IF c THEN a ELSE b	(IF c a b)
+
+It is easy to define new operators.  See SYS: IO1; INFIX LISP.
+
+W] EH:REQUIRE-PDL-ROOM.
+
+EH:REQUIRE-PDL-ROOM regpdl-space specpdl-space
+  makes the current stack group larger if necessary, to make sure that
+  there are at least regpdl-space free words in the regular pdl, and at
+  least specpdl-space free words in the special pdl, not counting what
+  is currently in use.
+
+X] Rubout Handler Option :DONT-SAVE.
+
+If you specify a non-NIL value for the :DONT-SAVE option when
+you invoke the rubout handler, then the input string read will not
+be saved on the input ring for the Control-C command.
+
+This feature is used by YES-OR-NO-P so that the Yes or No
+does not get saved.
+
+Y] New Host Operation :NETWORK-ADDRESSES.
+
+The operation :NETWORK-ADDRESSES, on a host object, returns an alternating
+list of network names and lists of addresses, such as
+    (:CHAOS (3104) :ARPA (106357002))
+You can therefore find out all networks a host is known to be on, etc.
+
+Z] Error in Manual: SI:FILE-INPUT-STREAM-MIXIN.
+
+The flavor documented in the manual as SI:FILE-INPUT-STREAM-MIXIN
+is actually called SI:INPUT-FILE-STREAM-MIXIN.  Similarly, what is described
+as SI:FILE-OUTPUT-STREAM-MIXIN is actually called SI:OUTPUT-FILE-STREAM-MIXIN.
+
+AA] New Error Condition SYS:NO-SERVER-UP.
+
+The error condition SYS:NO-SERVER-UP is signaled by certain requests for
+a service from any available network host, when no suitable host is currently
+available.
+
+BB] New Function CHAOS:UP-HOSTS.
+
+CHAOS:UP-HOSTS host-list &optional number-of-hosts (timeout 250.)
+  returns a list of all the hosts in host-list which are currently accessible
+  over the chaos network.  host-list is a list of host names and/or host objects.
+  The value is always a list of host objects, possibly NIL for none of them.
+
+  If number-of-hosts is non-NIL, it should be a positive integer; when that
+  many hosts have responded, CHAOS:UP-HOSTS returns right away without
+  bothering to listen for replies from the rest.
+
+  timeout is how long it takes, without response, to decide that a host is down.
+
+CC] GET and GETHASH with Three Arguments.
+
+GET and GETHASH now take an optional third argument, which is a default value
+to be returned as the value if no property or hash table entry is found.
+
+DD] New Macro TYPECASE.
+
+There is now a TYPECASE macro, compatible with Common Lisp.
+
+Miscellaneous User Interface Changes
+
+     A] Incremental Bands.
+     B] Evaluation in the Debugger.
+     C] Beep Types.
+     D] Terminal T Change.
+     E] New Function SI:VIEW-UNFINISHED-PATCHES
+     F] VMS Default Device.
+     G] Improved File Error Handling.
+     H] Some Functions' Keyword Args Missing in ARGLIST.
+     I] Evaluating/Compiling Multi-Font Files.
+
+A] Incremental Bands.
+
+You can now save disk space when you save a band containing your favorite
+programs by making an incremental band; that is, a band which contains the
+differences between the Lisp world you want to save and another band (the one
+you originally loaded).
+
+To do this, provide a non-NIL third argument to DISK-SAVE, as in
+    (DISK-SAVE "LOD4" NIL T)
+It takes a couple of extra minutes to find what pages need to be saved.
+You can restore the incremental band with DISK-RESTORE or boot it like
+any other band.
+
+Booting or restoring an incremental band works by first booting the original band
+and then copying in the differences that the incremental band records.  This
+takes only a little longer than booting the original complete load band.
+
+The original band to which an incremental band refers must be a complete load.
+When you update a standard system band (loading patches, for instance) you
+should always make a complete load, so that the previous system band is not
+needed for the new one to function.
+
+The incremental band contains the partition name of the original band;
+DESCRIBE-PARTITION prints it out for you.  That original band must still exist,
+with the same contents, in order for the incremental band to work properly.  The
+incremental band contains error check data used to verify this.  The error
+checking is done by the microcode when the incremental band is booted, but it
+is also done by SET-CURRENT-BAND, so that you will not be permitted to make an
+incremental band current if it is not going to work.
+
+B] Evaluation in the Debugger.
+
+When you evaluate an expression in the debugger, it is evaluated in the
+binding environment of the frame that is current in the debugger.
+
+Initially, the debugger starts out with its current frame being the one in which
+the error happened.  Therefore, your expressions are evaluated in the environment
+of the error.  However, you now have the option of evaluating them in other
+environments instead.
+
+The debugger command Meta-S is no longer necessary in most cases, since simply
+evaluating the special variable will get the same result.  But it is still useful with
+a few variables such as STANDARD-INPUT and EH:CONDITION-HANDLERS which are
+rebound by the debugger for your protection when you evaluate anything.
+
+C] Beep Types.
+
+The system now supplies a non-NIL beep-type to the function BEEP on certain
+occasions.  These are the types defined so far:
+
+ZWEI:CONVERSE-PROBLEM
+  Used for the beep that is done when Converse is unable to send a message.
+ZWEI:CONVERSE-MESSAGE-RECEIVED
+  Used for the beeps done when a Converse message is received.
+ZWEI:NO-COMPLETION
+  Used when you ask for completion in the editor and the string does not complete.
+TV:NOTIFY
+  Used for the beep done when you get a notification that cannot
+  be printed on the selected window.
+
+Those of you who redefine BEEP can use the beep type (the first argument)
+to produce different sounds for different occasions.  More standard beep types
+will be defined in the future, if users suggest occasions that deserve beep types.
+
+D] Terminal T Change.
+
+Terminal T now controls just the deexposed Typeout action of the selected
+window.  A new command Terminal I controls the deexposed type-In action.
+(Sadly, Terminal O is already in use).
+
+Terminal 0 T -- just wait for exposure on output when deexposed.
+Terminal 1 T -- notify user on attempt to do output when deexposed
+Terminal 2 T -- permit output when deexposed.
+
+Terminal 0 I -- just wait for exposure on input when deexposed.
+Terminal 1 I -- notify user on attempt to do input when deexposed
+Terminal 2 I -- There is no Terminal 2 I.  It doesn't make sense.
+
+E] New Function SI:VIEW-UNFINISHED-PATCHES
+
+SI:VIEW-UNFINISHED-PATCHES &optional (system "System") (stream STANDARD-OUTPUT)
+prints out the unfinished patches of the system onto stream.
+
+F] VMS Default Device.
+
+The "primary device" for VMS hosts is now USRD$ rather than SYS$SYSDSK.
+
+G] Improved File Error Handling.
+
+When there is an error accessing a file and the system asks for a new pathname,
+you now have the option of entering the debugger instead.  Simply type End.
+
+H] Some Functions' Keyword Args Missing in ARGLIST.
+
+Calling ARGLIST on certain functions will omit the list of their keyword args.
+This is due to a compile bug when they were compiled.  If you think you have
+come across such a function, report it and it will be corrected with a patch.
+
+I] Evaluating/Compiling Multi-Font Files.
+
+It now works to evaluate or compile files that contain multiple fonts
+as specified with the Fonts attribute in the -*- line.  The old kludge
+that some users used for doing this should no longer be used.
+
+To make this work in all cases, user-defined readmacro characters should do all
+input using the function SI:XR-XRTYI (see its on-line documentation).  You may
+wish to specify arguments of stream NIL T.
+
+Note that if a readmacro detects a syntax error and wants to report this by
+signaling an Lisp error, it should always make SYS:READ-ERROR one of the
+condition names and provide the proceed-type :NO-ACTION, which should
+be handled by skipping over the invalid data and returning something (NIL
+is a reasonable thing to return).
+
+Editor and ZMail Changes
+
+     A] Selective Undo.
+     B] Control-Shift-D Command Changed.
+     C] New Dired Command on &lt; Key.
+     D] ZMail Can Generate Message-ID Fields.
+     E] New ZMail Command M-X Undigestify Message.
+     F] VMS Mail Files Understood.
+
+A] Selective Undo.
+
+You can now undo an editing change that is not the most recent change you made.
+If you give the Undo command C-Shift-U while there is a region, it undoes
+the most recent batch of changes that falls within the region.  The region does
+not go away, so you can repeat the command to undo successive changes
+within the same region.  For example, you can undo your changes to a
+specific Lisp function by using C-M-H to create a region around it
+and then using C-Shift-U.
+
+B] Control-Shift-D Command Changed.
+
+The command Control-Shift-D now prints the full documentation of the
+function which point is inside a call to.  Control-Shift-D is thus analogous to
+Control-Shift-A.  Meta-Shift-D is still available if you wish to specify the
+function to be documented.
+
+C] New Dired Command on &lt; Key.
+
+A new command to edit the superior directory of the current buffer's directory
+can be found on the &lt; key in DIRED.
+
+D] ZMail Can Generate Message-ID Fields.
+
+If you want, ZMail can put a Message-ID field in your outgoing messages.  Go into
+the Profile editor to get this behavior, because the default is not to generate
+Message-ID fields.
+
+E] New ZMail Command M-X Undigestify Message.
+
+This command takes the current message and splits it into its submitted messages
+so that you can act on them individually.  You can set aspects of what the command
+does by using the Profile editor:
+
+   (1) Should the original message be deleted ? (Default: Yes)
+   (2) Should everything but the header and ``table of contents'' be clipped out of
+	the original message ?  (Default: No)
+   (3) Should the name of the digest be append to the subject field of all the new
+       messages so that you can tell from which digest they came ?  (Default: Yes)
+
+F] VMS Mail Files Understood.
+
+ZMail can now read and write VMS format mail files, as used at MIT.
+</pre>
+
+    <hr/>
+    <p>Last modified: 2025/06/05 08:57:08 (UTC) by ams</p>
+  </body>
+</html>
+
+<!-- Local Variables: -->
+<!-- time-stamp-pattern: "-8/<p>Last modified:[ \t]%:y/%02m/%02d %02H:%02M:%02S (%Z) by %u</p>" -->
+<!-- time-stamp-time-zone: "UTC" -->
+<!-- End: -->

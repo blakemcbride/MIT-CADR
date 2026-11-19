@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <link rel="stylesheet" type="text/css"
+	  href="../lm3.css">
+    <title>LM-3 --- Lisp Machine System Release 18 Notes</title>
+  </head>
+  <body>
+    <center><h1>Lisp Machine System Release 18 Notes</h1></center>
+
+    <pre>
+Date: 23 AUG 1979 0151-EDT
+From: Moon at MIT-AI (David A. Moon)
+Subject: Incompatible changes coming!
+To: INFO-LISPM at MIT-AI
+
+Lisp machine system 18 and microcode 555, which must be used together,
+contain some incompatible changes.  Most of these probably only affect
+system programs, which have been fixed, but they are being announced in
+case any users have programs which would be affected.
+
+This system is installed on CADR1 and CADR6.  It will be installed on
+all the other machines in a few days, so if you are going to have trouble
+with the new system please find out before then.
+
+The function-calling microcode has been extensively revised.  The ^ and EXPT
+functions should now work completely.  However, any user programs (hopefully
+there are none) that use the macros in LISPM2;SGDEFS (stack-group and pdl
+formats) will need to be at least recompiled and possibly revised.
+
+The way the microcode treats multiple values has been changed as the first
+step of making multiple values "work right".  More about this later.   Any
+programs that return multiple values should be recompiled; they will still
+work in system 18 due to a kludge in the microcode, but they will crash the
+system in system 19, because the compiler wasn't really generating the right
+code.  Programs that receive multiple values returned by other functions
+have no problem.  Use of the MULTIPLE-VALUE-CALL macro, and of crockish code
+sequences involving %OPEN-CALL-BLOCK, should no longer be necessary.
+
+The format of the item-list in a menu has been changed.  Consult the
+documentation in the front of the file LISPM2;MENU.  If you have a program
+that uses menus and uses other than simple a-lists as item lists, you
+will need to change.
+
+The :RUBOUT-HANDLER stream operation has been changed.  A new argument has
+been added in front of the existing arguments, which is an alist of options.
+Normally you want to supply NIL.
+
+The RUBOUT-HANDLER-CONTROL-CHARACTER-HOOK has been flushed.  Presumably
+no one is using it.
+
+If you need help converting your programs, and if this message isn't
+sufficient help, please consult me.
+    </pre>
+
+    <hr/>
+    <p>Last modified: 2025/06/05 08:57:04 (UTC) by ams</p>
+  </body>
+</html>
+
+<!-- Local Variables: -->
+<!-- time-stamp-pattern: "-8/<p>Last modified:[ \t]%:y/%02m/%02d %02H:%02M:%02S (%Z) by %u</p>" -->
+<!-- time-stamp-time-zone: "UTC" -->
+<!-- End: -->

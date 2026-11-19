@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <link rel="stylesheet" type="text/css"
+	  href="../lm3.css">
+    <title>LM-3 --- Lisp Machine System Release 73 Notes</title>
+  </head>
+  <body>
+    <center><h1>Lisp Machine System Release 73 Notes</h1></center>
+
+    <pre>
+Moon@MIT-MC 08/30/81 01:05:42 Re: New system released
+To: info-lispm at MIT-AI
+System 73.10 is now considered to be released for general use.  I believe
+it is only installed on CADR-6 at the moment, but it should migrate to
+other machines in the near future.  Please do not use any copies of
+system 73 with minor versions less than 10.
+
+This system comes with microcode 786, and will probably not work with older
+microcode versions.  Microcode 786 is compatible with older systems.
+
+This system comes with Zmail 33.4.  The Zmail changes are documented in a
+separate release message to INFO-ZMAIL.
+
+The following system changes may be of interest.  There are no really
+incompatible changes this time.
+
+The M-X Bug command in the editor now always prompts for the recipient
+name, since so many people could not figure out how to get that
+behaviour.
+
+The meaning of :INCLUDED-FLAVORS and :NO-VANILLA-FLAVOR has been changed
+in the flavor system.  A new option, :REQUIRED-FLAVORS, now exists.  Details
+are in the file LMMAN;FLAVOR (the manual chapter on flavors).
+
+The argument to ESC F is interpreted slightly differently.  The self
+documentation reflects this change.  In particular, ESC F fingers on
+your login machine, which should work now even if it is a Tops-20.
+
+FORMAT now has a $ operator, identical to the one in Maclisp FORMAT.  Documentation
+online in LMMAN;FD.FIO.
+
+If ZWEI:*MOUSE-CLICK-ALWAYS-SELECTS* is non-NIL, mouse clicks in the
+editor always select the window.
+
+The #X reader macro now works correctly, the form following the #X is read with
+IBASE bound to 16. and SI:XR-EXTENDED-IBASE-P bound to T.  This causes things of
+the form: "+A0F" and "+FOO" to be interpreted as fixnums rather than as symbols.
+It does NOT yet work to bind BASE to something larger than 10., use format to
+print hex numbers if that is what you want.
+
+Previously unannounced # reader macro: "#|".  Text between #| and the matching |#
+is treated as a comment.  They nest correctly.  The are useful for long comments
+or commenting out sections of code.
+
+For MacLisp compatibility, defstruct no longer requires its keyword arguments
+to be in the keyword package.  It now treats them in a similar manner to
+the way LOOP treats its keywords.  Unless you are trying to be compatible
+with MacLisp, you are encouraged to continue to type those colons.
+
+New function TV:SET-DEFAULT-FONT intended to be called by users to
+change what font they want programs to display in by default.
+Associated are the variable TV:*DEFAULT-FONT*, the message
+:CHANGE-OF-DEFAULT-FONT, and the flavor TV:NO-CHANGE-OF-DEFAULT-FONT-MIXIN.
+(This mostly works, there are some small bugs with it which will be
+fixed some time later.)
+
+A new function PRESS:PRINT-XGP-FILE behaves like the /XGP option to the
+:DOVER program.  This is useful for printing Bolio output.
+
+The compiler's temporary area handling has been changed slightly.  The compiler
+now binds DEFAULT-CONS-AREA only while doing its internal processing
+(WHICH INCLUDES CALLING THE USER'S MACROS).  It no longer does input or output
+with the temporary area in effect.  Note however, that it is still the case
+that the conses of the source program read in are allocated in the temporary
+area (data types other than conses are not put in the temporary area by READ.)
+
+New status functions, (STATUS OPSYS) and (STATUS SITE), for compatibility
+with Maclisp.  (STATUS FILESYS), a member of the same family, is
+deliberately omitted since the Lisp machine can deal with more than one
+file system at a time.
+    </pre>
+
+    <hr/>
+    <p>Last modified: 2025/06/05 08:39:30 (UTC) by ams</p>
+  </body>
+</html>
+
+<!-- Local Variables: -->
+<!-- time-stamp-pattern: "-8/<p>Last modified:[ \t]%:y/%02m/%02d %02H:%02M:%02S (%Z) by %u</p>" -->
+<!-- time-stamp-time-zone: "UTC" -->
+<!-- End: -->

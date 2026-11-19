@@ -1,0 +1,223 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <link rel="stylesheet" type="text/css"
+	  href="../lm3.css">
+    <title>LM-3 --- Lisp Machine System Release 72 Notes</title>
+  </head>
+  <body>
+    <center><h1>Lisp Machine System Release 72 Notes</h1></center>
+
+    <pre>
+Date: 31 July 1981 23:13-EDT
+From: Mike McMahon &lt;MMcM at MIT-AI&gt;
+Subject: System 72 released
+To: INFO-LISPM at MIT-AI
+
+System 72 is now officially released.  It comes with microcode 774.
+There are a large number of important changes in this system, so this
+message summarizes them first:
+
+The BREAK key is no longer special in Supdup and Telnet
+The semantics of RETURN-FROM have been changed
+RETURN with one argument treats multiple values differently
+Minor compiler changes
+New commands in the error handler for special variables, single-stepping,
+ and new functions BREAKON, UNBREAKON
+New display in the who-line: active network servers
+Name changes: process-create, tv:define-blinker, :which-operations-p,
+  :handle-message-p, time:chaos-time, time:print-chaos-times obsolete
+Changes to patch and make-system systems
+Changes to #\ syntax:  #\I is now #\ROMAN-I, #\CONTROL-Q is new
+New functions and macros: ONCE-ONLY, PROCESS-WAIT-WITH-TIMEOUT, FIXNUMP,
+ FLONUMP, ZWEI:LOAD-FILE-INTO-ZMACS
+Site configuration changes
+
+
+&gt;&gt; Supdup and Telnet escape key.
+
+The crock wherein both Network and Break work as the Telnet and Supdup
+escape character has finally been declared obsolete.  There is now only
+one escape character, and its initial default setting is to the Network
+key, which was put on the keyboard precisely for that purpose.
+
+&gt;&gt; RETURN-FROM:
+
+RETURNs inside the arguments of a RETURN-FROM no longer return to the
+place specified by the RETURN-FROM.  Now, they return to the innermost
+PROG.  Example:
+
+(PROG FOO ()
+  (SETQ A (PROG ()
+	    (RETURN-FROM FOO (RETURN 1)))))
+
+returns 1 from the inner PROG, and sets A to 1.
+
+Note well: this improvement is incompatible with something the manual
+tells you to do, under RETURN-LIST.
+
+&gt;&gt; Multiple values:
+
+RETURN and RETURN-FROM with only one expression-argument, such as
+(RETURN (FOO)) and (RETURN-FROM BAR (FOO)), now pass back all the
+values of that argument.  The canonical way to return a specific
+sequence of values now is (RETURN (VALUES A B C)), etc.
+
+For compatibility, RETURN and RETURN-FROM with several
+expression-arguments still return the first value only of each one.
+If you want to make sure to return precisely one value, do
+(RETURN (VALUES A)).
+
+RETURN-LIST is logically superfluous, since it is the same as
+(RETURN (VALUES-LIST ...)), but it is still supported.
+
+MULTIPLE-VALUE-RETURN is now the same as RETURN, and will eventually be
+flushed.  You'll get a compiler warnings if you are using it.
+
+
+&gt;&gt; Compiler changes:
+
+An undeclared free variable now gets a "declared special" warning for
+each function in which it appears free.
+
+LET, LET*, VALUES and VALUES* are no longer macros.
+
+
+&gt;&gt; Error handler:
+
+You can now look at the special bindings of a frame with the
+Control-Meta-S command, or at the binding of a particular variable as
+visible in a given frame with Meta-S.
+
+The error handler can now be used to step through compiled or
+interpreted code.  In compiled code it stops on function calls and
+returns.  In interpreted code it does essentially what the old stepper
+does, though with different commands and output.  Stepping is done using
+the "trap on exit" bits of stack frames and the "trap on call" bits
+of stack groups.
+
+The commands C-X, M-X and C-M-X control "trap on exit".  C-X toggles
+the trap on exit bit of the frame you are looking at.  If the bit is
+set, returning from or throwing through the frame causes a trap to the
+error handler, which you can continue from with C-C.  M-X sets the bit
+for the current frame and all outer frames.  C-M-X clears the bit for
+all those frames.  Setting the bit for a lot of frames is useful for
+seeing how far out a looping program is getting.
+
+M-D controls "trap on call".  It toggles a bit which, if set, causes
+the next function call to trap to the error handler.  You proceed
+from the trap with C-C.  The frame of the call that trapped is
+automatically set to trap on exit as well.
+
+C-D continues from an error and sets the "trap on call" bit as well.
+
+You can start stepping at any error using one of the above commands.
+Alternatively, do (BREAKON 'FOO) to cause a trap on calling FOO.
+(UNBREAKON 'FOO) turns this off.  BREAKON can take a second arg
+whose value is a condition on which to trap; if you specify several
+conditions for the same function (using multiple calls to BREAKON),
+a trap occurs if any condition is true.  UNBREAKON also accepts
+a second arg, which says which condition to take away.  With only
+one arg, UNBREAKON removes all break conditions.
+
+Every error now signals SOME condition.  Random macrocode errors
+signal NIL, and random microcode errors signal condition :ERROR.
+
+You can now declare that a function is an "error reporter".  This
+means that its function is to test for and report errors, and errors
+detected inside it should be reported as having happened in the
+error-reporting function's caller rather than in the error-reporting
+function itself.  FOr example, FERROR is now an error-reporting
+function.  Make this declaration by giving the function name
+a non-nil :ERROR-REPORTER property.
+
+&gt;&gt; Who-line display.
+
+The who-line now displays information about any servers which are
+running at the present time.  This information is displayed in the same
+portion of the who-line as file transactions.  For instance, if your
+who-line says "BAND-TRANSFER serving CADR-3", then CADR-3 is currently
+using your BAND-TRANSFER server.  If your wholine says "3 Active
+Servers", then there are three other processes trying to use your
+machine remotely.  You can find out more about them by saying
+(TV:DESCRIBE-SERVERS).  Should you wish to make them go away, the
+incantation is (TV:CLOSE-ALL-SERVERS &lt;reason&gt;), where &lt;reason&gt; is a
+string.  This is done automatically in such functions as DISK-RESTORE.
+
+&gt;&gt; Naming.
+
+The battle for naming consistency continues to be waged: PROCESS-CREATE
+has been renamed to MAKE-PROCESS, and TV:DEFINE-BLINKER has been renamed
+to TV:MAKE-BLINKER.  The old names will continue to work indefinitely.
+
+DEFSELECT and the STREAM-DEFAULT-HANDLER now both understand the
+:OPERATION-HANDLED-P and :SEND-IF-HANDLES messages, just as all flavor
+instances do.  So it should now be safe to use these messages on
+any stream in the system.  The old names :WHICH-OPERATIONS-P and
+:HANDLE-MESSAGE-P have been flushed; use :OPERATION-HANDLED-P.
+
+&gt;&gt; Marking Systems as experimental, released, obsolete, etc.
+
+Systems (of the patch and make- sort) now have a status associated with
+them, which is displayed when the machine boots and in the label.  It is
+updated by (SI:LOAD-PATCHES).  Currently defined statuses are
+:EXPERIMENTAL, :RELEASED, :OBSOLETE and :BROKEN.  When a system is
+recompiled, the status of the new system version that creates is set to
+:EXPERIMENTAL.  (This can in fact be overridden by the :INITIAL-STATUS
+argument to DEFSYSTEM.)  The function SI:SET-SYSTEM-STATUS can then be
+used to declare the system released or broken as needed.  The format of
+patch directories is not compatible, but the old format is recognized
+and converted (giving a status of :RELEASED) when necessary (e.g. Add
+Patch or SET-SYSTEM-STATUS), so users should not need to do anything to
+their systems that don't need compiling.
+
+&gt;&gt; Syntax for characters.
+
+The names of the Roman numeral keys have been changed from #\I, #\II,
+etc. to #\ROMAN-I, #\ROMAN-II, etc.  The old names will no longer work.
+If you have a program that uses these names, you will get an error if
+you try to recompile it or load its source; all you have to do is switch
+to the new names.  The reason for this change is to remove an ambiguity
+regarding the letter "I" in the following new feature:
+
+It works to say #\Control-Meta-B, #\HYPER-SUPER-CTRL-, and so on.  In
+specifying the names of the shift keys, case is ignored, they cn be in
+any order, and CTRL can be spelled either "CONTROL" or "CTRL".  If the
+last character is non-alphanumeric (e.g. a parenthesis), it should be
+slashified as usual.  (The old way to do this was with things like
+#/B and #/.  This old syntax will continue to work, but the new
+one is, for obvious reasons, preferrable in new programs.)
+
+&gt;&gt; Various new functions and macros on the GLOBAL package.
+
+A macro that helps you define macros, ONCE-ONLY, has been installed.
+See LMMAN; MACROS &gt; for documentation.  PROCESS-WAIT-WITH-TIMEOUT is
+like PROCESS-WAIT but lets you specify a timeout as well; see LMMAN;
+PROCES &gt;.  FIXNUMP and FLONUMP of one argument exist and have the
+obvious meanings.
+
+ZWEI:LOAD-FILE-INTO-ZMACS allows loading a file into the file editor
+from an init file or otherwise outside the editor context.
+
+The functions TIME:CHAOS-TIME and TIME:PRINT-CHAOS-TIMES have been
+renamed to CHAOS:HOST-TIME and CHAOS:PRINT-HOST-TIMES for the sake of
+systems without chaosnets.
+
+&gt;&gt; Site configuration changes
+
+The way the system keeps track of network hosts, console locations, file and
+time servers, default host for logging in, presence of special devices such
+as dover and elevator, and other details of the site-specific configuration
+has been changed.  See MMcM if this affects you (it probably doesn't).
+    </pre>
+
+    <hr/>
+    <p>Last modified: 2025/06/05 08:57:07 (UTC) by ams</p>
+  </body>
+</html>
+
+<!-- Local Variables: -->
+<!-- time-stamp-pattern: "-8/<p>Last modified:[ \t]%:y/%02m/%02d %02H:%02M:%02S (%Z) by %u</p>" -->
+<!-- time-stamp-time-zone: "UTC" -->
+<!-- End: -->

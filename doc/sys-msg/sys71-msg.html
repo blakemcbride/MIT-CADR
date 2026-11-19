@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <link rel="stylesheet" type="text/css"
+	  href="../lm3.css">
+    <title>LM-3 --- Lisp Machine System Release 71 Notes</title>
+  </head>
+  <body>
+    <center><h1>Lisp Machine System Release 71 Notes</h1></center>
+
+    <pre>
+Date: 11 July 1981 18:06-EDT
+From: Mike McMahon &lt;MMcM at MIT-AI&gt;
+Subject: New system release
+To: INFO-LISPM at MIT-AI
+
+System 71 is now officially released.  It comes with microcode 767.
+
+The major change for this system is the addition of logical pathnames,
+which allow the file computer used when accessing a file to be
+determined at OPEN time.  This change should be for the most part
+invisible to the user, but if you run across a pathname with host SYS:,
+that's what it is.  The curious are referred to LMMAN; PATHNM for more
+details (s.v. Logical Pathnames).
+
+The system system and the patch system have been integrated.  To make
+your system patchable, you now need only include (:PATCHABLE) in the
+DEFSYSTEM options.  The major version for a patchable system is now
+incremented when you recompile that system via MAKE-SYSTEM, not when you
+load it for the first time.  To compile but not increment the major
+version, give the :NO-INCREMENT-PATCH keyword (in addition to :COMPILE).
+To just increment the version, give :INCREMENT-PATCH.  The function
+SI:ADD-PATCHABLE-SYSTEM is now gone and should be removed from system
+initializations.  What it used to do will now be done automatically by
+MAKE-SYSTEM on a patchable system.
+
+The processing of component system in a DEFSYSTEM can now be made to
+depend on other transformations.  This is useful for having a set of
+macro files for all the components.  To do this, use the
+:DO-COMPONENTS transformation, which takes one argument of the
+dependencies.  Look at LISPM; SYSDCL for an example.
+
+TV:WINDOW-CREATE has been renamed to TV:MAKE-WINDOW for consistency with
+other functions.  The old name will continue to work indefinitely.
+    </pre>
+
+    <hr/>
+    <p>Last modified: 2025/06/05 08:38:12 (UTC) by ams</p>
+  </body>
+</html>
+
+<!-- Local Variables: -->
+<!-- time-stamp-pattern: "-8/<p>Last modified:[ \t]%:y/%02m/%02d %02H:%02M:%02S (%Z) by %u</p>" -->
+<!-- time-stamp-time-zone: "UTC" -->
+<!-- End: -->

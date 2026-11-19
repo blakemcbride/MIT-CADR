@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <link rel="stylesheet" type="text/css"
+	  href="../lm3.css">
+    <title>LM-3 --- Lisp Machine System Release 44 Notes</title>
+  </head>
+  <body>
+    <center><h1>Lisp Machine System Release 44 Notes</h1></center>
+
+    <pre>
+Date: 22 SEP 1980 0351-EDT
+From: Moon at MIT-AI (David A. Moon)
+Subject: New system release
+To: INFO-LISPM at MIT-AI
+
+System 44.2 with microcode 692 is now the "installed new" system.  It is
+currently installed on CADR's 3, 6, and 8, and should migrate to more shortly.
+
+The main changes from system 40.1 of note (besides bug fixes) are:
+
+The process system has been revised.  Processes are now flavor objects and
+there are some new scheduler features (I don't know if the new scheduler
+features claim to work yet.)
+
+Use of TOPS-20 for file storage is really supposed to work now.
+
+There are floating-point arrays.  The array type symbol is ART-FLOAT.
+These are intended to reduce consing when doing floating-point array
+computations.  Accessing a floating-point array is actually somewhat slower
+than accessing an ART-Q array with flonums in it, but storing a "temporary"
+flonum into an ART-FLOAT array does not create a "permanent" flonum that
+would later need to be garbage-collected.  All floating-point arithmetic
+operations are now 4.5 microseconds (about 20%) faster, due to removal of
+some overhead.
+    </pre>
+
+    <hr/>
+    <p>Last modified: 2025/06/05 08:38:10 (UTC) by ams</p>
+  </body>
+</html>
+
+<!-- Local Variables: -->
+<!-- time-stamp-pattern: "-8/<p>Last modified:[ \t]%:y/%02m/%02d %02H:%02M:%02S (%Z) by %u</p>" -->
+<!-- time-stamp-time-zone: "UTC" -->
+<!-- End: -->

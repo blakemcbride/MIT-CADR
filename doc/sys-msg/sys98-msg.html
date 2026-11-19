@@ -1,0 +1,1936 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <link rel="stylesheet" type="text/css"
+	  href="../lm3.css">
+    <title>LM-3 --- Lisp Machine System Release 98 Notes</title>
+  </head>
+  <body>
+    <center><h1>Lisp Machine System Release 98 Notes</h1></center>
+
+    <pre>
+System 98 is now released.  It uses microcode version 306.  It will not
+run with earlier microcode versions, and microcode 306 may not be used with
+system 97.
+
+
+System 98 was originally used with microcode 305, but 306 fixes some important bugs.
+So all system 98 bands should be updated to use microcode 306.
+
+Files compiled in system 97 will run in system 98
+  unless they contain character constants for
+  control, meta, super or hyper characters (such as #\C-A)
+  or for mouse characters (such as #\MOUSE-3-1).
+  This means that init files which define editor commands
+  usually must be recompiled.
+Files compiled in system 98 will not run in system 97.
+
+You can debug system 98 with CC from system 97 provided that CADR patch 1.1
+is loaded.  You cannot debug system 98 from system 94.  You can debug all
+earlier systems from system 98.
+
+You should also read the files SYS: DOC; COMMON LISP,
+SYS: DOC; SYS98 DEFSTRUCT and SYS: MAN; GENERIC TEXT,
+which describe other compatible improvements present in system 98.
+The current status of the package system is described in
+SYS: DOC; SYS98 PACKAGES.
+
+Contents of the rest of this file:
+
+    Incompatible Changes
+    Incompatible Changes Coming in Future Systems.
+    Compatible Lisp Programming Changes
+    Window System Changes
+    User Interface Changes
+    Editor Changes
+
+Common Lisp Is Supported.
+
+Most of the differences between Common Lisp and the traditional Lisp machine
+dialect of Lisp are compatible extensions.  These extensions are available in
+all programs.  They are described in SYS: DOC; COMMON LISP,
+SYS: DOC; SYS98 DEFSTRUCT and SYS: MAN; GENERIC TEXT.  Many of these
+extensions are very useful, so all users should read these files even if they have
+no plans to write portable Common Lisp code.
+
+There are some incompatibilities between Common Lisp and the traditional Lisp
+machine system, however.  For the sake of existing programs, in most cases the
+system still works the traditional way.  If you wish to write a Common Lisp
+program and therefore want the Common Lisp definitions of the incompatible
+constructs, you should place
+
+				Common Lisp: T; Base: 10;
+
+in the -*- line of your file.  This gets you the Common Lisp reader syntax
+and the incompatible Common Lisp definitions of certain system functions.
+These Common Lisp incompatible versions of traditional system functions
+actually live in the CLI package, and are documented that way in this file
+and the others.
+
+If you want to use Common Lisp for interactive input, set the variable
+*DEFAULT-COMMON-LISP* non-NIL.  This variable is bound at the top level
+of each process, so setting it applies only to the current process.
+Lisp listeners check the variable before each form so it works
+to set the variable while operating in the listener.
+
+A few things in Common Lisp are not yet supported:
+ transcendental functions of complex numbers
+ "alternative" definitions as macros of nonstandard special forms
+ INLINE and NOTINLINE declarations
+
+A few incompatible changes could not be made conditional in this way,
+and apply to all programs.  The serious ones have been announced previously.
+They are all described on the following page.
+
+Incompatible Changes
+
+] Arrays Stored in Row-Major Order.
+
+Arrays used to be stored in column-major order.  This does not affect user programs
+except when they do one of these three things:
+
+  Access screen arrays of windows using AREF.  Since the TV hardware
+  has not been changed, the horizontal dimension is still the one that
+  varies fastest in memory; which means it is now the second dimension
+  rather than the first.
+
+  Use multidimensional displaced arrays or arrays displaced to
+  multidimensional arrays.
+
+  Deal with large multidimensional arrays and want to optimize paging behavior
+
+  Store multidimensional arrays in QFASL files.
+  A QFASL file records the elements of an array in the order they appear
+  in storage.  Therefore, if an array is dumped in an earlier system
+  and loaded into system 98, it will appear to be transposed.
+
+The functions AR-2-REVERSE, MAKE-PIXEL-ARRAY and others are provided to make
+it easier for you to change your code so that it works in both system 98 and older
+system versions.  See section 8.8 of the Lisp machine manual.
+
+] All &KEY Arguments Are Now Optional.
+
+It is no longer ever an error to omit a keyword argument defined with &KEY.
+&OPTIONAL now has no effect on the treatment of &KEY arguments.
+This is for Common Lisp and for compatibility with Symbolics systems.
+
+] Colons on Keywords Required in USER Package.
+
+The USER package is now just like all other packages in requiring that colons
+be used in front of keyword symbols.  For example, you can no longer write
+just TYI instead of :TYI if your program is in USER.
+
+] Double Colon for Internal Symbols; #: to Override Local Nicknames.
+
+The brain-damaged designers of Common Lisp have now changed their minds
+about how to refer to an internal symbol of another package.  They now
+specify :: for that, rather than #:.
+
+The Lisp machine does not actually require you to use this construct, and
+you are free to access internal symbols with plain colon in a package prefix.
+However, the need to give :: this new meaning means that it cannot have
+its old meaning, which is to suppress local package nicknames.
+
+Therefore, the meaning of suppressing local package nicknames is given
+to #:.
+
+As of system 98.8, the situation is:
+
+  FOO:BAR		refer to external symbol of package FOO
+			(but actually you can use it for any symbol in FOO).
+  FOO::BAR		refer to an internal symbol of package FOO,
+			in strict Common Lisp.
+  FOO#:BAR		refer to external (really, any) symbol in the package
+			whose global name or nickname is FOO.
+  #:BAR		make an uninterned symbol named BAR.
+
+Another change is that the printer now does not try to indicate internal symbols
+in any way if you are using the standard readtable.  If you are using the
+Common Lisp readtable, such symbols will now be indicated with ::.
+
+] Keywords Evaluate to Themselves.
+
+All symbols in the KEYWORD package--that is to say, symbols that you
+write with a colon, such as :STRING-OUT--are now automatically set
+up to evaluate to themselves.  Thus, you can now write
+    (SEND STREAM :TYI)
+instead of
+    (SEND STREAM ':TYI)
+
+This Common Lisp change ought not to invalidate any reasonable programs.
+
+] Pointer Fields Now 25 Bits; Flag Bit Gone.
+
+Each typed data word in Lisp machine memory used to have one bit called
+the "flag bit" which was not considered part of the contents of the word.
+This is no longer so.  There is no longer a flag bit; instead, the pointer field
+of the word is one bit larger, making it 25 bits in all.
+
+This extra bit extends the range of integers that can be represented without
+allocation of storage, and also extends the precision of small-floats by one bit.
+
+On the Lambda processor, the maximum size of virtual memory is doubled.
+This is the primary reason for the change.  Unfortunately, the CADR mapping
+hardware is not able to use the extra bit as an address bit, so the maximum
+virtual memory size on a CADR is unchanged.
+
+The functions %24-BIT-PLUS, %24-BIT-DIFFERENCE and %24-BIT-TIMES still
+produce only 24 bits of result.  If you wish to have a result the full size
+of the pointer field, however wide that is, you should use the functions
+%POINTER-DIFFERENCE and %POINTER-TIMES (the last is new), and
+%MAKE-POINTER-OFFSET with a first argument of DTP-FIX to do addition.
+
+The functions %FLOAT-DOUBLE, %DIVIDE-DOUBLE, %REMAINDER-DOUBLE and
+%MULTIPLY-FRACTIONS use the full width of the pointer field.
+
+The values returned by SXHASH have not changed!  They are always positive
+fixnums less than 2**23.
+
+] *THROW Passes Multiple Values to *CATCH.
+
+*CATCH used to return exactly four arguments, of which the first one was
+a single value given to *THROW, and the other three had complicated meanings.
+
+Now, *CATCH returns any number of values: either the values thrown, or
+the values of the last form inside the *CATCH, if no *THROW was done.
+
+To throw more than one value, make the second subform of a *THROW
+something which returns multiple values.  Thus,
+    (*CATCH 'FOO (*THROW 'FOO (VALUES 'A 'B)))
+returns the two values A and B.
+
+] CATCH-ALL Returns Additional Values.
+
+CATCH-ALL now returns all the values of the body or all the values thrown,
+plus three more: the tag, action and count a la *UNWIND-STACK.
+
+Yes, it is peculiar for a function to return n values followed by three specific ones,
+but it has to work that way.
+
+If you want to receive all these values, you should use CACTH-ALL within a
+MULTIPLE-VALUE-LIST and then use (BUTLAST list 3) to get the values
+thrown or returned and (NLEFT 3 list) to get the three specific values.
+
+] Character Bits Moved.
+
+The Control, Meta, Super, Hyper and Mouse bits now occupy a new position in
+character codes.  This is so that they will not overlap the field used by the
+character's font number.
+
+You can continue to use the byte pointers %%KBD-CONTROL to examine and
+set the bits; these byte pointers have different values now but your code
+will work anyway.  No change to the source is needed.
+
+However, you must recompile any file that contains a character constant which
+has one of the control bits set.
+
+] Local SPECIAL Declarations to Change in Meaning.
+
+One change that will take place for the sake of Common Lisp
+is that a SPECIAL declaration within a function will have to be
+present in the construct (LET, PROG, etc.) which binds a variable
+in order to make the binding be special.  Thus, for example,
+    (DEFUN FOO (A)
+      (DECLARE (SPECIAL B))
+      (LET (B)
+	...))
+will no longer make B special.  Instead, you must write
+    (DEFUN FOO (A)
+      (LET (B)
+	(DECLARE (SPECIAL B))
+	...))
+where the local declaration appears just inside the construct that binds
+the variable in question.
+
+A further unfortunate consequence of this is that LOCAL-DECLARE cannot
+be used any more to make a binding special, as in
+    (DEFUN FOO (A)
+      (LOCAL-DECLARE ((SPECIAL B))
+	(LET (B)
+	  ...)))
+because this too would fail to put the declaration just inside the LET.
+
+To facilitate the changeover, this change has not actually been made.
+Local SPECIAL declarations will still affect code just as they used to.
+However, any code which depends on this will get a warning reminding
+you to fix the code.  The actual change will occur in a future system version.
+
+Note that LOCAL-DECLAREs of SPECIAL around an entire function,
+affecting arguments of the function, will continue to work.
+Also, if you are just examining or setting the variable, as in
+    (LOCAL-DECLARE ((SPECIAL A))
+      ... (+ A 5) ...)
+and not rebinding it, then your code will not be affected.
+
+] EVALHOOK/APPLYHOOK Incompatible Change.
+
+Evalhook and applyhook functions are now passed two additional arguments,
+which describe the interpreter environment that the evaluation or application
+was going to take place in.  See the section on evaluation in SYS: DOC; COMMON LISP
+for more information.
+
+] Time Functions Return Exact Year.
+
+The functions DECODE-UNIVERSAL-TIME, TIME:GET-TIME and GET-DECODED-TIME now
+return the correct year number (a number greater than 1900.) rather than the
+year number modulo 100.
+
+] SELECT-MATCH Changed, and Much Faster.  LIST-MATCH-P.
+
+The syntax of SELECT-MATCH has been changed so as to avoid use of the construct #?.
+This is to avoid defining the construct #? and therefore leave it free for users to define.
+
+In addition, new instructions are used to make the matching extremely fast,
+faster than any other way you could test for a list's having certain elements
+and extract the others.
+
+As before, SELECT-MATCH takes an expression for an object to be tested
+followed by any number of clauses to try.  Each clause contains a pattern,
+a conditional form, and more forms that make the body of the clause.
+The first clause whose pattern matches the object and for which the conditional
+form produces a non-NIL value is the chosen clause, and its body is executed.
+The last clause can be an OTHERWISE clause.
+
+The change is that the pattern is now an expression made with the ` character,
+with commas indicating a variable in the pattern.  For example, in
+    (SELECT-MATCH FOO
+      (`(A ,B ,B) (SYMBOLP B) (PRINT B))
+      (OTHERWISE (PRINT FOO)))
+the first clause matches if FOO is a list of three elements, the first being the
+symbol A, and the second and third being the same symbol.  The second
+clause matches anything that slips through the first.
+
+Note that variables used in the patterns (such as B in the example above) are
+bound locally by the SELECT-MATCH.
+
+You can get the effect of a single SELECT-MATCH pattern with LIST-MATCH-P:
+
+LIST-MATCH-P list &quote pattern
+  returns T if the value of list matches pattern.
+  Any match variables appearing in pattern will be set in the course of the
+  matching, and some of the variables may be set even if the match fails.
+
+] BREAK Arguments Changed.
+
+The function BREAK is being changed to accept a format string and format
+arguments.  It used to take an unevaluated first argument, normally a symbol,
+and simply print it.
+
+To make the changeover easier, BREAK evaluates its first argument by hand,
+unless it is a symbol--then its pname is used as the format string.
+However, the compiler prints a warning if you use BREAK in the old way.
+
+] Y-OR-N-P And YES-OR-NO-P Arguments Changed.
+
+These functions now take just a format string and format arguments.
+They no longer accept the stream to use as an argument; they always
+use the value of QUERY-IO.
+
+If you used to pass two arguments, you must now bind QUERY-IO around
+the call instead.
+
+] :EVAL-WHEN Option in DEFSTRUCT Gone.
+
+You probably did not know about this option unless you found out by being screwed.
+DEFSTRUCT no longer generates any sort of EVAL-WHEN.  If you want the expansion of
+a DEFSTRUCT to be inside an EVAL-WHEN, simply write an EVAL-WHEN around the
+DEFSTRUCT.
+
+] Macro Expander Functions Take Two Arguments.
+
+A macro's expander function used to be passed only one argument, the
+macro call to be expanded.  Now it is passed a second argument as well.
+It is an "environment" object, and it is used to record the local macro
+definitions currently in effect.
+
+Since many old macros are still compiled to accept only one argument,
+MACROEXPAND-1 is smart and will pass only one argument in such a case.
+So there is no need to alter or recompile your macro definitions now.
+
+However, if you have anything else which calls macro expander functions
+directly, it must be changed to do what MACROEXPAND-1 does.  The easiest
+way is to write
+    (CALL expander-function NIL form :OPTIONAL environment)
+
+If you define a macro using MACRO (instead of DEFMACRO), you should
+change the arglist yourself to accept a second optional argument, even if
+it is just IGNORE.
+
+] SETF and LOCF Definitions Done Differently.
+
+You no longer use SETF and LOCF properties to define how to do SETF or
+LOCF on some kind of form.  Instead, you use the macro DEFSETF to define
+how to SETF it, and you do (DEFMACRO (function SI:LOCF-METHOD) ...)
+to define how to do LOCF on it.  See the section in SYS: DOC; COMMON LISP
+that talks about SETF.
+
+One exception: (DEFPROP FOO SI:UNSETFABLE SETF) still works, by special
+dispensation.  Likewise for SI:UNLOCFABLE.
+
+] COPY-FILE Takes Keyword Arguments.
+
+COPY-FILE filename new-name &key (error T) (copy-creation-date T) (copy-author T) report-stream
+		 (create-directories ':QUERY) (characters ':DEFAULT) (byte-size ':DEFAULT)
+  copies the file named filename to the name new-name.
+  characters and byte-size specify what mode of I/O to use to transfer the data.
+  characters can be T to specify character input and output, NIL for binary,
+   :ASK meaning ask the user which one, :MAYBE-ASK meaning ask if it is not
+   possible to tell with certainty which method is best, or :DEFAULT meaning
+   to guess as well as possible automatically.
+  If binary transfer is done, byte-size is the byte size to use.  :DEFAULT means
+  to ask the file system for the byte size that the old file is stored in,
+  just as it does in OPEN
+
+  copy-author and copy-creation-date say whether to set those properties of the
+  new file to be the same as those of the old file.  If a property is not copied,
+  it is set to your login name or the current date and time.
+
+  report-stream, if non-NIL, is a stream on which a message should be printed
+  describing the file copied, where it is copied to, and which mode was used.
+
+  create-directories says what to do if the output filename specifies a directory that
+  does not exist.  It can be T meaning create the directory, NIL meaning treat it as
+  an error, or :QUERY meaning ask the user which one to do.
+
+  error, if NIL, means that if an error happens then this function should just return
+  an error indication.
+
+  There are four values:
+    The defaulted pathname to be opened for output in copying this file.
+    The truename of the file copied
+    The "outcome":
+      The truename of the new file, If the file was successfully copied.
+      A condition object, if there was an error and error was NIL.
+      NIL if the user was asked whether to copy this file and said no.
+    The mode: a Common Lisp type descriptor such as STRING-CHAR
+    or (UNSIGNED-BYTE 8), saying how the file was copied.
+
+  If filename contains wildcards, multiple files are copied.  The new name for each
+  file is obtained by merging new-name (parsed into a pathname) with that file's
+  truename as a default.  The mode of copy is determined for each file individually,
+  and each copy is reported on the report-stream if there is one.  If error is NIL,
+  an error in copying one file does not prevent the others from being copied.
+
+  When wildcards are used, each of the four values is a list with one element
+  for each file that matched.
+
+] MAKE-PATHNAME Change.
+
+The meaning of the defaults argument to MAKE-PATHNAME is changed.
+Now all pathname components that are not specified or specified as NIL
+are defaulted from the defaults, if you give defaults.  If you do not give
+defaults, then the host alone defaults, from *DEFAULT-PATHNAME-DEFAULTS*,
+as it used to.
+
+] SI:PRINT-OBJECT and SI:PRINT-LIST Arguments Changed.
+
+These functions no longer accept the slashify-p argument.
+Instead, they look at the current value of *PRINT-ESCAPE*.
+Their argument lists are now:
+
+SI:PRINT-OBJECT object prindepth stream &optional which-operations
+SI:PRINT-LIST list prindepth stream &optional which-operations
+
+] PROMPT-AND-READ Changed.
+
+Two PROMPT-AND-READ options, namely :EVAL-FORM and
+:EVAL-FORM-OR-END, have been changed incompatibly in the
+conventions they use to return values.  See the section on
+PROMPT-AND-READ, below.
+
+Incompatible Changes Coming In Future Systems.
+
+] Decimal Radix Will Become the Default.
+
+In some future system, base 10. will become the default.  This is a Common Lisp
+change.  However, it will still be possible to specify the radix for each file
+individually.  To avoid any difficulties, place Base: 8; in the attribute list (the
+-*- line) of any file which is supposed to be in octal.
+
+] FORMAT control argument will change.
+
+The control argument to FORMAT will change in some future system to be compatible
+with Common Lisp. There will no longer be separate functions FORMAT and CLI:FORMAT, as there
+are in System 98.
+This change will affect the following FORMAT directives:
+
+~X	~width,padchar,commacharX
+	      Prints its argument in hexadecimal. (Analogous to ~O, ~B and ~D)
+	This command used to be used to insert spaces into the output.
+
+	Use ~number-of-spaces@T to achieve the same result as the old ~number-of-spacesX directive.
+
+~F	~width,decimal-places,scale,overflowchar,padcharF
+	      Prints a floating-point number in nonexponential notation.
+		Multiplies by 10^scale before printing if scale is specified.
+		Prints in width positions, with decimal-places digits after the decimal point.
+		Pads on left with padchar if necessary.  If then number doesn't fit in width positions,
+		and overflowchar is specified, this command just fills the width positions with
+		that character.
+	This directive used to just take one optional prefix control arg, which specified how many
+		mantissa digits to print. This is the same as 2+decimal-places for the new FORMAT.
+
+	Use ~,n+2F to achieve the same result as the old ~nF directive.
+
+~E	~width,decimal-places,exponent-places,scale,overflowchar,padchar,exptcharE
+	      Prints a floating-point number in exponential notation.
+		Prints in width positions, with exponent-places digits of exponent.
+		If scale (default is 1) is positive, prints scale digits before point, decimal-places-scale+1 after.
+		If scale is zero, prints decimal-places digits after the point, and a zero before if there's room.
+		If scale is negative, prints decimal-places digits after the point, of which the first -scale
+		are zeros.
+		If exptchar is specified, it is used to delimit the exponent (instead of "e" or whatever.)
+		If overflowchar is specified, then if the number doesn't fit in the specified width,
+		or if the exponent doesn't fit in exponent-places positions, the field is filled with overflowchar
+		instead.
+	This directive used to just take one optional prefix control arg, which specified how many
+		mantissa digits to print. This is the same as 2+decimal-places for the new FORMAT.
+
+	Use ~,n+2E to achieve the same result as the old ~nE directive.
+
+~G	~width,decimal-places,exponent-places,scale,overflowchar,padchar,exptcharG
+	      Like ~E, but if the number fits without an exponent, it is printed without one.
+	This command used to be used to go to a particular argument.
+
+	Use ~argument-number@* to achieve the same result as the old ~argument-numberG directive.
+
+Note: in System 98 you must use CLI:FORMAT to use the new Common Lisp style format directives.
+GLOBAL:FORMAT will continue to use the old directives.
+In System 99 these two functions will become identical, so the best thing is to update your code to
+use CLI:FORMAT now so that it will work in both System 98 and in future systems.
+
+Compatible Lisp Programming Changes
+
+] All Macros Are Displacing In Interpreted Code.
+
+All macros are displacing when encountered by EVAL.
+DEFMACRO-DISPLACE, and so on, are now synonyms for DEFMACRO, and so on.
+
+] :ALLOW-OTHER-KEYS As A Keyword Argument.
+
+:ALLOW-OTHER-KEYS has a special meaning as a keyword when passed
+to a function that takes &KEY arguments.  If followed by a non-NIL value,
+it prevents an error if any keyword is not recognized.  Thus, given the function
+
+	(DEFUN FOO (&KEY A B) (LIST A B))
+
+you would get an error if you do (FOO :A 5 :C T) because :C is not recognized.
+But if you do (FOO :A 5 :C T :ALLOW-OTHER-KEYS T), you get no error.
+The :C and its argument are just ignored.
+
+]  Package System Changes.
+
+PKG-EXTERNAL-SYMBOLS package
+  returns a list of all the external symbols of package.  package can be
+  a package or a package name (as a symbol or string).
+
+MAKE-PACKAGE allows additional keyword arguments:
+     invisible import shadowing-import import-from relative-names relative-names-for-me
+
+  invisible, if non-NIL, means that this package should not be put on the
+  list *ALL-PACKAGES*.  As a result, FIND-PACKAGE will not find this package,
+  not by its name and not by its nicknames.  You can make normal use of the
+  package in all other respects (passing it to INTERN, passing it to USE-PACKAGE
+  to make other packages inherit from it or it from others, and so on).
+
+  import, if non-NIL, is a symbol or a list of symbols to be imported into this
+  package.  You could accomplish as much by calling IMPORT after you have
+  created the package.
+
+  shadowing-import, if non-NIL, is a symbol or a list of symbols to be imported
+  into this package with shadowing.  You could accomplish as much by calling
+  SHADOWING-IMPORT after you have created the package.
+
+  import-from, if non-NIL, is a list containing a package (or package name)
+  followed by names of symbols to import from that package.  Specifying
+  import-from as (CHAOS "OPEN" "CLOSE") is nearly the same as specifying
+  import as (CHAOS:OPEN CHAOS:CLOSE), the difference being that with
+  import-from the symbols OPEN and CLOSE are not looked up in the CHAOS
+  package until it is time to import them.
+
+  relative-names is an alist specifying the local nicknames to have in this
+  package for other packages.  Each element looks like (localname . package),
+  where package is a package or a name for one, and localname is the
+  desired local nickname.
+
+  relative-names-for-me is an alist specifying local nicknames by which this
+  package can be referred to from other packages.  Each element looks like
+  (package localname), where package is a package name and localname is
+  the name to refer to this package by from package.  You will note that
+  the elements of this list are not dotted while those of relative-names are.
+  Blame everyone's favorite obnoxious Lisp machine company for this.
+
+DEFPACKAGE &quote name keywords-and-values...
+  is a new way to create a package.  All the arguments are simply passed to
+  MAKE-PACKAGE.  The differences between this function (actually, macro) and
+  MAKE-PACKAGE are:
+
+    DEFPACKAGE does not evaluate any arguments.
+
+    Re-evaluating a DEFPACKAGE for an existing package is allowed, and modifies
+    the existing package in accordance with changes in the definition.
+
+    The editor notices DEFPACKAGE and records it as the "definition" of the package.
+
+Package attributes in a file's -*- line can now have this format
+    Package: (name keyword value keyword value...);
+which means that the package to be used is name and, if that package does
+not exist, it should be created by passing name and the keywords and values
+to MAKE-PACKAGE.
+
+PKG-ADD-RELATIVE-NAME in-pkg name for-pkg
+  defines name as a local nickname in in-pkg for for-pkg.  in-pkg and for-pkg
+  may be packages, symbols or strings.
+
+PKG-DELETE-RELATIVE-NAME in-pkg name
+  eliminates name as a local nickname in in-pkg.
+
+SYS:PACKAGE-NOT-FOUND							Error Condition
+  is signaled whenever you do PKG-FIND-PACKAGE with second argument
+  :ERROR, NIL or omitted, and the package you were looking for does not exist.
+
+  The condition instance supports the operations :NAME and :RELATIVE-TO;
+  these return whatever was passed as the first and third arguments to
+  PKG-FIND-PACKAGE (the package name, and the package whose local nicknames
+  should be searched).
+
+  The proceed types :RETRY, :NO-ACTION, :NEW-NAME and :CREATE-PACKAGE
+  may be available.
+  :RETRY says to search again for the specified name
+  in case it has become defined; if it is still undefined, the error occurs again.
+  :CREATE-PACKAGE says to search again for the specified name, and create
+  a package with that name if none exists yet.
+  :NEW-NAME is accompanied by a name (a string) as an argument.  That name
+  is used instead, ignoring any local nicknames.  If that name too is not found,
+  another error occurs.
+  :NO-ACTION (available on errors from within READ) says to continue with the
+  entire READ as well as is possible without having a valid package.
+
+] All Objects Except Symbols and Lists Are Constants.
+
+All arrays, instances, fefs, characters, closures, etc. now evaluate to themselves.
+Evaluating such objects used to be an error; this new behavior therefore
+cannot hurt anything.
+
+The only kinds of objects which currently can evaluate to anything but themselves
+are symbols and lists.  However, it is not guaranteed that no other kind of object
+will ever be defined to evaluate to other than itself.
+
+] Nonlocal GO and RETURN.
+
+You can now GO or RETURN from an internal LAMBDA expression to the containing
+function.  Example:
+
+    (PROG ()
+      (MAPC #'(LAMBDA (X) (IF (NUMBERP X) (RETURN T)))
+	    INPUTS))
+
+returns T if any element of INPUTS is a number.  So does
+
+    (PROG ()
+      (MAPC #'(LAMBDA (X) (IF (NUMBERP X) (GO RET-T)))
+	    INPUTS)
+      (RETURN NIL)
+     RET-T
+      (RETURN T))
+
+] DEFSUBST Preserves Order of Evaluation.
+
+It used to be the case that if a DEFSUBST's body used an argument more than once,
+or used its arguments out of order, the forms supplied as arguments would be
+evaluated multiple times or in the wrong order.
+
+This has been fixed.  The arguments passed to a DEFSUBST function will be
+evaluated exactly once, in the order they are written.
+
+For example, after (DEFSUBST FOO (A B) (CONS B A)), the reference
+(FOO X (SETQ X Y)) used to turn into (CONS (SETQ X Y) X), which is incorrect
+since it uses the new value of X twice.  To be correct, the old value of X
+should be used for the second argument to CONS.
+
+Now, the expansion will be something effectively like
+    (LET ((TEMP X)) (CONS (SETQ X Y) TEMP))
+
+] MACROEXPAND-ALL.
+
+The function MACROEXPAND-ALL is called like MACROEXPAND.  It expands
+macro definitions not only at the top level of a form but also in its subexpressions.
+It is never confused by a macro name appearing at the start of a list
+which is not a subexpression.
+
+MACROEXPAND-ALL form &optional environment
+  expands macro definitions at all levels in form and returns the result.
+  environment is used for finding local MACROLET macro definitions;
+  it is like the second argument to MACROEXPAND (see previous page).
+
+  Only one value is returned.
+
+] TV:BITBLT-CLIPPED.
+
+TV:BITBLT-CLIPPED is just like TV:BITBLT, except that if you specify
+transfers that include points outside the bounds of either the source or
+destination array, only the part of the transfer that is within the bounds
+of both arrays will take place.
+
+The height and width you specify are required to be positive.
+
+] %BLT-TYPED.  Proper Use of %P-STORE-TAG-AND-POINTER, %P-DPB(-OFFSET).
+
+%BLT-TYPED is called just like %BLT and does about the same thing: copy any
+number of consecutive memory words from one place in memory to another.
+The difference is that %BLT is only properly used on data which contains no
+pointers to storage, while %BLT-TYPED is only properly used on boxed data.
+
+Both %BLT and %BLT-TYPED can be used validly on data which is formatted with
+data types (boxed) but whose contents never point to storage.  This includes
+words whose contents are always fixnums or small flonums, and also words which
+contain array headers, array leader headers, or FEF headers.  Whether or not the
+machine is told to examine the data types of such data makes no difference
+since, on examining them, it would decide that nothing needed to be done.
+
+For unboxed data (data formatted so as not to contain valid data type fields), such
+as the inside of a numeric array or the instruction words of a FEF, only %BLT
+may be used.  If %BLT-TYPED were used, it would examine the data type fields of
+the data words, and probably halt due to an invalid data type code.
+
+For boxed data which may contain pointers, only %BLT-TYPED may be used.  If
+%BLT were used, it would appear to work, but problems could appear mysteriously
+later because nothing would notice the presence of the pointer there.  For
+example, the pointer might point to a bignum in the number consing area, and
+moving it in this way would fail to copy it into a nontemporary area.  Then the
+pointer would become invalidated the next time the number consing area was
+emptied out.  There could also be problems with lexical closures and with
+garbage collection.
+
+%P-STORE-TAG-AND-POINTER should be used only for storing into boxed words,
+for the same reason as %BLT-TYPED: the microcode could halt if the data stored
+is not valid boxed data.
+
+%P-DBP and %P-DPB-OFFSET should be used only when the word being modified
+does not contain a pointer.  It may be an unboxed word, or it may be a boxed word
+containing a fixnum, small-flonum or array header.  The same goes for
+%P-DEPOSIT-FIELD and %P-DEPOSIT-FIELD-OFFSET.
+
+] CAR-SAFE, Etc.
+
+CAR-SAFE is like CAR when operating on a list.  If the argument is not a list,
+CAR-SAFE returns NIL.  CAR-SAFE never gets an error.
+
+The functions CDR-SAFE, CDDR-SAFE, NTH-SAFE and NTHCDR-SAFE also exist
+and are analogous.
+
+] SETQ-GLOBALLY, etc.
+
+There are now functions to use to examine or set the global binding of
+a variable, as opposed to the binding currently in effect.  The global binding
+is the one that is in effect in all processes or stack groups which have not
+rebound the variable.
+
+They work by forking off another process and examining or setting the
+variable in that process.  The bindings of your own process are not visible
+in the other process, and that process establishes no bindings of its own,
+so references to the symbol there access the global binding.
+
+SYMEVAL-GLOBALLY symbol
+  returns the global binding of symbol.
+
+SETQ-GLOBALLY unevaluated-symbol value unevaluated-symbol value...
+  sets the global binding of each symbol to the corresponding value.
+
+SET-GLOBALLY symbol value
+  sets the global binding of symbol to value.  symbol is an evaluated argument.
+
+MAKUNBOUND-GLOBALLY symbol
+  makes the global binding of symbol be void.
+
+BOUNDP-GLOBALLY symbol
+  returns T if the global binding of symbol is not void.
+
+The primary use of these functions are so that init files can set variables
+which are bound by the LOAD function, such as PACKAGE or BASE.
+If your init file does (SETQ PACKAGE (FIND-PACKAGE 'FOO)), this will
+be nullified as soon as LOAD exits and its binding of PACKAGE goes away.
+If you do (SETQ-GLOBALLY PACKAGE (FIND-PACKAGE 'FOO)), the current
+binding established by LOAD is actually not changed, but when the LOAD
+exits and the global binding is in effect again, FOO will be the current package.
+
+] :STRING-LINE-IN Stream Operation.
+
+:STRING-LINE-IN is a new standard input stream operation, supported by all
+the input streams provided by the system.  It fills a user-supplied buffer with
+text from the stream until either the buffer is full, end of file is reached,
+or a Return is found in the input.  If input stops due to a Return, the Return
+itself is not put in the buffer.
+
+Thus, this operation is nearly the same as :STRING-IN, except that :STRING-IN
+always keeps going until the buffer is full or until end of file.
+
+:STRING-LINE-IN returns three values:
+  the index in the buffer at which filling stopped
+      (if the buffer has a fill pointer, it is set to this value as well.)
+  T if end of file was reached.
+  T if the line is not complete; that is, input did not encounter a
+      Return character.  In this case there may be more text in the file
+      belonging to the same line.
+
+] LOCATION-MAKUNBOUND Takes Two Arguments.
+
+LOCATION-MAKUNBOUND now takes a second, optional argument.
+This argument supplies a pointer value to use in the void marker
+that is stored.
+
+A void location actually contains a pointer with data type DTP-NULL.
+This pointer is supposed to point to the object whose value or function definition
+is void.  In the case of a symbol's value cell or function cell, the object
+would be the symbol itself.
+
+LOCATION-MAKUNBOUND makes the location point to whatever object you supply
+as the second value.
+
+] :REQUIRED-INIT-KEYWORDS.
+
+You can now write (:REQUIRED-INIT-KEYWORDS init-keywords...) in a DEFFLAVOR.
+Then, whenever the flavor (or any flavor that depends on it) is instantiated,
+it will be an error if any of those init keywords fails to be specified.  For example,
+after
+   (DEFFLAVOR FOO (A) :INITTABLE-INSTANCE-VARIABLES (:REQUIRED-INIT-KEYWORDS :A))
+it is an error to do (MAKE-INSTANCE 'FOO) since the :A keyword is not provided.
+
+] Method Combination Improvements.
+
+When using method combination types such as :LIST, :PROGN, :APPEND and
+:PASS-ON, which formerly allowed any number of untyped methods and nothing
+else, you can now use the method combination type keyword as a method type.
+For example, when using :OR combination for operation :DOIT, you can now
+define a method (MYFLAVOR :OR :DOIT) as well as (MYFLAVOR :DOIT).  The
+method is combined the same way whichever name you use.  However, when the
+operation is invoked, all the typed methods are called first, followed by all the
+untyped methods.
+
+There is no longer a limit of three values passed back from the primary method
+when :AFTER methods are in use.  However many values the primary method
+chooses to return, they will be passed back to the ultimate caller.
+
+] UNDEFFLAVOR.
+
+UNDEFFLAVOR flavor-name
+  removes the definition of flavor-name.  Any flavors that depend on it are no longer
+  valid to instantiate.
+
+] Instantiation Flavor Functions.
+
+Now you can set up a flavor FOO so that, when you try to instantiate it, it calls a
+function to decide what flavor it should really instantiate (not necessarily FOO).
+You do this by giving FOO an instantiation flavor function.  Write
+    (:INSTANTIATION-FLAVOR-FUNCTION function-name)
+in the DEFFLAVOR for FOO to do this.
+
+When (MAKE-INSTANCE 'FOO keyword-args) is done, the function specified is
+called with two arguments: the flavor name specified (FOO in this case)
+and the init plist (the list of keyword args).  It should return the name of
+the flavor that should actually be instantiated.
+
+Note that the instantiation flavor function applies only to the flavor it is
+specified for.  It is not inherited by dependent flavors.
+
+] Run-Time-Alternative Flavors.
+
+A run-time-alternative flavor is a way to define a collection of similar flavors,
+all built on the same base flavor but having various mixins as well, and choose
+which one to instantiate based on init options.  (This is implemented using the
+:INSTANTIATION-FLAVOR-FUNCTION feature.)
+
+A simple example would be
+
+    (DEFFLAVOR FOO () (BASIC-FOO)
+      (:RUN-TIME-ALTERNATIVES
+	 (:BIG BIG-FOO-MIXIN))
+      (:INIT-KEYWORDS :BIG))
+
+Then, (MAKE-INSTANCE 'FOO ':BIG T) will get you an instance of a flavor
+whose components are BIG-FOO-MIXIN as well as FOO.  But (MAKE-INSTANCE 'FOO)
+or (MAKE-INSTANCE 'FOO ':BIG NIL) will get you an instance of FOO itself.
+The clause (:BIG BIG-FOO-MIXIN) in the :RUN-TIME-ALTERNATIVES says to
+incorporate BIG-FOO-MIXIN if :BIG's value is T, but not if it is NIL.
+
+You can have several clauses in the :RUN-TIME-ALTERNATIVES.  Each one
+is processed independently.  Thus, you could have keywords :BIG and :WIDE
+independently control two mixins and get four possibilities.
+
+You can test for values of a keyword other than just T or NIL.  The clause
+    (:SIZE (:BIG BIG-FOO-MIXIN) (:SMALL SMALL-FOO-MIXIN)
+	   (NIL NIL))
+allows the value for the keyword :SIZE to be :BIG, :SMALL or NIL (or omitted).
+If it is NIL or omitted, no mixin is used (that's what the second NIL means).
+If it is :BIG or :SMALL, an appropriate mixin is used.  This kind of clause
+is distinguished from the simpler kind by having a list as its second element.
+The values you check for can be anything, but EQ is used to compare them.
+
+You can also have the value of one keyword control the interpretation of others
+by inserting clauses within clauses.  After the place where you put the mixin name
+or NIL for no mixin, you can put other clauses which specify keywords and
+their interpretation.  These other clauses are acted on only if the containing
+alternative is chosen.  For example, the clause
+    (:ETHERIAL (T ETHERIAL-MIXIN)
+	       (NIL NIL
+		    (:SIZE (:BIG BIG-FOO-MIXIN) (:SMALL SMALL-FOO-MIXIN)
+			   (NIL NIL))))
+says to consider the :SIZE keyword only if :ETHERIAL is NIL.
+
+:RUN-TIME-ALTERNATIVES. can also be called :MIXTURE, for compatibility
+with brand S.
+
+] Additional Arguments to FS:PARSE-PATHNAME.
+
+FS:PARSE-PATHNAME thing &optional with-respect-to defaults (start 0) end junk-allowed
+  Parses thing into a pathname and returns it.
+  thing can be a pathname, a string or symbol, or a Maclisp-style namelist.
+  If it is a pathname, it is returned unchanged, and the other arguments
+  do not matter.
+
+  with-respect-to can be NIL or a host or host-name;
+   if it is not NIL, the pathname is parsed for that host
+   and it is an error if the pathname specifies a different host.
+  If with-respect-to is NIL, then defaults is used to get the host
+   if none is specified.  defaults may be a host object in this case.
+  start and end are indices specifying a substring of thing to be parsed.
+   They default to 0 for start and NIL (meaning end of thing) for end.
+  If junk-allowed is non-NIL, parsing stops without error if
+   the syntax is invalid, and this function returns NIL.
+   The second value is the index in thing at which parsing stopped,
+   which is the index of the invalid character if there was invalid syntax.
+  If junk-allowed is NIL, invalid syntax signals an error.
+
+] :DEVICE-WILD-P, etc., Pathname Operations.
+
+The operation :DEVICE-WILD-P operation on a pathname object is defined to
+return non-NIL if the pathname's device component contains a wildcard.
+
+:DIRECTORY-WILD-P, :NAME-WILD-P, :TYPE-WILD-P and :VERSION-WILD-P
+are similar, for their respective pathname components.
+
+] STRING-LENGTH Now Accepts Same Args as STRING.
+
+Anything which STRING could coerce into a string,
+STRING-LENGTH can give you the length of.
+
+] MAKE-PLANE Allows Additional Keyword Arguments.
+
+The arguments initial-dimensions and initial-origins are now accepted.
+You can use them to specify which part of the infinite plane the initially
+allocated storage should be for.  Each of these arguments, if specified,
+should be a list whose length is the rank of the plane; one element for
+each dimension.  Each element of initial-dimensions is the width to
+allocate initially in that dimension.  Each element of initial-origins
+is the smallest index, in that dimension, for which the initially allocated
+storage should be used.
+
+] MAP-RESOURCE And DEALLOCATE-WHOLE-RESOURCE.
+
+MAP-RESOURCE function resource-name &rest extra-args
+  operates with function on each object created in resource resource-name.
+  Each time function is called, it receives three fixed args, plus the extra-args.
+  The three fixed args are
+    an object of the resource;
+    T if the object is currently allocated ("in use");
+    the resource data structure itself.
+
+DEALLOCATE-WHOLE-RESOURCE resource-name
+  deallocates each object in resource resource-name.  This is equivalent to doing
+  DEALLOCATE-RESOURCE on each one individually.  This function is often useful
+  in warm-boot initializations.
+
+] ~ Format Directive.
+
+Format output within a ~ ... ~ construct is printed with each line indented
+to match the indentation that was current when the ~ was reached.
+
+] DEFSELECT-INCREMENTAL.
+
+With DEFSELECT-INCREMENTAL you can define a DEFSELECT that starts out empty
+and has methods added to it incrementally with individual DEFUNs.
+
+You do (DEFSELECT-INCREMENTAL fspec default-handler) to define fspec
+as a select-method function which has no methods except the standard
+ones (:WHICH-OPERATIONS, :OPERATION-HANDLED-P, and :SEND-IF-HANDLES).
+
+Then, to define the indivudual methods, use DEFUN on function specs of the form
+(:SELECT-METHOD fspec operation).  Note that the argument list of the DEFUN must
+explicitly provide for the fact that the operation will be the first argument;
+this is different from what you do in an ordinary DEFSELECT.
+
+Example:
+
+    (DEFSELECT-INCREMENTAL FOO IGNORE)   ;The function IGNORE is the default handler
+    (DEFUN (:SELECT-METHOD FOO :LOSE) (IGNORE A)
+      (1+ A))
+
+defines FOO just like
+
+    (DEFSELECT (FOO IGNORE)
+      (:LOSE (A) (1+ A)))
+
+The difference is that reevaluating the DEFSELECT gets rid of any methods
+that used to exist but have been deleted from the DEFSELECT itself.
+Reevaluating the DEFSELECT-INCREMENTAL has no such effect, and reevaluating
+an individual DEFUN redefines only that method.
+
+] READLINE, READLINE-TRIM, READLINE-OR-NIL.
+
+READLINE and READLINE-TRIM have been extended to return a second
+value.  This value is T if end-of-file was encountered.
+
+Note that end-of-file can still be an error if encountered at the beginning of the
+line, and this is still controlled by the eof-option argument.  But if the function
+does return, the second argument always says whether there was an end-of-file
+
+The new function READLINE-OR-NIL is like READLINE-TRIM except that it returns
+NIL rather than "" if the input line is empty or all blank.
+
+] READ-DELIMITED-STRING.
+
+READ-DELIMITED-STRING &optional delimiter stream eof rubout-handler-options buffer-size
+  reads input from stream until a delimiter character is reached, then returns
+  all the input before but not including the delimiter as a string.
+  delimiter is either a character or a list of characters which all serve as delimiters.
+  It defaults to the character End.  stream defaults to the value of STANDARD-INPUT.
+
+  If eof is non-NIL, then end of file on attempting to read the first character
+  is an error.  Otherwise it just causes an empty string to be returned.
+  End of file once at least one character has been read is never an error
+  but it does cause the function to return all the input so far.
+
+  Input is done using rubout handling and echoing if stream supports the
+  :RUBOUT-HANDLER operation.  In this case, rubout-handler-options are passed
+  as the options argument to that operation.
+
+  buffer-size specifies the size of string buffer to allocate initially.
+
+  Three values are returned:
+   the string of input read;
+   a flag which is T if input ended due to end of file;
+   the delimiter character which terminated input (or NIL if end of file was reached).
+
+] PROMPT-AND-READ Improvements.
+
+There are several new options you can give to PROMPT-AND-READ, and some
+existing options now take arguments.  Remember that the first argument to
+PROMPT-AND-READ is an option, which is either a keyword or a list
+of a keyword followed by arguments (alternating keywords and values).
+The rest of the arguments are a string and additional args passed to FORMAT to
+print the prompt.
+
+These options are changed incompatibly:
+
+:EVAL-FORM-OR-END
+  is changed so that, if the user types just End, it returns :END as the second value.
+  It used to return #/END as the second value in that case.  The first value will still be NIL.
+
+(:EVAL-FORM-OR-END :DEFAULT object)
+(:EVAL-FORM :DEFAULT object)
+  if the user types Space meaning use the default, the second value will now be :DEFAULT
+  rather than #/SPACE.  The first value will still be object, the default.
+
+Here are the options that now take additional arguments:
+
+(:PATHNAME :DEFAULTS default-list :VERSION default-version)
+  default-list is passed as the second argument to FS:MERGE-PATHNAME-DEFAULTS,
+  and default-version is passed as the fourth argument.
+
+(:NUMBER :INPUT-RADIX radix :OR-NIL nil-ok-flag)
+  reads a string terminated by Return or End, and parses it into a number
+  using radix radix if the number is a rational.  The number is returned.
+  If nil-ok-flag is non-NIL, then it is also permitted to type just
+  Return or End, and then NIL is returned.
+
+Here are the new options:
+
+:CHARACTER
+  means to read a single character and return a fixnum representing it.
+
+(:DATE :NEVER-P never-ok :PAST-P past-required)
+  means to read a string terminated by Return or End and parse it as a date/time.
+  The universal time number representing that date/time is returned.
+  If past-required is non-NIL, the date must be before the present time,
+  or else you get an error and must rub out and use a different date.
+  If never-ok is non-NIL, then you may also type "never"; NIL is returned.
+
+:EXPRESSION
+  is the same as :READ: read a Lisp object using READ and return it.
+
+:EXPRESSION-OR-END
+  means to read a Lisp object using READ, but alternately allow just End
+  to be typed and return the two values NIL and :END.
+
+:PATHNAME-OR-NIL
+  means to read a file name and return a pathname object,
+  but if the user types just End then return NIL instead.
+  The pathname is defaulted with FS:MERGE-PATHNAME-DEFAULTS.
+(:PATHNAME-OR-NIL :DEFAULTS default-list :VERSION default-version)
+  default-list is passed as the second argument to FS:MERGE-PATHNAME-DEFAULTS,
+  and default-version is passed as the fourth argument.
+
+] :NO-ERROR Clauses in CONDITION-CALL.
+
+The last clause in a CONDITION-CALL or CONDITION-CALL-IF may now be
+a :NO-ERROR clause.  This looks and works about the same as a :NO-ERROR clause in
+a CONDITION-CASE: it is executed if the body returns without error.
+The values returned by the body are stored in the variables which are
+the elements of the list which is the first argument of the CONDITION-CALL,
+and the values of the last form in the clause are returned by the
+CONDITION-CALL form itself.
+
+] SI:SET-SYNTAX-FROM-DESCRIPTION.
+
+There are new syntax descriptions that you can pass to this function:
+
+    SI:ESCAPE		a quote-one-character character.
+				In the standard readtable / is such a character.
+
+    SI:MULTIPLE-ESCAPE    a quote-several-characters character.
+				In the standard readtable | is such a character.
+
+    SI:CHARACTER-CODE-ESCAPE  is followed by a character's octal code.
+				In the standard readtable  is such a character.
+
+    SI:DIGITSCALE		a character for shifting an integer by digits.
+				In the standard readtable ^ is such a character.
+
+    SI:BITSCALE		a character for shifting an integer by bits.
+				In the standard readtable _ is such a character.
+
+    SI:NON-TERMINATING-MACRO  a macro character that is not recognized
+				if a token is already in progress.
+				In the standard readtable # is such a character.
+				(It is also a dispatching macro, but that is another matter.)
+				The correct way to make a character be a macro
+				is with SET-MACRO-CHARACTER, not with this description.
+
+SI:SLASH and SI:CIRCLECROSS are still implemented
+but it is preferable to use SI:ESCAPE or SI:CHARACTER-CODE-ESCAPE.
+SI:VERTICALBAR is no longer defined; use SI:MULTIPLE-ESCAPE.
+Unfortunately it is no longer possible to define SI:DOUBLEQUOTE
+as Doublequote is now just a macro character.
+
+] Microcoded Functions Interruptible.
+
+Many microcoded functions, including LAST, MEMQ, ASSQ and GET, are now
+interruptible.  This means in particular that if you pass a circular list to any of
+them you can now abort successfully.
+
+] NTH-VALUE.
+
+The function NTH-VALUE makes it convenient to select one of the values
+returned by a function.  For example, (NTH-VALUE 1 (FOO)) returns
+the second of FOO's values.  NTH-VALUE operates without consing in compiled
+code if the first argument's value is known at compile time.
+
+NTH-VALUE value-number expression					Special form
+  evaluates expression, then returns one of its values as specified by
+  value-number (with 0 selecting the first value).
+
+] PATCH-LOADED-P.
+
+PATCH-LOADED-P major-version minor-version &optional (system-name "SYSTEM")
+  returns T if the changes in patch number major-version.minor-version of
+  system system-name are loaded.  If major-version is the major version of
+  that system which is currently loaded, then the changes in that patch
+  are loaded if the current minor version is greater than or equal to
+  minor-version.  If the currently loaded major version is greater than
+  major-version then it is assumed that the newer system version contains
+  all the improvements patched into earlier versions, so the value is T.
+
+] Process Queues.
+
+A process queue is a kind of lock which can record several processes which
+are waiting for the lock and grant them the lock in the order that they requested it.
+The queue has a fixed size.  If the number of processes waiting remains less than that
+size then they will all get the lock in the order of requests.  If too many processes
+are waiting than the order of requesting is not remembered for the extra ones.
+
+SI:MAKE-PROCESS-QUEUE name size
+  makes a process queue object named name, able to record size processes.
+  size includes the process that owns the lock.
+
+SI:PROCESS-ENQUEUE process-queue &optional lock-value who-state
+  attempts to lock process-queue on behalf of lock-value.  If lock-value is NIL
+  then the locking is done on behalf of CURRENT-PROCESS.
+
+  If the queue is locked, then lock-value or the current process is put on the
+  queue.  Then this function waits for that lock value to reach the front of
+  the queue.  When it does so, the lock has been granted, and this function returns.
+
+  who-state appears in the who line during the wait.  It defaults to "Lock".
+
+SI:PROCESS-DEQEUEUE process-queue &optional lock-value
+  unlocks process-queue.  lock-value (which defaults to the current process)
+  must be the value which now owns the lock on the queue, or an error occurs.
+  The next process or other object on the queue is granted the lock and its
+  call to SI:PROCESS-ENQUEUE will therefore return.
+
+SI:RESET-PROCESS-QUEUE process-queue
+  unlocks the queue and clears out the list of things waiting to lock it.
+
+SI:PROCESS-QUEUE-LOCKER process-queue
+  returns the object in whose name the queue is currently locked,
+  or NIL if it is not now locked.
+
+] DEFINE-SYMBOL-MACRO.
+
+DEFINE-SYMBOL-MACRO, a misfeature recently introduced by Symbolics,
+has not been implemented in the MIT system.
+
+The effect of (DEFINE-SYMBOL-MACRO FOO (PRINT 'HUH)) would be
+that evaluating the symbol FOO would execute (PRINT 'HUH).
+Yes, (EVAL 'FOO) would print HUH!  Can you believe it?
+
+I think DEFINE-SYMBOL-MACRO is disgusting, but if users find it is useful
+or needed for compatibility I will implement it.  Tell me if you want this.
+
+] WITH-OPEN-FILE-SEARCH.
+
+WITH-OPEN-FILE-SEARCH is a new macro for opening a file and trying various
+pathnames until one of them succeeds.  The pathnames tried differ only in
+their type components.
+
+WITH-OPEN-FILE-SEARCH (streamvar (operation defaults auto-retry) types-and-pathname . options) &body body
+  tries opening various files until one succeeds; then binds streamvar to the stream
+  and executes body, closing the stream on exit.
+
+  types-and-pathname should evaluate to two values, the first being a list of types to try
+  and the second being a pathname, called the base pathname.  Each pathname to try
+  is made by merging the base pathname with the defaults defaults and one of the types.
+  options should evaluate alternatingly to keywords and values, which are passed to OPEN.
+
+  If all the names to be tried fail, a FS:MULTIPLE-FILE-NOT-FOUND error is signaled.
+  operation is provided just so that the :OPERATION operation on the error object
+  can return it.  It is usually the user-level function for which the
+  WITH-OPEN-FILE-SEARCH is being done.
+
+  If auto-retry is non-NIL, an error causes the user to be prompted for a new base
+  pathname.  The entire set of types specified is tried anew with this pathname.
+
+] Creating Links.
+
+FS:CREATE-LINK link-name link-to &key (error T)
+  creates a link named link-name which points to a file named link-to.
+  An error happens if the host specified in link-name does not support links,
+  or for any of the usual problems that can happen in creating a file.
+
+] Rubout Handler Interface.
+
+There are some new options for use in controlling the rubout handler;
+some other options are changed.  The new options are
+ :NO-INPUT-SAVE, :ACTIVATION, :COMMAND, :PREEMPTABLE and :EDITING-COMMAND.
+The changed options are
+ :DO-NOT-ECHO, :PASS-THROUGH and :PROMPT.
+
+Recall that the options are the first argument to the :RUBOUT-HANDLER stream
+operation; the remaining arguments being the parsing function and arguments to
+call it with.  The options argument is an alist; each element should look like one
+of these patterns:
+
+    (:NO-INPUT-SAVE T)
+	Don't save this batch of input in the input history when it is done.
+	YES-OR-NO-P specifies this option.
+
+    (:FULL-RUBOUT value)
+	Cause immediate return from the :RUBOUT-HANDLER operation
+	if the buffer ever becomes empty due to deletion of text.
+	Two values are returned: NIL and value.
+
+	The debugger uses this option so it can erase "Eval:" from the screen
+	if you rub out all the characters of the form to be evaluated.
+
+    (:INITIAL-INPUT string)
+	Start out with string in the buffer.
+
+    (:INITIAL-INPUT-POINTER n)
+	Start out with editing pointer n chars from the beginning of the buffer.
+	This is used with :INITIAL-INPUT.
+
+    (:ACTIVATION fn args...)
+	Activate if certain characters are typed in.
+	An activation character causes the buffered input to be read immediately,
+	and moves the editing pointer to the end of the buffer.
+
+	fn is used to test characters for being activators.
+	It is called with an input character (never a blip) as the first arg
+	and args as additional args.  If fn returns non-NIL, the character is an activation.
+
+	The activation character does not go in the buffer itself.
+	However, after the parsing function has read the entire contents
+	of the buffer, it reads a blip (:ACTIVATION char numeric-arg)
+	where char is the character that activated and numeric-arg
+	is the numeric arg that was pending for the next rubout handler command.
+
+    (:DO-NOT-ECHO chars...)
+	Poor man's activation characters.  Like :ACTIVATION except:
+	the characters that should activate are listed explicitly, and
+	the character itself is returned, rather than a blip, after all the buffered input.
+
+    (:COMMAND fn args...)
+	Make certain characters preemptive commands.
+	A preemptive command returns instantly to the caller,
+	of the :RUBOUT-HANDLER operation, regardless of the input in the buffer.
+	It returns two values: a list (:COMMAND char numeric-arg) and the keyword :COMMAND.
+	Any buffered input remains in the buffer for the next time input is done.
+	In the mean time, the preemptive command character can be processed
+	by the command loop.
+
+	In testing for whether a character should be a preemptive command,
+	this works just like :ACTIVATION.
+
+    (:PREEMPTABLE value)
+	Make all blips act as preemptive commands.
+	If this option is specified, the rubout handler returns immediately
+	when it reads a blip, leaving buffered input for next time.
+	Two values are returned: the blip that was read, and value.
+
+    (:EDITING-COMMAND (char doc)...)
+	Define editing commands to be executed by the parsing function itself.
+	Each char is such a command, and doc says what it does.
+	doc is printed out by the rubout handler's help command.
+	If any of these characters is read by the rubout handler,
+	it is returned immediately to the parsing function
+	regardless of where the input pointer is in the buffer.
+	The parsing function should not regard the character as part of the input.
+
+	There are two reasonable things that the parsing function can do:
+	  print some output
+	  :FORCE-KBD-INPUT
+	If output is printed, the :REFRESH-RUBOUT-HANDLER operation should
+	be invoked afterward.  This causes the rubout handler to redisplay
+	so that the input being edited appears after the output that was done.
+	If input is forced, it will be interpreted as rubout handler commands.
+
+	There is no way to act directly on the buffered input because different
+	implementations of the rubout handler store it in different ways.
+
+    (:PASS-THROUGH chars...)
+	Causes the rubout handler to treat the specified characters as ordinary
+	self-inserting characters. This enables characters such as Help to be input
+	without any need to quote them. This can make the any rubout handler
+	editing command which was assigned to that key inaccessible. This option
+	only works with characters with no control bits set.
+
+    (:PROMPT fn-or-string)
+	Direct prompting for the input being read.
+	If fn-or-string is a string, it is printed; otherwise it is called with two args:
+	the stream, and a character which is an editing command that says
+	why the prompt is being printed.
+
+    (:REPROMPT fn-or-string)
+	Same as :PROMPT except used only if the input is reprinted
+	for some reason after editing has begun.  The :REPROMPT option
+	is not used on initial entry.  If both :PROMPT and :REPROMPT
+	are specified, :PROMPT is used on initial entry and :REPROMPT thereafter.
+
+    (:NONRECURSIVE T)
+	Means to ignore previously-specified rubout-handler options and only use the
+	options specified to this invocation of the rubout handler, either using the
+	:RUBOUT-HANDLER operation or WITH-INPUT-EDITING. Use this option to override
+	the default behaviour, which is to look at all rubout-handler options including
+	those specified at an earlier time.
+
+A new convenient way to invoke the rubout handler on a stream
+if the stream supports it is to use WITH-INPUT-EDITING.
+
+WITH-INPUT-EDITING (stream options) body...			Macro
+  invokes the rubout handler on stream, if it is supported,
+  and then executes body.  body is executed in any case,
+  within the rubout handler if possible.
+  body's values are returned by WITH-INPUT-EDITING.
+  However, if a preemptive command is read, WITH-INPUT-EDITING
+  returns immediately with the values being as specified above
+  under :COMMAND or :PREEMPTABLE.
+
+  options are used as the rubout handler options.
+
+All rubout handlers now check for the condition name SYS:PARSE-ERROR when they
+decide whether to handle an error.  They used to check for SYS:READ-ERROR.
+All the errors signaled by the system which have the condition name SYS:READ-ERROR
+now have SYS:PARSE-ERROR as well, so no change in behavior should be apparent.
+However, you can signal an error which has SYS:PARSE-ERROR but not SYS:READ-ERROR
+if you wish (say, if the error happens in some function other than READ).
+
+SYS:PARSE-ERROR is also the condition name which the compiler looks for
+in its efforts to continue from errors that happen while reading text to be compiled.
+
+The function SYS:PARSE-FERROR is a convenient way to signal such an error,
+if you do not want any additional condition names besides SYS:PARSE-ERROR and the
+ones it implies.  The arguments are a format string and args for it.
+If SYS:PARSE-FERROR is called while reading text to be compiled, it will
+return NIL automatically.
+
+] Some Chaosnet Functions Renamed.
+
+Some functions in the CHAOS package have had their names changed.
+This is so we can avoid having two advertised system functions with
+the same name in different packages.  The old names still work.
+
+	Old Name			New Name
+
+	CHAOS:FINISH		CHAOS:FINISH-CONN
+	CHAOS:CLOSE			CHAOS:CLOSE-CONN
+	CHAOS:FINISHED-P		CHAOS:CONN-FINISHED-P
+
+] Chaosnet Listening Streams.
+
+Now you can listen for a chaosnet connection and open a stream at the same time.
+To do this, call CHAOS:OPEN-STREAM with NIL as the host argument.
+You must still pass a non-NIL contact-name argument.  The function will
+return a stream to you as soon as someone attempts to connect to that contact name.
+
+At this time, you must accept or reject the connection by invoking the
+stream operation :ACCEPT or :REJECT.  :REJECT takes one argument, a string
+to send back as the reason for rejection.  Before you decide which to do,
+you can use the :FOREIGN-HOST operation to find out where the connection came from.
+
+Window System Changes
+
+] TV:LIST-MOUSE-BUTTONS-MIXIN's Functionality Is Now The Default.
+
+If a window has an input buffer and does not define a handler for mouse clicks,
+they are handled by putting :MOUSE-CLICK blips into the input buffer.
+It used to be necessary to mix in TV:LIST-MOUSE-BUTTONS-MIXIN to get this behavior.
+Now that flavor is a no-op.
+
+Refer to section 10.1 of the window system manual for more information.
+
+] :PREEMPTABLE-READ Operation Available in TV:STREAM-MIXIN.
+
+Now all windows that handle :RUBOUT-HANDLER also handle the
+:PREEMPTABLE-READ operation.  It used to be necessary to mix in
+TV:PREEMPTABLE-READ-ANY-TYI-MIXIN to have this operation available.
+That flavor is now a no-op.
+
+Refer to page 55 of the window system manual for information on using
+this operation.
+
+You can also do preemptable input using the :RUBOUT-HANDLER operation
+with the :PREEMPTABLE option.  This is a new feature documented in this file.
+
+] :MENU Menu Item Type Improved.
+
+The value of a :MENU menu item can now be any form which evaluates to
+a suitable menu.  A menu itself is a special case of such a form, now that
+menus and other unusual objects evaluate to themselves.
+
+] :FUNCALL-WITH-SELF Menu Item Type.
+
+:FUNCALL-WITH-SELF is a new type of menu item.  The value associated with it
+is a function of one argument.  If the menu item is executed, the function will
+be called, with the menu (which is the value SELF, in the menu's :EXECUTE
+method) as its argument.  The value that the function returns is the value
+of executing the menu item.
+
+] TV:MOUSE-WAIT Takes Who-state as Argument.
+
+TV:MOUSE-WAIT takes an additional optional argument which, if specified, is
+displayed as the run state in the who line while the function waits for mouse input.
+
+] TV:CHAR-MOUSE-P and TV:MAKE-MOUSE-CHAR.
+
+You should no longer use the byte pointer %%KBD-MOUSE in making
+mouse characters or testing whether a character is a mouse character.
+It still works at the moment, but may stop working in the future.
+To avoid problems, convert code as soon as you have switched over to 98.
+
+To test, use TV:CHAR-MOUSE-P.  To construct, use TV:MAKE-MOUSE-CHAR.
+
+TV:CHAR-MOUSE-P char
+  T if char is a mouse character.
+
+TV:MAKE-MOUSE-CHAR button n-clicks
+  returns the mouse character for clicking on button button, n-clicks times.
+  Both button and n-clicks range from 0 to 2; n-clicks is actually one less
+  than the number of clicks.  The left button is button 0; the right one is 2.
+
+You continue to use %%KBD-MOUSE-BUTTON and %%KBD-MOUSE-N-CLICKS as byte pointers
+to extract from a mouse character the button clicked and how many times.
+
+] TV:MARGIN-SPACE-MIXIN.
+
+The mixin TV:MARGIN-SPACE-MIXIN defines a margin item which is blank.
+You can leave blank space next to any of the window's edges.  The blank
+space can go between two margin items at that edge, or between the inside
+of the window and the margin items.  For example, it could be used to
+separate the scroll bar from the inside of the window, or separate the
+scroll bar from the border, depending on where in the ordering you mix
+the mixin in.
+
+The mixin defines an init keyword called :SPACE whose value specifies
+how much blank space to leave at each edge.  The values you can use are:
+  T      leave one pixel of space at all four edges.
+  NIL    leave no blank space.  This turns off the effect of the mixin.
+  n      leave n pixels of space at each edge.
+  (left top right bottom)
+	 leave top pixels of space at the top edge, left pixels at the left edge, etc.
+
+Two operations are also defined by the mixin: :SPACE and :SET-SPACE.
+ :SET-SPACE takes an argument just like the :SPACE init keyword and alters
+ the amount of space the mixin is generating.  :SPACE as an operation returns
+ a list of four values (left top right bottom) describing how much space is
+ currently being taken up by the mixin.
+
+] TV:ADD-SYSTEM-KEY Saves Previous Definition.
+
+If a system key is already defined and you use TV:ADD-SYSTEM-KEY to redefine it,
+the previous definition is restored when you do TV:REMOVE-SYSTEM-KEY to
+remove the new definition.
+
+User Interface Changes
+
+] *VALUES* Records All Values Produced in a Listen Loop.
+
+Lisp listeners, BREAK and the debugger now record all the values of each
+evaluated form in the variable *VALUES*.  Each process has its own *VALUES*.
+The value of *VALUES* is a list, and each element is a list of the values of one
+evaluated form.  The most recent forms' values come first.
+
+If a form is aborted for any reason, NIL is pushed on *VALUES* for it.
+
+(CAAR *VALUES*) is therefore equivalent to the value of the variable *
+if and only if the last form was not aborted.
+
+] Variable Ratio Mouse Motion.
+
+The ratio of mouse motion on the table to mouse cursor motion on the screen
+now depends on the speed of motion.  If you move the mouse slowly, the cursor
+moves only a little as the mouse moves.  As you move the mouse faster, the same
+amount of mouse motion moves the cursor a long distance.
+
+To control this feature, use this function
+
+TV:MOUSE-SPEED-HACK &rest specs
+  specs consists of an odd number of elements: alternating scale factors and speeds,
+  followed by one more scale factor.  Each scale factor applies up to the speed
+  that follows it.  The last scale factor applies to all higher speeds.
+  The standard settings are made with specs of (.6 120 1 200 1.5 400 2.2 700 3.3)
+  so you can see that a speed of 120 is fairly slow, while 700 is moderately fast.
+  A scale factor of 1 corresponds to the mouse motion ratio previously in use.
+  So, (TV:MOUSE-SPEED-HACK 1) would restore the old fixed-ratio behavior.
+
+] UNADVISE.
+
+The function UNADVISE has been generalized in that all arguments now act
+independently to restrict which pieces of advice should be removed.
+Thus, if all three arguments are NIL, all advice is removed.
+If the first argument is non-NIL, it is a function spec, and only advice
+on that function spec is removed.
+If the second argument is non-NIL, it is an advice class (:BEFORE, :AFTER or :AROUND),
+and only advice of that class is removed.
+If the third argument is non-NIL, it is a position (if it is a number) or a name
+(if it is a symbol), and only advice with that position or that number is removed.
+
+UNADVISE-WITHIN has been improved in a similar fashion.
+ADVISE has been changed so that (ADVISE) returns a list of all functions which have
+advice, in the same way the (TRACE) returns a list of all traced functions.
+
+] Choose Variable Values Windows.
+
+Clicking the right mouse button on a variable's value now puts you in
+the rubout handler with the old value of the variable there for you to edit.
+You can use parts of the text of the old value to make up the text of the
+new value.
+
+Clicking left still puts you in the rubout handler with a blank slate;
+then you must type the new value from scratch.
+
+The keyword :PAST-DATE is now allowed for describing how to print and
+parse a variable value.  It is the same as :DATE for printing.  For parsing,
+it is almost the same as :DATE, but if the day is specified only by a day
+of the week then the most recent past day of that name will be used, rather
+than the next coming one.
+
+] Output of Character Names.
+
+FORMAT ~:C and FORMAT:OCHAR now never output a character name for graphic
+characters other than Space and Altmode.  All other graphic characters are output
+as themselves, whether or not they have names, since they appear on the
+keyboard as themselves.
+
+] :STEPCOND Argument to TRACE.
+
+The :STEPCOND argument to TRACE generalizes the :STEP argument.  It allows
+you to specify that STEP should be invoked on the execution of the traced
+function only if a certain condition is met.  The value you provide for the
+:STEPCOND argument should be a form to be evaluated when the traced function
+is called; if the form evaluates non-NIL, the function will be stepped.
+
+] MONITOR-VARIABLE No Longer Exists.
+
+One consequence of the fact that boxed data words no longer have a flag bit
+is that MONITOR-VARIABLE is no longer possible to implement.  This function
+has been removed.  Sorry.
+
+] C-M-H Command in Debugger.
+
+The debugger command Control-Meta-H prints a description of the condition
+handlers established by the stack frame you are looking at.
+
+] EH:*DEBUG-IO-OVERRIDE*.
+
+If EH:*DEBUG-IO-OVERRIDE* is non-NIL, the debugger will now use it for its input
+and output, rather than using the value of DEBUG-IO.
+
+] Compiled Code Read-Only Now.
+
+The areas in which compiled code lives are now read-only.
+This is to catch bugs such as NCONCing onto a constant list.
+
+The pnames of interned symbols are also read-only now.
+
+] Compilation Allowed in More Than One Process At Once.
+
+It is no longer the case that compilation uses fixed data structures
+which exist in only one copy.  You will no longer get the message
+"Compiler in process FOO waiting for resources."
+
+] MAKE-SYSTEM Improvements.
+
+If MAKE-SYSTEM is done on a system which is not known, the file
+SYS: SITE; system SYSTEM is now loaded without any query if the file exists.
+
+When MAKE-SYSTEM asks you about a list of files to be compiled or loaded,
+you now have the option of saying you would like to be asked again about
+each individual file.  Do this by typing "S" instead of "Y" or "N".
+
+After you type "S", you will be asked about each file in the bunch just
+as you would have been earlier if you had specified :SELECTIVE as
+an argument to MAKE-SYSTEM.  Finally you will be asked once again
+to approve of the entire bunch of files, before processing actually begins.
+
+] Fasdumping Functions Always Record Package to Load in.
+
+The functions DUMP-FORMS-TO-FILE, COMPILER:FASD-SYMBOL-VALUE,
+COMPILER:FASD-FONT and COMPILER:FASD-FILE-SYMBOLS-PROPERTIES
+now always record in the QFASL file created the name of the package
+in which the file was written.  This makes sure that the symbols used
+when the file is loaded will be the same as when it was dumped.
+
+In DUMP-FORMS-TO-FILE, you can specify the package to use by including
+a :PACKAGE attribute in the ATTRIBUTE-LIST argument.  For example, if
+that argument is the list (:PACKAGE :SI) then the file is dumped and loaded
+in the SI package.  If you do not specify a package, the file is dumped and
+loaded in USER.  With the other three functions, the file is always dumped
+and loaded in USER.
+
+] APROPOS and SUB-APROPOS Accept Keywords :BOUNDP and :FBOUNDP.
+
+In APROPOS, specifying a non-NIL value for the keyword argument boundp
+restricts the search to symbols which have values.  A non-NIL fboundp
+restricts it to symbols with function definitions.  SUB-APROPOS accepts
+the same new arguments.
+
+] FS:LOAD-PATHNAME-DEFAULTS Now a Synonym for *DEFAULT-PATHNAME-DEFAULTS*.
+
+Common Lisp wants LOAD to use the default defaults.  It seems that if
+LOAD should do so then everything else which used the LOAD defaults
+should do likewise.  So the two variables have been forwarded together.
+
+Editor Changes
+
+] Yank Command Improvements.
+
+What used to be called the kill ring is now called the kill history because it is
+no longer a ring buffer.  It now records all the kills you have ever done, in
+strict chronological order.
+
+Meta-Y still brings older kills into the region, and any particular sequence of
+Meta-Y commands works just as it used to.  But the history is not permanently
+rotated; as soon as a new kill is done, it snaps back to chronological order.
+We say that Meta-Y rotates the history's yank pointer around the history list.
+Control-Y with no argument yanks what the yank pointer points at.
+
+So far, the yank pointer corresponds entirely to what used to be the front of
+the kill ring, but here are the differences.
+   - Killing anything moves the yank pointer up to the front of the list.
+   - Numeric arguments Control-Y count from the most recent kill,
+     not from the yank pointer.
+
+You can think of this as meaning that either killing or Control-Y with an argument
+"un-rotates" any rotation you have done, before it does its work.
+
+Control-Y with an argument of zero prints a list of the first 20 elements of
+the kill history.  Click on one of them to yank it.  Click on the message saying
+that there are more elements, if you want to see the rest of them.
+
+There are several other histories as well as the kill history.
+They all work just like the kill history, except that you use some other
+command instead of Control-Y to yank from them.  Meta-Y is used for
+rotating the yank pointer no matter which history you are yanking from;
+it simply works on whatever history your last yank used.
+
+For example, the previous inputs in the rubout handler are now stored
+in a history.  The command Control-C yanks from it, pretty much as before,
+except that it now takes arguments exactly like Control-Y.
+Control-Meta-Y is a new alias for Control-C; it has the advantage
+of not being a debugger command, so you can use it in the debugger
+with no extra complications.
+
+All the pathnames you have typed in minibuffers now go in a history.
+The command Meta-Shift-Y, which used to yank the last pathname input,
+has been generalized to yanks from this history.  It takes args just like
+Control-Y, now.  Use Meta-Y immediately after a Meta-Shift-Y to rotate
+the yank pointer to other pathnames in the history.
+
+All buffer names given as arguments in the minibuffer also have a history.
+(Actually, each Zmacs window has its own history of these.)
+Meta-Shift-Y is the command for this history as well.
+
+All function specs and other definition names you give as arguments in the
+minibuffer also have their own history, which is accessible through Meta-Shift-Y.
+
+There is no ambiguity in Meta-Shift-Y.
+When the minibuffer wants a pathname, Meta-Shift-Y uses the pathname ring.
+When the minibuffer wants a buffer name, Meta-Shift-Y uses the buffer name ring.
+When the minibuffer wants a definition name, Meta-Shift-Y uses that ring.
+Other rings of minibuffer arguments of particular kinds may be created in
+the future; Meta-Shift-Y will be the way to access all of them.
+
+Note that the command Control-X Altmode, which repeats previous minibuffer
+commands, takes arguments just like Control-Y, and also stores its data in a
+history.  However, this command does not really work by yanking text.
+There has been no change in the way Control-Meta-Y is used to go back to
+previous minibuffer arguments or to a previous command.
+
+Summary:
+
+    Control-Y		kill history		everywhere
+    Control-Meta-Y		input history		rubout handler
+	     Control-C is the same as Control-Meta-Y
+    Control-Meta-Y		input history	      Editor Top Level and Ztop
+    Meta-Shift-Y		arg history		minibuffer
+
+    Meta-Y			rotate yank pointer of any history
+
+] Lisp (Edit) Windows, and Ztop.
+
+The Lisp (Edit) window or editor top level, and Ztop mode, now provide
+infinitely long input histories just like the one that the usual rubout handler
+provides.  Formerly each batch of input read in a Lisp (Edit) window or in
+Ztop mode was pushed on the kill history.  Now it goes on the window's
+or Ztop buffer's input history instead.  Use Control-Meta-Y to yank
+the most recent element of the input history, just as you would in the
+rubout handler, and then use Meta-Y to rotate to earlier inputs if you wish.
+
+] Yanking and Fonts.
+
+When text is moved between buffers and files in which fonts are specified,
+the precise font of each character is now preserved.  If you yank a character
+which was in font MEDFNT in the buffer where it used to be, it will be in
+MEDFNT after it is yanked.  This may necessitate adding fonts to the font list
+of the buffer you are editing; if so, you will be asked whether to modify
+the attribute list (the -*- line) in the text as well.
+
+This new feature applies to the commands C-Y, Insert File, Insert Buffer,
+and C-X G.  But it only applies when fonts have been specified in the buffer
+you are editing (with Set Fonts or with a Fonts: attribute).  Otherwise, all
+the yanked text gets put into the default font along with everything else
+in the buffer.  Also, if fonts were not specified in the file or buffer that
+the text came from, it simply goes into font zero of the current buffer.
+
+] Sectionization Improvements.
+
+Now each form in a buffer gets its own section.  This has several beneficial results.
+
+M-X Compile Buffer Changed Sections will no longer recompile
+any random forms that are adjacent to functions you have edited.
+In fact, this command recompiles only sections containing DEF... forms.
+
+Evaluating a random form in the buffer will no longer mark any definition
+as "already recompiled".  Even evaluating a form which is part of a definition
+will no longer mark the entire definition as "already recompiled".
+
+C-Shift-C can now print the name of the function being compiled
+very quickly, based on the sectionization.
+
+The section nodes for non-definition forms have names which are strings
+containing the file or buffer name, the function which the form invokes, and a
+numeric suffix to make the name unique: for example, QFCTNS-DEFPROP-182.
+You will see these section names mentioned in the output of Meta-X List
+Sections and other commands for listing or visiting sets of sections.
+
+] Per-Buffer Local Variables.
+
+Now you can make any special variable's value local in a specific editor
+or, in the case of Zmacs, in a specific buffer.  For editor user option
+variables this can be done with a Meta-X command.
+
+ZWEI:MAKE-LOCAL-VARIABLE variable &optional value xvcell
+  makes variable local in the current editor, or in the current buffer
+  if this is an editor which can select various buffers (that is, Zmacs).
+  If value is specified (whether NIL or not) then variable is set to
+  value after it is made local; otherwise it keeps its global value.
+
+  The argument xvcell is used in Zmacs buffer switching.  If non-NIL,
+  it should be a closure value cell, which is used as the value cell for
+  the local binding.  value is ignored when xvcell is given.
+
+ZWEI:KILL-LOCAL-VARIABLE variable
+  makes variable no longer be local in the current editor or buffer.
+  It reverts to its global value.
+
+The easy way to make a Zwei user option variable such as *COMMENT-COLUMN*
+local is with the command Meta-X Make Local Variable.  It reads a variable's
+pretty name (such as Comment Column) with completion and makes that variable
+local.  The complementary command Meta-X Kill Local Variable also exists.
+
+Meta-X List Local Variables prints the names and values of all the local
+variables in the current editor or current buffer.
+
+] `Shifted' Mouse Clicks.
+
+If is now possible to use `shifted' mouse clicks to give Zmacs commands.
+(Where `shifted' means modified by one or more of the Control-, Meta-,
+Super- or Hyper- keys) Thus it is now possible to give the M-X Set Key a
+`shifted' mouse click (like Control-Mouse-Left-1) as the key, and to set
+`shifted' mouse keys in init files using ZWEI:SET-COMTAB.
+
+] Deleted Files and DIRED.
+
+DIRED now displays files that are really deleted on disk with a lower case "d"
+in the first column.  Files whose deletion has been requested but not done
+are displayed with a capital "D".  If you request undeletion of an actually deleted
+file, the file is displayed with a capital "U", but such operations as printing,
+editing, or applying a function to the file are not allowed since the file is
+really still deleted.
+
+] Pathname Defaulting in DIRED and BDIRED.
+
+When the current buffer is a DIRED or BDIRED buffer and you issue a
+command that reads a filename, the default filename is now the file
+whose line you are pointing at.
+
+] Matching Close Parentheses Displayed for Open Parentheses.
+
+When point is before an open parenthesis, the matching close parenthesis now
+blinks.  If point is both before an open parenthesis and after a close parenthesis,
+the matching open of the preceding close parenthesis is the one that blinks.
+
+] C-Shift-J is now Change Font Region.
+
+The command C-Shift-J is now Change Font Region, just like C-X C-J.
+
+] M-Shift-J is now Change One Font Region.
+
+This command operates on all characters in the region which have
+a particular font, changing them to another font.  It asks for the
+font to look for first, and then the font to change to.  For example,
+you could specify to change all font A characters into font C.
+
+] Meta-X View File and Fonts.
+
+The View File command now displays the file with its correct fonts
+if the file specifies fonts in its attribute list.
+
+] Meta-X Tags Search List Sections.
+
+This command searches all the files in the currently selected tag table
+for a string that you specify.  It does not itself move point or select
+a different buffer.  Instead it records which sections the string is found in
+and then prints a list of the sections' names.  You can then begin visiting
+the sections one by one with C-Shift-P.
+
+] Control-X 4 J Jumps to Saved Point in Other WIndow.
+
+If you save a location in a register with C-X S register, you can jump to it again
+with C-X J register.  Now you can also select the other window (in or entering
+two-window mode) and jump to the saved location in that window, by using
+Control-X 4 J register.
+
+] Changed Default for Meta-X Source Compare.
+
+The default version is now :NEWEST for both the first and the second input file.
+
+] Meta-X Start Private Patch.
+
+A private patch is one which is not installed in the system.  It is not associated
+with any specific patchable system, and it does not get a patch version number.
+It is simply a file of redefinitions which you can load explicitly if you like.
+LOAD-PATCHES does not know about private patches.
+
+Meta-X Start Private Patch starts editing a private patch.  You are asked
+to specify the pathname of the patch file.  Once you have done
+this, you can put text into the patch with Meta-X Add Patch, just as you
+can for installed patches.  You finish with Meta-X Finish Patch, as usual.
+This saves and compiles the patch file.
+
+You can use Meta-X Start Private Patch to resume editing a private patch
+you created previously.  This works whether or not you had finished the patch
+earlier.
+
+] Meta-X Add Patch Changed Sections.
+
+The command Meta-X Add Patch Changed Sections finds all sections you have
+changed the text of, in all buffers, and asks you for each one whether to do
+Meta-X Add Patch of its text.  But sections which have been Add Patched already
+since their last modification are excluded.  If you answer the question P,
+then all the rest of the changed sections in the same buffer are patched without
+further question.
+
+Meta-X Add Patch Buffer Changed Sections is similar but considers only the
+current buffer's sections.
+
+] Buffer Selection History Now Per Window.
+
+Each Zmacs window now keeps its own history of all buffers. The C-M-L
+command, and defaulting when reading a buffer name argument, both use the
+selected window's history.  (This is the same history that you can yank from
+using the Meta-Shift-Y command when giving a buffer name argument.)
+The history's `most recent' elements are buffers which have been selected in this
+window, most recent first. The least recent elements are other Zmacs buffers which
+have not yet been selected by this window. The histories of different Zmacs windows
+all contain the same elements, but they may be in different orders.
+C-X C-B now displays the per-window history.
+
+] Command C-X C-; to Make the Region into a Comment.
+
+This command puts a comment starter (value of ZWEI:*COMMENT-BEGIN*) in front
+of each line starting in the region, except for blank lines.
+With numeric argument, it removes precisely the value of ZWEI:*COMMENT-BEGIN*
+(a single semicolon in Lisp mode) from each line in the region that starts with one.
+
+You can use C-X C-; to comment out the lines of the region before recompiling
+a function.  Later, use C-U C-X C-; to remove the commenting thus made.
+Only a single semicolon is removed, so any lines which were comments before
+commenting out the region remain comments after un-commenting the region.
+
+] More Rubout Handler Commands.
+
+The rubout handler now has a mark, and supports the commands Control-Space,
+Control-&gt;, Control-&lt;, Control-W and Meta-W.  They work about the same
+as the editor commands of the same names.
+
+The rubout handler also now supports Meta-T.
+
+Meta-Status is now a way to print the rest of the input history beyond
+the part that Status shows you.  A numeric argument specifies how many
+elements to skip mentioning at the front of the input history.
+Control-Meta-Status does a similar thing for the kill history, to complement
+the Control-Status command.
+
+] M-X Copy File, Rename File, Delete File, Undelete File.
+
+These four commands have been changed to do prompting and querying in a new way.
+
+If the pathname specified has no wildcards, no prompting or querying is done.
+The operation is just performed.
+
+If there is a wildcard, then a list of the files that match it is printed all at once.
+You are then asked to confirm with Y or N.  If you say Y, then all the files
+are operated on forthwith.
+				  </pre>
+
+    <hr/>
+    <p>Last modified: 2025/06/05 09:12:00 (UTC) by ams</p>
+  </body>
+</html>
+
+<!-- Local Variables: -->
+<!-- time-stamp-pattern: "-8/<p>Last modified:[ \t]%:y/%02m/%02d %02H:%02M:%02S (%Z) by %u</p>" -->
+<!-- time-stamp-time-zone: "UTC" -->
+<!-- End: -->
